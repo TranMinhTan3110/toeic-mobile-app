@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase configuration files (Bảo mật thông tin dự án Firebase)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Local environment variables (Lưu IP của ASP.NET Backend)
+.env
+*.env
+
+# VS Code settings
+.vscode/
+
+# MacOS metadata
+.DS_Store
