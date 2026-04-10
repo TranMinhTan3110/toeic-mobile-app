@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 
 class ReusableImageCard extends StatelessWidget {
-  final File? imageFile;
+  final String imagePath;
   final double? width;
   final double? height;
 
-  const ReusableImageCard({super.key, this.imageFile, this.width, this.height});
+  const ReusableImageCard({
+    super.key,
+    required this.imagePath,
+    this.width,
+    this.height,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +24,8 @@ class ReusableImageCard extends StatelessWidget {
         height: height ?? 250.0,
         padding: const EdgeInsets.all(12.0),
         color: Colors.white,
-        child: imageFile != null
-            ? Image.file(imageFile!, fit: BoxFit.contain)
+        child: imagePath != null && imagePath!.isNotEmpty
+            ? Image.asset(imagePath!, fit: BoxFit.contain)
             : const Center(
                 child: Icon(Icons.image, size: 50, color: Colors.grey),
               ),

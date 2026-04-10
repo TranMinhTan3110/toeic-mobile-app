@@ -1,3 +1,4 @@
+//dùng để test 3 widget: ReusableImageCard, BoldTextLabel, DescriptionInputBox
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../widgets/cards/reusable_image_card.dart';
@@ -13,14 +14,14 @@ class TestScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    File? imageFile = File('C:/Users/ICT/Downloads/cassette_image.jpg');
-
+    // Đường dẫn đến hình ảnh trên máy tính (cần test thì thêm vào assets và pubspec.yaml)
+    String imagePath = 'assets/images/cassette_image.jpg';
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF4DB6AC),
         leading: const Icon(Icons.arrow_back_ios, color: Colors.white),
         title: const Text('Câu 1', style: TextStyle(color: Colors.white)),
-        centerTitle: false, // Tiêu đề nằm bên trái
+        centerTitle: false,
         actions: const [
           Icon(Icons.info_outline, color: Colors.white),
           SizedBox(width: 8),
@@ -54,7 +55,7 @@ class TestScreen extends StatelessWidget {
             ),
 
             // Widget 1: Box chứa hình ảnh
-            ReusableImageCard(imageFile: imageFile),
+            ReusableImageCard(imagePath: imagePath),
 
             // Widget 2: Chữ đậm dưới hình ảnh
             const BoldTextLabel(text: "Cassette / Damage"),

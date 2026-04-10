@@ -96,7 +96,7 @@ class TestListScreen extends StatelessWidget {
         crossAxisCount: 4,
         crossAxisSpacing: 10,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.7,
+        childAspectRatio: 0.6,
       ),
       itemBuilder: (context, index) {
         return TestCardWidget(

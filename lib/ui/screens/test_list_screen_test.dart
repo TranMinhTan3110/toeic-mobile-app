@@ -1,3 +1,4 @@
+//dùng để test view TestListScreen và TestDetailScreen
 import 'package:flutter/material.dart';
 import 'exam/test_list_screen.dart';
 
@@ -13,12 +14,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'TOEIC App Test',
       theme: ThemeData(
-        primarySwatch: Colors.teal, // Set màu chủ đạo cho giống thiết kế
+        primarySwatch: Colors.teal,
         scaffoldBackgroundColor: Colors.white,
       ),
-      // Set màn hình danh sách đề thi làm màn hình khởi động
       home: const TestListScreen(),
-      // Tắt cái dải băng chữ DEBUG đỏ đỏ ở góc phải màn hình cho đẹp
       debugShowCheckedModeBanner: false,
     );
   }
