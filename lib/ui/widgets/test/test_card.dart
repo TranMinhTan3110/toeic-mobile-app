@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/constants/app_colors.dart';
+import '../core/theme/app_colors.dart';
 
 /// Trạng thái của bài test.
 enum TestStatus { notStarted, inProgress, completed }
@@ -197,8 +197,8 @@ class _MetaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <String>[];
-    if (duration != null) items.add('⏱ $duration');
-    if (questionCount != null) items.add('📝 $questionCount câu');
+    if (duration != null) items.add('$duration');
+    if (questionCount != null) items.add('$questionCount câu');
 
     return Wrap(
       spacing: 12,
