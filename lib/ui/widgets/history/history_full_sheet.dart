@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors_home.dart';
-import 'history_item_model.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../data/models/history_item_model.dart';
 import 'history_row.dart';
 
 class HistoryFullSheet extends StatefulWidget {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/ui/widgets/home/section_title.dart';
-import '../../../core/theme/app_colors_home.dart';
-
+import '../../../core/theme/app_colors.dart';
 class NotebookSection extends StatelessWidget {
   final int vocabularyCount;
   final int questionCount;

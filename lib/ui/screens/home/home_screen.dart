@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors_home.dart';
-import '../../widgets/home/home_app_bar.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/skill_card.dart';
 import '../../widgets/home/exam_card.dart';
 import '../../widgets/home/section_title.dart';
-import '../../widgets/home/home_bottom_nav.dart';
+import '../../widgets/common/home_bottom_nav.dart';
 import '../../widgets/history/history_section.dart';
-import '../../widgets/history/history_item_model.dart';
+import '../../../data/models/history_item_model.dart';
 import '../../widgets/home/notebook_section.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // HistoryItem(title: 'Điền Vào Câu',   type: 'Luyện tập', percent: 50, date: DateTime.now()),
     // HistoryItem(title: 'Từ Vựng Unit 3', type: 'Luyện tập', percent: 70, date: DateTime.now()),
     // HistoryItem(title: 'Ngữ Pháp Tổng',  type: 'Luyện tập', percent: 80, date: DateTime.now()),
-    // Thêm data từ DB vào đây — nếu > 5 sẽ tự ẩn và hiện "Xem thêm"
   ];
 
   final List<HistoryItem> _examHistory = [
@@ -62,7 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const HomeAppBar(),
+          const CustomAppBar(
+            title: 'Trang chủ',
+            centerTitle: true,
+            showBackButton: false,
+          ),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
