@@ -24,8 +24,8 @@ class ReusableImageCard extends StatelessWidget {
         height: height ?? 250.0,
         padding: const EdgeInsets.all(12.0),
         color: Colors.white,
-        child: imagePath != null && imagePath!.isNotEmpty
-            ? Image.asset(imagePath!, fit: BoxFit.contain)
+        child: imagePath.isNotEmpty
+            ? Image.asset(imagePath, fit: BoxFit.contain)
             : const Center(
                 child: Icon(Icons.image, size: 50, color: Colors.grey),
               ),

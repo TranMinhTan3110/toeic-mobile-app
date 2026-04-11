@@ -1,6 +1,5 @@
 //dùng để test 3 widget: ReusableImageCard, BoldTextLabel, DescriptionInputBox
 import 'package:flutter/material.dart';
-import 'dart:io';
 import '../widgets/cards/reusable_image_card.dart';
 import '../shared/bold_text_label.dart';
 import '../widgets/inputs/description_input_box.dart';
@@ -14,7 +13,7 @@ class TestScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Đường dẫn đến hình ảnh trên máy tính (cần test thì thêm vào assets và pubspec.yaml)
+    // Đường dẫn đến hình ảnh trên máy tính (cần test/đổi hình thì thêm hình vào assets và vào pubspec.yaml thêm đường dẫn)
     String imagePath = 'assets/images/cassette_image.jpg';
     return Scaffold(
       appBar: AppBar(

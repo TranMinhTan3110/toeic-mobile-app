@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/models/test_info.dart';
 import '../../widgets/cards/test_card_widget.dart';
 import 'test_detail_screen.dart';
 import 'see_more_screen.dart';
+import '../../widgets/common/custom_app_bar.dart';
 
 class TestListScreen extends StatelessWidget {
   const TestListScreen({super.key});
@@ -23,11 +25,11 @@ class TestListScreen extends StatelessWidget {
     final listWriting = _generateMockTests('Writing 2023');
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Thi', style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF4DB6AC),
+      backgroundColor: AppColors.background,
+      appBar: const CustomAppBar(
+        title: 'Thi',
         centerTitle: true,
+        showBackButton: false, // Ẩn nút back vì đây là màn hình chính
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -63,7 +65,11 @@ class TestListScreen extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary, // Thêm màu cho text tiêu đề
+            ),
           ),
         ),
         TextButton(
@@ -78,7 +84,7 @@ class TestListScreen extends StatelessWidget {
           child: const Text(
             'Xem thêm',
             style: TextStyle(
-              color: Color(0xFF4DB6AC),
+              color: AppColors.textLink, // Màu cho link / nút bấm dạng chữ
               fontWeight: FontWeight.bold,
             ),
           ),

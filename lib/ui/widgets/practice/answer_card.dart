@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 /// Model cho 1 đáp án.
 class AnswerOption {
-  const AnswerOption({
-    required this.key,
-    required this.text,
-  });
+  const AnswerOption({required this.key, required this.text});
   final String key; // 'A', 'B', 'C', 'D'
   final String text;
 }
@@ -123,11 +120,7 @@ class AnswerCard extends StatelessWidget {
 // Single answer tile
 
 class _AnswerTile extends StatelessWidget {
-  const _AnswerTile({
-    required this.option,
-    required this.state,
-    this.onTap,
-  });
+  const _AnswerTile({required this.option, required this.state, this.onTap});
 
   final AnswerOption option;
   final AnswerState state;
@@ -173,7 +166,9 @@ class _AnswerTile extends StatelessWidget {
   }
 
   Color get _keyFg {
-    return state == AnswerState.normal ? AppColors.textSecondary : AppColors.textOnPrimary;
+    return state == AnswerState.normal
+        ? AppColors.textSecondary
+        : AppColors.textOnPrimary;
   }
 
   IconData? get _trailingIcon {
@@ -237,7 +232,9 @@ class _AnswerTile extends StatelessWidget {
               const SizedBox(width: 8),
               Icon(
                 _trailingIcon,
-                color: state == AnswerState.correct ? AppColors.success : AppColors.error,
+                color: state == AnswerState.correct
+                    ? AppColors.success
+                    : AppColors.error,
                 size: 20,
               ),
             ],

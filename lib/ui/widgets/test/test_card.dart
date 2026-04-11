@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 /// Trạng thái của bài test.
 enum TestStatus { notStarted, inProgress, completed }
@@ -145,7 +145,10 @@ class TestCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        _MetaRow(duration: duration, questionCount: questionCount),
+                        _MetaRow(
+                          duration: duration,
+                          questionCount: questionCount,
+                        ),
                       ],
                     ),
                   ),
@@ -174,7 +177,9 @@ class TestCard extends StatelessWidget {
                     _ScoreBadge(score: score!),
                   if (status != TestStatus.completed)
                     _StartButton(
-                      label: status == TestStatus.inProgress ? 'Tiếp tục' : 'Bắt đầu',
+                      label: status == TestStatus.inProgress
+                          ? 'Tiếp tục'
+                          : 'Bắt đầu',
                       onTap: onTap,
                     ),
                 ],
@@ -206,7 +211,10 @@ class _MetaRow extends StatelessWidget {
           .map(
             (s) => Text(
               s,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
             ),
           )
           .toList(),
