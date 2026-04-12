@@ -63,7 +63,7 @@ Chứa những thứ **không thay đổi theo tính năng** – dùng ở mọi
 **Vai trò:** Lưu các giá trị cố định, tránh magic string/number.
 
 ```dart
-// lib/core/constants/app_colors.dart
+// lib/core/constants/app_colors_home.dart
 class AppColors {
   static const Color primary = Color(0xFF1565C0);
   static const Color accent  = Color(0xFF42A5F5);

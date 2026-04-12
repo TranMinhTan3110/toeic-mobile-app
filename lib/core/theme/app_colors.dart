@@ -56,6 +56,22 @@ class AppColors {
   static const Color warning         = Color(0xFFFFA726);
   static const Color info            = Color(0xFF42A5F5);
 
+  //home
+  static const primaryPale   = Color(0xFFFFF0E5);
+  static const border        = Color(0xFFFFE0C2);
+  static const cardBg        = Colors.white;
+
+  static const green         = Color(0xFF3B6D11);
+  static const greenBg       = Color(0xFFEAF3DE);
+  static const blue          = Color(0xFF185FA5);
+  static const blueBg        = Color(0xFFE6F1FB);
+  static const purple        = Color(0xFF534AB7);
+  static const purpleBg      = Color(0xFFEEEDFE);
+
+  static const textDark      = Color(0xFF2C2C2A);
+  static const textMid       = Color(0xFF444441);
+  static const textMuted     = Color(0xFF888780);
+
   // Gradient helpers
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [Color(0xFFFF8C42), Color(0xFFFFB07A)],
