@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Widget header hiển thị ngay dưới AppBar, trên các thẻ card phần.
 /// Thường gồm: tên phần lớn, mô tả ngắn, và thông tin tiến độ.

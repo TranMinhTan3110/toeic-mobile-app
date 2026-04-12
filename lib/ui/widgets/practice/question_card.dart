@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Card bọc nội dung câu hỏi. Kích thước cố định (height), nội dung
 /// bên trong scroll được nếu dài.

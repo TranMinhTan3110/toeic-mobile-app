@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_colors.dart';
-
+import '../../../core/theme/app_colors.dart';
 /// Card dùng trong màn hình ôn luyện kỹ năng.
 /// Hiển thị "Phần X – <tên phần>" kèm icon và tiến độ.
 ///
