@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 /// Card dùng trong màn hình ôn luyện kỹ năng.
 /// Hiển thị "Phần X – <tên phần>" kèm icon và tiến độ.
@@ -161,7 +162,11 @@ class _CardBody extends StatelessWidget {
 
           //Trailing icon
           isLocked
-              ? const Icon(Icons.lock_outline, color: AppColors.textHint, size: 20)
+              ? const Icon(
+                  Icons.lock_outline,
+                  color: AppColors.textHint,
+                  size: 20,
+                )
               : const Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.primary,

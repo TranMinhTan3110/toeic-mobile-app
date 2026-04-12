@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 /// Các tab có trong phần giải thích.
 enum ExplanationTab { explanation, transcript, translation }
@@ -113,8 +114,11 @@ class _ExplanationWidgetState extends State<ExplanationWidget>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded,
-                      color: AppColors.success, size: 18),
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.success,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Đáp án đúng: ${widget.correctKey}',
@@ -147,9 +151,14 @@ class _ExplanationWidgetState extends State<ExplanationWidget>
             isScrollable: _tabs.length > 2,
             labelColor: AppColors.tabActive,
             unselectedLabelColor: AppColors.tabInactive,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            unselectedLabelStyle:
-                const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
             indicatorColor: AppColors.tabIndicator,
             indicatorWeight: 3,
             indicatorSize: TabBarIndicatorSize.label,

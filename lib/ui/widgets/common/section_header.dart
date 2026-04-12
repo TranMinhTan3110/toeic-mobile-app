@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
+
 
 /// Widget header hiển thị ngay dưới AppBar, trên các thẻ card phần.
 /// Thường gồm: tên phần lớn, mô tả ngắn, và thông tin tiến độ.
@@ -58,7 +60,10 @@ class SectionHeader extends StatelessWidget {
             children: [
               // Section badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
                   borderRadius: BorderRadius.circular(20),
@@ -85,7 +90,7 @@ class SectionHeader extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              if (extraInfo != null) extraInfo!,
+              ?extraInfo,
             ],
           ),
           if (hasProgress) ...[
@@ -98,7 +103,9 @@ class SectionHeader extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: currentQuestion! / totalQuestions!,
                       backgroundColor: AppColors.primaryLighter,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                       minHeight: 6,
                     ),
                   ),

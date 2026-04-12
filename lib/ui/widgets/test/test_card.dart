@@ -145,7 +145,10 @@ class TestCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        _MetaRow(duration: duration, questionCount: questionCount),
+                        _MetaRow(
+                          duration: duration,
+                          questionCount: questionCount,
+                        ),
                       ],
                     ),
                   ),
@@ -174,7 +177,9 @@ class TestCard extends StatelessWidget {
                     _ScoreBadge(score: score!),
                   if (status != TestStatus.completed)
                     _StartButton(
-                      label: status == TestStatus.inProgress ? 'Tiếp tục' : 'Bắt đầu',
+                      label: status == TestStatus.inProgress
+                          ? 'Tiếp tục'
+                          : 'Bắt đầu',
                       onTap: onTap,
                     ),
                 ],
@@ -197,8 +202,8 @@ class _MetaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <String>[];
-    if (duration != null) items.add('⏱ $duration');
-    if (questionCount != null) items.add('📝 $questionCount câu');
+    if (duration != null) items.add('$duration');
+    if (questionCount != null) items.add('$questionCount câu');
 
     return Wrap(
       spacing: 12,
@@ -206,7 +211,10 @@ class _MetaRow extends StatelessWidget {
           .map(
             (s) => Text(
               s,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
             ),
           )
           .toList(),
