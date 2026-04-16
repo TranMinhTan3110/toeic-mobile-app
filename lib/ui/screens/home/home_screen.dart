@@ -9,6 +9,8 @@ import '../../widgets/common/home_bottom_nav.dart';
 import '../../widgets/history/history_section.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/home/notebook_section.dart';
+import '../practice/writing_screen.dart';
+import '../exam/test_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,37 +24,130 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Dữ liệu luyện tập ──────────────────────────────────────────────
   static const _practiceItems = [
-    (label:'Nghe Hiểu', icon:Icons.headphones,   color:AppColors.primary, bg:AppColors.primaryPale, progress:0.65),
-    (label:'Đọc Hiểu',  icon:Icons.menu_book,    color:AppColors.green,   bg:AppColors.greenBg,    progress:0.42),
-    (label:'Luyện Nói', icon:Icons.mic,           color:AppColors.blue,    bg:AppColors.blueBg,     progress:0.30),
-    (label:'Viết',      icon:Icons.edit,          color:AppColors.purple,  bg:AppColors.purpleBg,   progress:0.20),
+    (
+      label: 'Nghe Hiểu',
+      icon: Icons.headphones,
+      color: AppColors.primary,
+      bg: AppColors.primaryPale,
+      progress: 0.65,
+    ),
+    (
+      label: 'Đọc Hiểu',
+      icon: Icons.menu_book,
+      color: AppColors.green,
+      bg: AppColors.greenBg,
+      progress: 0.42,
+    ),
+    (
+      label: 'Luyện Nói',
+      icon: Icons.mic,
+      color: AppColors.blue,
+      bg: AppColors.blueBg,
+      progress: 0.30,
+    ),
+    (
+      label: 'Viết',
+      icon: Icons.edit,
+      color: AppColors.purple,
+      bg: AppColors.purpleBg,
+      progress: 0.20,
+    ),
   ];
 
   static const _examItems = [
-    (label:'Thi Thử',  icon:Icons.assignment_turned_in, color:AppColors.primary, bg:AppColors.primaryPale, badge:'HOT', badgeColor:AppColors.primary),
-    (label:'Từ Vựng',  icon:Icons.translate,             color:AppColors.green,   bg:AppColors.greenBg,     badge:null,  badgeColor:null),
-    (label:'Ngữ Pháp', icon:Icons.spellcheck,            color:AppColors.blue,    bg:AppColors.blueBg,      badge:null,  badgeColor:null),
-    (label:'Cài Đặt',  icon:Icons.settings,              color:AppColors.primary, bg:AppColors.primaryPale, badge:null,  badgeColor:null),
+    (
+      label: 'Thi Thử',
+      icon: Icons.assignment_turned_in,
+      color: AppColors.primary,
+      bg: AppColors.primaryPale,
+      badge: 'HOT',
+      badgeColor: AppColors.primary,
+    ),
+    (
+      label: 'Từ Vựng',
+      icon: Icons.translate,
+      color: AppColors.green,
+      bg: AppColors.greenBg,
+      badge: null,
+      badgeColor: null,
+    ),
+    (
+      label: 'Ngữ Pháp',
+      icon: Icons.spellcheck,
+      color: AppColors.blue,
+      bg: AppColors.blueBg,
+      badge: null,
+      badgeColor: null,
+    ),
+    (
+      label: 'Cài Đặt',
+      icon: Icons.settings,
+      color: AppColors.primary,
+      bg: AppColors.primaryPale,
+      badge: null,
+      badgeColor: null,
+    ),
   ];
 
-  // ── Dữ liệu lịch sử — thay bằng data từ database sau ─────────────
-  // Khi kết nối DB: truyền list động vào HistorySection
+  // ── Dữ liệu lịch sử ─────────────
   final List<HistoryItem> _practiceHistory = [
-    HistoryItem(title: 'Điền Vào Câu',   type: 'Luyện tập', percent: 15, date: DateTime.now()),
-    HistoryItem(title: 'Nghe Hiểu Part 1', type: 'Luyện tập', percent: 30, date: DateTime.now()),
-    HistoryItem(title: 'Đọc Hiểu',       type: 'Luyện tập', percent: 30, date: DateTime.now()),
-    // HistoryItem(title: 'Điền Vào Câu',   type: 'Luyện tập', percent: 50, date: DateTime.now()),
-    // HistoryItem(title: 'Từ Vựng Unit 3', type: 'Luyện tập', percent: 70, date: DateTime.now()),
-    // HistoryItem(title: 'Ngữ Pháp Tổng',  type: 'Luyện tập', percent: 80, date: DateTime.now()),
+    HistoryItem(
+      title: 'Điền Vào Câu',
+      type: 'Luyện tập',
+      percent: 15,
+      date: DateTime.now(),
+    ),
+    HistoryItem(
+      title: 'Nghe Hiểu Part 1',
+      type: 'Luyện tập',
+      percent: 30,
+      date: DateTime.now(),
+    ),
+    HistoryItem(
+      title: 'Đọc Hiểu',
+      type: 'Luyện tập',
+      percent: 30,
+      date: DateTime.now(),
+    ),
   ];
 
   final List<HistoryItem> _examHistory = [
-    HistoryItem(title: 'Đề Thi Thử 01', type: 'Thi', percent: 60, date: DateTime.now()),
-    HistoryItem(title: 'Đề Thi Thử 02', type: 'Thi', percent: 75, date: DateTime.now()),
-    HistoryItem(title: 'Đề Thi Thử 03', type: 'Thi', percent: 75, date: DateTime.now()),
-    HistoryItem(title: 'Đề Thi Thử 04', type: 'Thi', percent: 75, date: DateTime.now()),
-    HistoryItem(title: 'Đề Thi Thử 05', type: 'Thi', percent: 75, date: DateTime.now()),
-    HistoryItem(title: 'Đề Thi Thử 06', type: 'Thi', percent: 75, date: DateTime.now()),
+    HistoryItem(
+      title: 'Đề Thi Thử 01',
+      type: 'Thi',
+      percent: 60,
+      date: DateTime.now(),
+    ),
+    HistoryItem(
+      title: 'Đề Thi Thử 02',
+      type: 'Thi',
+      percent: 75,
+      date: DateTime.now(),
+    ),
+    HistoryItem(
+      title: 'Đề Thi Thử 03',
+      type: 'Thi',
+      percent: 75,
+      date: DateTime.now(),
+    ),
+    HistoryItem(
+      title: 'Đề Thi Thử 04',
+      type: 'Thi',
+      percent: 75,
+      date: DateTime.now(),
+    ),
+    HistoryItem(
+      title: 'Đề Thi Thử 05',
+      type: 'Thi',
+      percent: 75,
+      date: DateTime.now(),
+    ),
+    HistoryItem(
+      title: 'Đề Thi Thử 06',
+      type: 'Thi',
+      percent: 75,
+      date: DateTime.now(),
+    ),
   ];
 
   @override
@@ -78,12 +173,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   HistorySection(
                     practiceItems: _practiceHistory,
                     examItems: _examHistory,
-                    previewCount: 5,           // ẩn từ item thứ 6 trở đi
+                    previewCount: 5,
                   ),
                   // ── Sổ tay ───────────────────────────────────
                   NotebookSection(
-                    vocabularyCount: 0,       // TODO: lấy từ DB
-                    questionCount: 0,          // TODO: lấy từ DB
+                    vocabularyCount: 0,
+                    questionCount: 0,
                     onVocabReview: () {},
                     onQuestionReview: () {},
                   ),
@@ -111,13 +206,30 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 14),
           Row(
             children: _practiceItems
-                .map((e) => Expanded(
-              child: SkillCard(
-                label: e.label, icon: e.icon,
-                iconColor: e.color, iconBg: e.bg,
-                progress  : e.progress, onTap: () {},
-              ),
-            ))
+                .map(
+                  (e) => Expanded(
+                    child: SkillCard(
+                      label: e.label,
+                      icon: e.icon,
+                      iconColor: e.color,
+                      iconBg: e.bg,
+                      progress: e.progress,
+                      onTap: () {
+                        // Thêm điều kiện chuyển trang dựa trên label
+                        if (e.label == 'Viết') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const WritingScreen(),
+                            ),
+                          );
+                        } else {
+                          // TODO: Xử lý cho Nghe Hiểu, Đọc Hiểu, Luyện Nói
+                        }
+                      },
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -135,14 +247,30 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 14),
           Row(
             children: _examItems
-                .map((e) => Expanded(
-              child: ExamCard(
-                label: e.label, icon: e.icon,
-                iconColor: e.color, iconBg: e.bg,
-                badge: e.badge, badgeColor: e.badgeColor,
-                onTap: () {},
-              ),
-            ))
+                .map(
+                  (e) => Expanded(
+                    child: ExamCard(
+                      label: e.label,
+                      icon: e.icon,
+                      iconColor: e.color,
+                      iconBg: e.bg,
+                      badge: e.badge,
+                      badgeColor: e.badgeColor,
+                      onTap: () {
+                        if (e.label == 'Thi Thử') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TestListScreen(),
+                            ),
+                          );
+                        } else {
+                          // TODO: Xử lý cho Từ Vựng, Ngữ Pháp, Cài Đặt
+                        }
+                      },
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ],
