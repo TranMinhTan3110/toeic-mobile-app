@@ -22,7 +22,6 @@ class WritingScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildOverallProgress(),
@@ -30,7 +29,6 @@ class WritingScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // 2. Skill cards (refactor tại đây)
               SkillCard(
                 partNumber: 1,
                 title: 'Mô tả tranh',

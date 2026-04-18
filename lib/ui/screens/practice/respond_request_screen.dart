@@ -48,21 +48,6 @@ class _RespondRequestScreenState extends State<RespondRequestScreen> {
 
             const SizedBox(height: 16),
 
-            Center(
-              child: TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'Nâng cấp để tải toàn bộ bài tập về máy,\ntải dữ liệu nhanh hơn, ổn định hơn',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ),
-
             const SizedBox(height: 24),
 
             PracticeSettingsRow(
