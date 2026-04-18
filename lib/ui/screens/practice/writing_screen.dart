@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../../widgets/practice/skill_card.dart';
 
-// 1. IMPORT 3 MÀN HÌNH CỦA 3 PHẦN THI VÀO ĐÂY
-// (Đảm bảo các file này nằm cùng thư mục với writing_screen.dart, nếu khác thì bạn sửa lại đường dẫn nhé)
+// Screens
 import 'picture_description_screen.dart';
 import 'respond_request_screen.dart';
 import 'essay_writing_screen.dart';
@@ -18,53 +18,62 @@ class WritingScreen extends StatelessWidget {
       appBar: const CustomAppBar(title: 'Viết'),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header: Tổng quan tiến độ
-              _buildOverallProgress(),
-              const SizedBox(height: 24),
+              // 1. Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildOverallProgress(),
+              ),
 
-              // 2. Danh sách các phần thi (Đã thêm sự kiện onTap)
-              _buildPartCard(
-                title: 'Phần 1 - Mô tả tranh',
-                doneCount: 8,
+              const SizedBox(height: 16),
+
+              // 2. Skill cards (refactor tại đây)
+              SkillCard(
+                partNumber: 1,
+                title: 'Mô tả tranh',
+                subtitle: '8 câu đã làm',
                 progress: 0.53,
                 isLocked: false,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const PictureDescriptionScreen(),
+                      builder: (_) => const PictureDescriptionScreen(),
                     ),
                   );
                 },
               ),
-              _buildPartCard(
-                title: 'Phần 2 - Phản hồi yêu cầu',
-                doneCount: 4,
+
+              SkillCard(
+                partNumber: 2,
+                title: 'Phản hồi yêu cầu',
+                subtitle: '4 câu đã làm',
                 progress: 0.8,
                 isLocked: false,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const RespondRequestScreen(),
+                      builder: (_) => const RespondRequestScreen(),
                     ),
                   );
                 },
               ),
-              _buildPartCard(
-                title: 'Phần 3 - Viết luận',
-                doneCount: 0,
+
+              SkillCard(
+                partNumber: 3,
+                title: 'Viết luận',
+                subtitle: '0 câu đã làm',
                 progress: 0.0,
                 isLocked: false,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const EssayWritingScreen(),
+                      builder: (_) => const EssayWritingScreen(),
                     ),
                   );
                 },
@@ -72,53 +81,66 @@ class WritingScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // 3. Đường phân cách (Lằn ranh)
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(color: AppColors.divider, thickness: 1.5),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Icon(
-                      Icons.history_rounded,
-                      color: AppColors.textHint,
-                      size: 20,
+              // ====== GIỮ NGUYÊN HISTORY ======
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: AppColors.divider, thickness: 1.5),
                     ),
-                  ),
-                  Expanded(
-                    child: Divider(color: AppColors.divider, thickness: 1.5),
-                  ),
-                ],
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(
+                        Icons.history_rounded,
+                        color: AppColors.textHint,
+                        size: 20,
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(color: AppColors.divider, thickness: 1.5),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 24),
 
-              // 4. Phần Lịch sử luyện tập
-              const Text(
-                'Lịch sử luyện tập',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Lịch sử luyện tập',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
+
               const SizedBox(height: 16),
 
-              _buildHistoryItem(
-                date: '16/04/2026',
-                part: 'Phần 1 - Mô tả tranh',
-                score: '8/15 câu',
-              ),
-              _buildHistoryItem(
-                date: '15/04/2026',
-                part: 'Phần 2 - Phản hồi yêu cầu',
-                score: '4/5 câu',
-              ),
-              _buildHistoryItem(
-                date: '14/04/2026',
-                part: 'Phần 3 - Viết luận',
-                score: '0/2 câu',
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    _buildHistoryItem(
+                      date: '16/04/2026',
+                      part: 'Phần 1 - Mô tả tranh',
+                      score: '8/15 câu',
+                    ),
+                    _buildHistoryItem(
+                      date: '15/04/2026',
+                      part: 'Phần 2 - Phản hồi yêu cầu',
+                      score: '4/5 câu',
+                    ),
+                    _buildHistoryItem(
+                      date: '14/04/2026',
+                      part: 'Phần 3 - Viết luận',
+                      score: '0/2 câu',
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 32),
@@ -129,7 +151,7 @@ class WritingScreen extends StatelessWidget {
     );
   }
 
-  // ---- WIDGETS CON ----
+  // =========================
 
   Widget _buildOverallProgress() {
     return Container(
@@ -186,80 +208,6 @@ class WritingScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  /// 2. BỔ SUNG BIẾN onTap VÀ BỌC BẰNG GestureDetector
-  Widget _buildPartCard({
-    required String title,
-    required int doneCount,
-    required double progress,
-    required bool isLocked,
-    VoidCallback? onTap, // Thêm hàm callback xử lý sự kiện click
-  }) {
-    return GestureDetector(
-      onTap: isLocked ? null : onTap, // Chỉ cho phép ấn nếu không bị khóa
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider, width: 1),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isLocked
-                        ? AppColors.textSecondary
-                        : AppColors.textPrimary,
-                  ),
-                ),
-                if (isLocked)
-                  const Icon(
-                    Icons.lock_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Số câu đã làm:',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                Text(
-                  '$doneCount',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildProgressBar(progress),
-          ],
-        ),
       ),
     );
   }
