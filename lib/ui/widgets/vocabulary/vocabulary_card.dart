@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../data/models/vocabulary_model.dart'; // Nạp model thật thay vì model chết
-import '../../screens/Vocabulary/vocabulary_detail_screen.dart'; // Thêm import màn hình chi tiết
+import '../../../data/models/vocabulary_model.dart';
+import '../../screens/Vocabulary/vocabulary_detail_screen.dart';
 
-/// Card hiển thị một từ vựng trong danh sách (Thiết kế gọn, loại bỏ input)
+/// Card hiển thị một từ vựng trong danh sách
 class VocabularyCard extends StatelessWidget {
-  final VocabularyModel word; // Đổi kiểu từ VocabularyWord -> VocabularyModel
-
+  final VocabularyModel word;
   final VoidCallback onAudio;
   final VoidCallback onStar;
   final bool isSelectMode;
@@ -29,7 +28,6 @@ class VocabularyCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: InkWell(
         onTap: () {
-          // Điều hướng sang màn hình chi tiết
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -93,26 +91,7 @@ class VocabularyCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Badge hiển thị loại từ (n, v, adj...)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _getWordTypeColor(word.wordType).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: _getWordTypeColor(word.wordType).withOpacity(0.5),
-                              width: 0.5,
-                            ),
-                          ),
-                          child: Text(
-                            word.wordType.toLowerCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: _getWordTypeColor(word.wordType),
-                            ),
-                          ),
-                        ),
+                        _WordTypeBadge(type: word.wordType),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -142,31 +121,40 @@ class VocabularyCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Color _getWordTypeColor(String type) {
+class _WordTypeBadge extends StatelessWidget {
+  final String type;
+  const _WordTypeBadge({required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
     switch (type.toLowerCase()) {
-      case 'noun':
-      case 'n':
-        return Colors.blue;
-      case 'verb':
-      case 'v':
-        return Colors.red;
-      case 'adj':
-      case 'adjective':
-        return Colors.green;
-      case 'adv':
-      case 'adverb':
-        return Colors.orange;
-      default:
-        return AppColors.textSecondary;
+      case 'noun': case 'n': color = Colors.blue; break;
+      case 'verb': case 'v': color = Colors.red; break;
+      case 'adj': case 'adjective': color = Colors.green; break;
+      case 'adv': case 'adverb': color = Colors.orange; break;
+      default: color = Colors.grey;
     }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+      ),
+      child: Text(
+        type.toLowerCase(),
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+      ),
+    );
   }
 }
 
-// ── Nút phát âm hình tròn nhỏ gọn hơn ─────────────────────────────────────────
 class _AudioButton extends StatelessWidget {
   final VoidCallback onTap;
-
   const _AudioButton({required this.onTap});
 
   @override
@@ -176,7 +164,7 @@ class _AudioButton extends StatelessWidget {
       child: Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.primarySurface,
           shape: BoxShape.circle,
         ),

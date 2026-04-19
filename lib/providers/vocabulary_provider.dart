@@ -1,10 +1,22 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import '../data/models/vocabulary_display_mode.dart';
 import '../data/models/vocabulary_model.dart';
 import '../data/repositories/vocabulary_repository.dart';
 
 class VocabularyProvider with ChangeNotifier {
   final VocabularyRepository _repository = VocabularyRepository();
   
+  VocabularyDisplayMode _displayMode = VocabularyDisplayMode.all;
+  VocabularyDisplayMode get displayMode => _displayMode;
+
+  void setDisplayMode(VocabularyDisplayMode mode) {
+    if (_displayMode == mode) {
+      _displayMode = VocabularyDisplayMode.all; 
+    } else {
+      _displayMode = mode;
+    }
+    notifyListeners();
+  }
   List<VocabularyModel> _words = [];
   List<VocabularyModel> get words => _words;
 

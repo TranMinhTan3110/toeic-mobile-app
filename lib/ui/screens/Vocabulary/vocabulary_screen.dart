@@ -6,6 +6,9 @@ import '../../widgets/vocabulary/lesson_selector_row.dart';
 import '../../widgets/vocabulary/action_button_row.dart';
 import '../../widgets/vocabulary/vocabulary_card.dart';
 import '../../../core/services/tts_service.dart';
+import 'vocabulary_quiz_screen.dart';
+import 'vocabulary_matching_screen.dart';
+import 'quiz_helper.dart';
 
 import '../../widgets/common/custom_app_bar.dart';
 
@@ -150,18 +153,51 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
             ),
 
           // Các nút chức năng
-          ActionButtonRow(
-            isSelectMode: _isSelectMode,
-            onToggleSelect: () {
-              setState(() {
-                _isSelectMode = !_isSelectMode;
-              });
+          Consumer<VocabularyProvider>(
+            builder: (context, provider, child) {
+              return ActionButtonRow(
+                isSelectMode: _isSelectMode,
+                onToggleSelect: () {
+                  setState(() {
+                    _isSelectMode = !_isSelectMode;
+                  });
+                },
+                onFlashcards: () {
+                  // Chuyển sang màn hình Flashcards (Sẽ làm sau)
+                },
+                onChooseWord: () {
+                  if (provider.words.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VocabularyQuizScreen(
+                          words: provider.words,
+                          quizType: QuizType.wordToDefinition,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                onDefinition: () {
+                  if (provider.words.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VocabularyMatchingScreen(
+                          words: provider.words,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                onMakeSentence: () {
+                  
+                }, 
+                onSpeaking: () {
+                 
+                },
+              );
             },
-            onFlashcards: () {},
-            onChooseWord: () {},
-            onDefinition: () {},
-            onMakeSentence: () {}, // Nút Đặt câu mới
-            onSpeaking: () {},
           ),
 
           const SizedBox(height: 8),
