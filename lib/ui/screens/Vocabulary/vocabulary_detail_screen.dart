@@ -6,10 +6,24 @@ import '../../widgets/vocabulary/detail_tabs/examples_tab.dart';
 import '../../widgets/vocabulary/detail_tabs/related_words_tab.dart';
 import '../../../core/services/tts_service.dart'; 
 
-class VocabularyDetailScreen extends StatelessWidget {
+import '../../widgets/common/custom_app_bar.dart';
+class VocabularyDetailScreen extends StatefulWidget {
   final VocabularyModel word;
 
   const VocabularyDetailScreen({super.key, required this.word});
+
+  @override
+  State<VocabularyDetailScreen> createState() => _VocabularyDetailScreenState();
+}
+
+class _VocabularyDetailScreenState extends State<VocabularyDetailScreen> {
+  late bool _isStarred;
+
+  @override
+  void initState() {
+    super.initState();
+    _isStarred = widget.word.isStarred;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,41 +31,51 @@ class VocabularyDetailScreen extends StatelessWidget {
       length: 3,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.primary,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            'Chi tiết từ vựng',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+        appBar: CustomAppBar(
+          title: 'Chi tiết từ vựng',
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: Icon(
-                word.isStarred ? Icons.star : Icons.star_border,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                // Logic toggle star
+            AppBarIconAction(
+              icon: _isStarred ? Icons.star : Icons.star_border,
+              color: _isStarred ? AppColors.star : Colors.white,
+              onTap: () {
+                setState(() {
+                  _isStarred = !_isStarred;
+                });
+                // Logic sync to provider/backend would go here
               },
             ),
           ],
+          bottom: const TabBar(
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white60,
+            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+            tabs: [
+              Tab(text: 'Từ vựng'),
+              Tab(text: 'Mẫu câu'),
+              Tab(text: 'Liên quan'),
+            ],
+          ),
         ),
         body: Column(
           children: [
             // Header Section: Word & Phonetic
             Container(
               width: double.infinity,
-              color: AppColors.primary,
-              padding: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(25),
+                  bottomRight: Radius.circular(25),
+                ),
+              ),
+              padding: const EdgeInsets.only(bottom: 24, left: 24, right: 24, top: 16),
               child: Column(
                 children: [
                   Text(
-                    word.word,
+                    widget.word.word,
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -64,7 +88,7 @@ class VocabularyDetailScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        word.phonetic,
+                        widget.word.phonetic,
                         style: const TextStyle(
                           fontSize: 18,
                           color: Colors.white70,
@@ -74,8 +98,7 @@ class VocabularyDetailScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       InkWell(
                         onTap: () {
-                          // Phát âm từ chính bằng TTS
-                          TtsService().speak(word.word);
+                          TtsService().speak(widget.word.word);
                         },
                         child: Container(
                           padding: const EdgeInsets.all(6),
@@ -96,38 +119,15 @@ class VocabularyDetailScreen extends StatelessWidget {
               ),
             ),
 
-            // TabBar Section
-            Container(
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(25),
-                  bottomRight: Radius.circular(25),
-                ),
-              ),
-              child: const TabBar(
-                indicatorColor: Colors.white,
-                indicatorWeight: 3,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white60,
-                labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                tabs: [
-                  Tab(text: 'Từ vựng'),
-                  Tab(text: 'Mẫu câu'),
-                  Tab(text: 'Liên quan'),
-                ],
-              ),
-            ),
-
             // TabContent Section
             Expanded(
               child: TabBarView(
                 children: [
-                  BasicInfoTab(word: word),
-                  ExamplesTab(examples: word.examples),
+                  BasicInfoTab(word: widget.word),
+                  ExamplesTab(examples: widget.word.examples),
                   RelatedWordsTab(
-                    synonyms: word.synonyms,
-                    antonyms: word.antonyms,
+                    synonyms: widget.word.synonyms,
+                    antonyms: widget.word.antonyms,
                   ),
                 ],
               ),

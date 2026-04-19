@@ -7,6 +7,8 @@ import '../../widgets/vocabulary/action_button_row.dart';
 import '../../widgets/vocabulary/vocabulary_card.dart';
 import '../../../core/services/tts_service.dart';
 
+import '../../widgets/common/custom_app_bar.dart';
+
 class VocabularyScreen extends StatefulWidget {
   const VocabularyScreen({super.key});
 
@@ -42,17 +44,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        title: const Text(
-          'Lý thuyết - Từ vựng',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+      appBar: const CustomAppBar(
+        title: 'Lý thuyết - Từ vựng',
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () {},
-        ),
       ),
       body: Column(
         children: [
