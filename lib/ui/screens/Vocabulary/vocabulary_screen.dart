@@ -17,27 +17,38 @@ class VocabularyScreen extends StatefulWidget {
 }
 
 class _VocabularyScreenState extends State<VocabularyScreen> {
-  String _selectedLesson = 'office'; 
-  String _selectedLevel = '450';
+  String? _selectedLesson; 
+  String? _selectedLevel;
+  bool _isInit = true;
   bool _isSelectMode = false;
 
   @override
   void initState() {
     super.initState();
-    // Gọi tải từ vựng giả lập từ Backend
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<VocabularyProvider>().fetchVocabularies(
-        _selectedLesson,
-        _selectedLevel,
-      );
-    });
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final provider = context.read<VocabularyProvider>();
+    await provider.fetchMetadata();
+    
+    if (provider.topics.isNotEmpty && provider.levels.isNotEmpty) {
+      setState(() {
+        _selectedLesson = provider.topics.first;
+        _selectedLevel = provider.levels.first;
+        _isInit = false;
+      });
+      _onLessonOrLevelChanged();
+    }
   }
 
   void _onLessonOrLevelChanged() {
-    context.read<VocabularyProvider>().fetchVocabularies(
-      _selectedLesson,
-      _selectedLevel,
-    );
+    if (_selectedLesson != null && _selectedLevel != null) {
+      context.read<VocabularyProvider>().fetchVocabularies(
+        _selectedLesson!,
+        _selectedLevel!,
+      );
+    }
   }
 
   @override
@@ -109,24 +120,34 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
           ),
 
           // Lọc Bài và Cấp độ
-          LessonSelectorRow(
-            selectedLesson: _selectedLesson,
-            selectedLevel: _selectedLevel,
-            lessons: const ['office', 'airport', 'hospital'],
-            levels: const ['450', '650', '800'],
-            onLessonChanged: (v) {
-              if (v != null) {
-                setState(() => _selectedLesson = v);
-                _onLessonOrLevelChanged();
-              }
-            },
-            onLevelChanged: (v) {
-              if (v != null) {
-                setState(() => _selectedLevel = v);
-                _onLessonOrLevelChanged();
-              }
-            },
-          ),
+          if (_isInit)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: LinearProgressIndicator(color: AppColors.primary),
+            )
+          else
+            Consumer<VocabularyProvider>(
+              builder: (context, provider, child) {
+                return LessonSelectorRow(
+                  selectedLesson: _selectedLesson ?? '',
+                  selectedLevel: _selectedLevel ?? '',
+                  lessons: provider.topics,
+                  levels: provider.levels,
+                  onLessonChanged: (v) {
+                    if (v != null) {
+                      setState(() => _selectedLesson = v);
+                      _onLessonOrLevelChanged();
+                    }
+                  },
+                  onLevelChanged: (v) {
+                    if (v != null) {
+                      setState(() => _selectedLevel = v);
+                      _onLessonOrLevelChanged();
+                    }
+                  },
+                );
+              },
+            ),
 
           // Các nút chức năng
           ActionButtonRow(

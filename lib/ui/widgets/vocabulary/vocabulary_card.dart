@@ -92,6 +92,27 @@ class VocabularyCard extends StatelessWidget {
                             color: AppColors.textSecondary,
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        // Badge hiển thị loại từ (n, v, adj...)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _getWordTypeColor(word.wordType).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: _getWordTypeColor(word.wordType).withOpacity(0.5),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Text(
+                            word.wordType.toLowerCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: _getWordTypeColor(word.wordType),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -120,6 +141,25 @@ class VocabularyCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getWordTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'noun':
+      case 'n':
+        return Colors.blue;
+      case 'verb':
+      case 'v':
+        return Colors.red;
+      case 'adj':
+      case 'adjective':
+        return Colors.green;
+      case 'adv':
+      case 'adverb':
+        return Colors.orange;
+      default:
+        return AppColors.textSecondary;
+    }
   }
 }
 

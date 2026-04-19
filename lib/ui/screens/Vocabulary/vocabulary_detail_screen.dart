@@ -128,6 +128,7 @@ class _VocabularyDetailScreenState extends State<VocabularyDetailScreen> {
                   RelatedWordsTab(
                     synonyms: widget.word.synonyms,
                     antonyms: widget.word.antonyms,
+                    collocations: widget.word.collocations,
                   ),
                 ],
               ),

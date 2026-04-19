@@ -4,11 +4,13 @@ import '../../../../core/theme/app_colors.dart';
 class RelatedWordsTab extends StatelessWidget {
   final List<String> synonyms;
   final List<String> antonyms;
+  final List<String> collocations;
 
   const RelatedWordsTab({
     super.key,
     required this.synonyms,
     required this.antonyms,
+    required this.collocations,
   });
 
   @override
@@ -30,6 +32,13 @@ class RelatedWordsTab extends StatelessWidget {
             words: antonyms,
             chipColor: const Color(0xFFF5F5F5),
             textColor: AppColors.textPrimary,
+          ),
+          const SizedBox(height: 32),
+          _buildWordChipSection(
+            title: 'Cụm từ thường gặp (Collocations)',
+            words: collocations,
+            chipColor: const Color(0xFFE3F2FD),
+            textColor: Colors.blue.shade700,
           ),
         ],
       ),
