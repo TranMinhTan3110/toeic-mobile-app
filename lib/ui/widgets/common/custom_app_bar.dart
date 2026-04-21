@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
+
+
 
 /// Widget AppBar dùng chung cho toàn app.
 ///
@@ -44,9 +46,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextStyle? titleStyle;
 
   @override
-  Size get preferredSize => Size.fromHeight(
-        kToolbarHeight + (bottom?.preferredSize.height ?? 0),
-      );
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
@@ -62,11 +63,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       titleSpacing: showBackButton ? 0 : 16,
       leading: showBackButton
-          ? _BackButton(color: fgColor, onTap: onBack ?? () => Navigator.maybePop(context))
+          ? _BackButton(
+              color: fgColor,
+              onTap: onBack ?? () => Navigator.maybePop(context),
+            )
           : null,
       title: Text(
         title,
-        style: titleStyle ??
+        style:
+            titleStyle ??
             TextStyle(
               color: fgColor,
               fontSize: 18,
@@ -74,15 +79,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               letterSpacing: 0.2,
             ),
       ),
-      actions: [
-        if (actions != null) ...actions!,
-        const SizedBox(width: 8),
-      ],
+      actions: [if (actions != null) ...actions!, const SizedBox(width: 8)],
       bottom: bottom,
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
       ),
     );
   }

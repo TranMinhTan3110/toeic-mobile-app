@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
+
 
 /// Card bọc nội dung câu hỏi. Kích thước cố định (height), nội dung
 /// bên trong scroll được nếu dài.
@@ -61,7 +62,11 @@ class QuestionCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.help_outline_rounded, color: AppColors.appBarFg, size: 16),
+                const Icon(
+                  Icons.help_outline_rounded,
+                  color: AppColors.appBarFg,
+                  size: 16,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Câu $questionNumber / $totalQuestions',
@@ -93,7 +98,7 @@ class QuestionCard extends StatelessWidget {
                         imagePath!,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _ImagePlaceholder(),
+                        errorBuilder: (_, _, _) => _ImagePlaceholder(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -127,7 +132,11 @@ class _ImagePlaceholder extends StatelessWidget {
         color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: const Icon(Icons.image_not_supported_outlined, color: AppColors.textHint, size: 36),
+      child: const Icon(
+        Icons.image_not_supported_outlined,
+        color: AppColors.textHint,
+        size: 36,
+      ),
     );
   }
 }

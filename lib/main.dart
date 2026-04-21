@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'providers/vocabulary_provider.dart';
-import 'ui/screens/Vocabulary/vocabulary_screen.dart';
+import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 
 void main() {
   runApp(
@@ -20,12 +18,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TOEIC App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Roboto', 
-      ),
-      home: const VocabularyScreen(),
+      home: const HomeScreen(),
     );
   }
 }
