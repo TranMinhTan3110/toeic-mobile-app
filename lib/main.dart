@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 
 void main() {

@@ -123,34 +123,55 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
           ),
 
           // Lọc Bài và Cấp độ
-          if (_isInit)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: LinearProgressIndicator(color: AppColors.primary),
-            )
-          else
-            Consumer<VocabularyProvider>(
-              builder: (context, provider, child) {
-                return LessonSelectorRow(
-                  selectedLesson: _selectedLesson ?? '',
-                  selectedLevel: _selectedLevel ?? '',
-                  lessons: provider.topics,
-                  levels: provider.levels,
-                  onLessonChanged: (v) {
-                    if (v != null) {
-                      setState(() => _selectedLesson = v);
-                      _onLessonOrLevelChanged();
-                    }
-                  },
-                  onLevelChanged: (v) {
-                    if (v != null) {
-                      setState(() => _selectedLevel = v);
-                      _onLessonOrLevelChanged();
-                    }
-                  },
+          Consumer<VocabularyProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading && _isInit) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: LinearProgressIndicator(color: AppColors.primary),
                 );
-              },
-            ),
+              }
+              
+              if (provider.errorMessage != null && _isInit) {
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        provider.errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: _loadData,
+                        child: const Text('Thử lại'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return LessonSelectorRow(
+                selectedLesson: _selectedLesson ?? '',
+                selectedLevel: _selectedLevel ?? '',
+                lessons: provider.topics,
+                levels: provider.levels,
+                onLessonChanged: (v) {
+                  if (v != null) {
+                    setState(() => _selectedLesson = v);
+                    _onLessonOrLevelChanged();
+                  }
+                },
+                onLevelChanged: (v) {
+                  if (v != null) {
+                    setState(() => _selectedLevel = v);
+                    _onLessonOrLevelChanged();
+                  }
+                },
+              );
+            },
+          ),
 
           // Các nút chức năng
           Consumer<VocabularyProvider>(

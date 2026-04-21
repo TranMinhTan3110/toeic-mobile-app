@@ -34,12 +34,19 @@ class VocabularyProvider with ChangeNotifier {
 
   // Tải danh sách chủ đề và cấp độ từ API
   Future<void> fetchMetadata() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    
     try {
       _topics = await _repository.getTopics();
       _levels = await _repository.getLevels();
-      notifyListeners();
     } catch (e) {
+      _errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra Wifi và IP: $e';
       debugPrint('Error fetching metadata: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
