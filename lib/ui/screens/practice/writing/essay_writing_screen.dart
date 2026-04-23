@@ -4,6 +4,7 @@ import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/practice_stats_card.dart';
 import '../../widgets/practice/instruction_card.dart';
 import '../../widgets/practice/practice_setting_row.dart';
+import 'essay_writing_test_screen.dart';
 
 class EssayWritingScreen extends StatefulWidget {
   const EssayWritingScreen({super.key});
@@ -66,7 +67,12 @@ class _EssayWritingScreenState extends State<EssayWritingScreen> {
           padding: const EdgeInsets.all(16),
           child: ElevatedButton(
             onPressed: () {
-              print('Bắt đầu Phần 3');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EssayWritingTestScreen(),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

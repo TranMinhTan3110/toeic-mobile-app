@@ -4,6 +4,7 @@ import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/practice_stats_card.dart';
 import '../../widgets/practice/instruction_card.dart';
 import '../../widgets/practice/practice_setting_row.dart';
+import 'respond_request_test_screen.dart';
 
 class RespondRequestScreen extends StatefulWidget {
   const RespondRequestScreen({super.key});
@@ -68,7 +69,12 @@ class _RespondRequestScreenState extends State<RespondRequestScreen> {
           padding: const EdgeInsets.all(16),
           child: ElevatedButton(
             onPressed: () {
-              print('Bắt đầu Phần 2');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RespondRequestTestScreen(),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
