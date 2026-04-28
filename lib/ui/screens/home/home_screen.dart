@@ -9,7 +9,7 @@ import '../../widgets/common/home_bottom_nav.dart';
 import '../../widgets/history/history_section.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/home/notebook_section.dart';
-import '../practice/writing_screen.dart';
+import '../practice/writing/writing_screen.dart';
 import '../exam/test_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../widgets/common/custom_app_bar.dart';
-import '../../widgets/practice/practice_stats_card.dart';
-import '../../widgets/practice/instruction_card.dart';
-import '../../widgets/practice/practice_setting_row.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../widgets/common/custom_app_bar.dart';
+import '../../../widgets/practice/practice_stats_card.dart';
+import '../../../widgets/practice/instruction_card.dart';
+import '../../../widgets/practice/practice_setting_row.dart';
 import 'essay_writing_test_screen.dart';
 
 class EssayWritingScreen extends StatefulWidget {

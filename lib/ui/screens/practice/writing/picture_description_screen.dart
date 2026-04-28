@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../widgets/common/custom_app_bar.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../widgets/common/custom_app_bar.dart';
 import 'picture_description_test_screen.dart';
-import '../../widgets/practice/practice_stats_card.dart';
-import '../../widgets/practice/practice_setting_row.dart';
-import '../../widgets/practice/instruction_card.dart';
+import '../../../widgets/practice/practice_stats_card.dart';
+import '../../../widgets/practice/practice_setting_row.dart';
+import '../../../widgets/practice/instruction_card.dart';
 
 class PictureDescriptionScreen extends StatefulWidget {
   const PictureDescriptionScreen({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../widgets/cards/essay_prompt_card.dart';
-import '../../widgets/shared/bold_text_label.dart';
-import '../../widgets/inputs/description_input_box.dart';
-import '../../widgets/practice/practice_bottom_bar.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../widgets/cards/essay_prompt_card.dart';
+import '../../../widgets/shared/bold_text_label.dart';
+import '../../../widgets/inputs/description_input_box.dart';
+import '../../../widgets/practice/practice_bottom_bar.dart';
 
 class EssayWritingTestScreen extends StatefulWidget {
   const EssayWritingTestScreen({super.key});

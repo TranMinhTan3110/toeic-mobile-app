@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../widgets/common/custom_app_bar.dart';
-import '../../widgets/practice/skill_card.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../widgets/common/custom_app_bar.dart';
+import '../../../widgets/practice/skill_card.dart';
 
 // Screens
 import 'picture_description_screen.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/ui/widgets/practice/practice_bottom_bar.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../widgets/cards/reusable_image_card.dart';
-import '../../widgets/inputs/description_input_box.dart';
-import '../../widgets/shared/bold_text_label.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../widgets/cards/reusable_image_card.dart';
+import '../../../widgets/inputs/description_input_box.dart';
+import '../../../widgets/shared/bold_text_label.dart';
 
 class PictureDescriptionTestScreen extends StatefulWidget {
   const PictureDescriptionTestScreen({super.key});
