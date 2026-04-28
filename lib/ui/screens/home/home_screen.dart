@@ -9,6 +9,7 @@ import '../../widgets/common/home_bottom_nav.dart';
 import '../../widgets/history/history_section.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/home/notebook_section.dart';
+import '../reading/reading_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -110,12 +111,20 @@ class _HomeScreenState extends State<HomeScreen> {
           const SectionTitle(title: 'luyện tập 4 kỹ năng toiec'),
           const SizedBox(height: 14),
           Row(
-            children: _practiceItems
+                children: _practiceItems
                 .map((e) => Expanded(
               child: SkillCard(
                 label: e.label, icon: e.icon,
                 iconColor: e.color, iconBg: e.bg,
-                progress  : e.progress, onTap: () {},
+                progress  : e.progress,
+                onTap: () {
+                  // Navigate to Reading screen when tapping "Đọc Hiểu"
+                  if (e.label == 'Đọc Hiểu') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => ReadingScreen(practiceHistory: _practiceHistory),
+                    ));
+                  }
+                },
               ),
             ))
                 .toList(),
