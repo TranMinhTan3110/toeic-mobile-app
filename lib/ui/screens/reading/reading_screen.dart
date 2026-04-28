@@ -6,6 +6,8 @@ import 'reading_detail_screen.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/history/reading_history_section.dart';
 import '../../widgets/reading/reading_section_card.dart';
+import 'part6_screen.dart';
+import 'part7_screen.dart';
 
 class ReadingScreen extends StatelessWidget {
   final List<HistoryItem> practiceHistory;
@@ -141,9 +143,16 @@ class ReadingScreen extends StatelessWidget {
             },
           ),
           const SizedBox(height: 12),
-          ReadingSectionCard(title: 'Phần 6 - Điền Vào Đoạn Văn', correctCount: '0/0', showLock: true),
+          ReadingSectionCard(
+            title: 'Phần 6 - Điền Vào Đoạn Văn',
+            correctCount: '0/0',
+            showLock: false,
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Part6Screen()));
+            },
+          ),
           const SizedBox(height: 12),
-          ReadingSectionCard(title: 'Phần 7 - Đọc Hiểu Đoạn Văn', correctCount: '0/0', showLock: true),
+          ReadingSectionCard(title: 'Phần 7 - Đọc Hiểu Đoạn Văn', correctCount: '0/0', showLock: false, onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Part7Screen())); }),
         ],
       ),
     );
