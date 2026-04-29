@@ -10,6 +10,7 @@ import '../../widgets/history/history_section.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/home/notebook_section.dart';
 import '../practice/writing/writing_screen.dart';
+import '../listening/listening_screen.dart';
 import '../exam/test_list_screen.dart';
 import '../Vocabulary/vocabulary_screen.dart';
 
@@ -229,8 +230,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               builder: (context) => const WritingScreen(),
                             ),
                           );
+                        } else if (e.label == 'Nghe Hiểu') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ListeningScreen(),
+                            ),
+                          );
                         } else {
-                          // TODO: Xử lý cho Nghe Hiểu, Đọc Hiểu, Luyện Nói
+                          // TODO: Xử lý cho Đọc Hiểu, Luyện Nói
                         }
                       },
                     ),
