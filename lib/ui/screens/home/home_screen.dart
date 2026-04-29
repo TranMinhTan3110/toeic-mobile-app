@@ -9,6 +9,7 @@ import '../../widgets/common/home_bottom_nav.dart';
 import '../../widgets/history/history_section.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/home/notebook_section.dart';
+import '../Vocabulary/vocabulary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -84,7 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   NotebookSection(
                     vocabularyCount: 0,       // TODO: lấy từ DB
                     questionCount: 0,          // TODO: lấy từ DB
-                    onVocabReview: () {},
+                    onVocabReview: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const VocabularyScreen()),
+                      );
+                    },
                     onQuestionReview: () {},
                   ),
                   const SizedBox(height: 24),
@@ -140,7 +146,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: e.label, icon: e.icon,
                 iconColor: e.color, iconBg: e.bg,
                 badge: e.badge, badgeColor: e.badgeColor,
-                onTap: () {},
+                onTap: () {
+                  if (e.label == 'Từ Vựng') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const VocabularyScreen()),
+                    );
+                  }
+                },
               ),
             ))
                 .toList(),
