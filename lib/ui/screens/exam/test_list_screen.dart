@@ -27,9 +27,8 @@ class TestListScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(
-        title: 'Thi',
-        centerTitle: true,
-        showBackButton: false, // Ẩn nút back vì đây là màn hình chính
+        title: 'Thi thử',
+        centerTitle: true, // Ẩn nút back vì đây là màn hình chính
       ),
       body: SingleChildScrollView(
         child: Padding(

@@ -9,12 +9,13 @@ class BoldTextLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin:
-          margin ?? const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      width: double.infinity,
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      alignment: Alignment.center,
       child: Text(
         text,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         textAlign: TextAlign.center,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       ),
     );
   }
