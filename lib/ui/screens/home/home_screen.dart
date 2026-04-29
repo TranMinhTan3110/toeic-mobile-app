@@ -11,6 +11,7 @@ import '../../../data/models/history_item_model.dart';
 import '../../widgets/home/notebook_section.dart';
 import '../practice/writing/writing_screen.dart';
 import '../exam/test_list_screen.dart';
+import '../Vocabulary/vocabulary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -177,9 +178,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   // ── Sổ tay ───────────────────────────────────
                   NotebookSection(
-                    vocabularyCount: 0,
-                    questionCount: 0,
-                    onVocabReview: () {},
+                    vocabularyCount: 0,       // TODO: lấy từ DB
+                    questionCount: 0,          // TODO: lấy từ DB
+                    onVocabReview: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const VocabularyScreen()),
+                      );
+                    },
                     onQuestionReview: () {},
                   ),
                   const SizedBox(height: 24),
@@ -264,8 +270,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               builder: (context) => const TestListScreen(),
                             ),
                           );
+                        } else if (e.label == 'Từ Vựng') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VocabularyScreen(),
+                            ),
+                          );
                         } else {
-                          // TODO: Xử lý cho Từ Vựng, Ngữ Pháp, Cài Đặt
+                          // TODO: Xử lý cho Ngữ Pháp, Cài Đặt
                         }
                       },
                     ),
