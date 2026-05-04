@@ -221,11 +221,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 iconColor: e.color, iconBg: e.bg,
                 progress  : e.progress,
                 onTap: () {
-                  // Navigate to Reading screen when tapping "Đọc Hiểu"
                   if (e.label == 'Đọc Hiểu') {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => ReadingScreen(practiceHistory: _practiceHistory),
                     ));
+                  } else if (e.label == 'Nghe Hiểu') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ListeningScreen(),
+                    ));
+                  } else if (e.label == 'Viết') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const WritingScreen(),
+                    ));
+                  } else if (e.label == 'Luyện Nói') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Chức năng Luyện Nói đang được phát triển.')),
+                    );
                   }
                 },
               ),
