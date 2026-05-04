@@ -8,6 +8,7 @@ class AppColors {
   static const Color primaryLight    = Color(0xFFFFB07A);  // cam nhạt
   static const Color primaryLighter  = Color(0xFFFFD4B0);  // cam rất nhạt
   static const Color primaryDark     = Color(0xFFE06A1A);  // cam đậm
+  static const Color primarySurface  = Color(0xFFFFF3E0);  // nền nhạt màu cam
 
   // Background
   static const Color background      = Color(0xFFFFF8F3);  // nền tổng thể (trắng cam rất nhạt)
@@ -55,6 +56,7 @@ class AppColors {
   static const Color error           = Color(0xFFEF5350);
   static const Color warning         = Color(0xFFFFA726);
   static const Color info            = Color(0xFF42A5F5);
+  static const Color star            = Color(0xFFFFB300);
 
   //home
   static const primaryPale   = Color(0xFFFFF0E5);
