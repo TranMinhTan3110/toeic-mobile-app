@@ -11,6 +11,7 @@ import 'vocabulary_matching_screen.dart';
 import 'quiz_helper.dart';
 
 import '../../widgets/common/custom_app_bar.dart';
+import '../practice/flashcard/flashcard_screen.dart';
 
 class VocabularyScreen extends StatefulWidget {
   const VocabularyScreen({super.key});
@@ -184,7 +185,16 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   });
                 },
                 onFlashcards: () {
-                  // Chuyển sang màn hình Flashcards (Sẽ làm sau)
+                  if (provider.words.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FlashcardScreen(
+                          vocabularies: provider.words,
+                        ),
+                      ),
+                    );
+                  }
                 },
                 onChooseWord: () {
                   if (provider.words.isNotEmpty) {
