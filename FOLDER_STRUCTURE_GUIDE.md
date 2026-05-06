@@ -1,4 +1,4 @@
-# 📁 Hướng Dẫn Cấu Trúc Thư Mục – TOEIC Mobile App
+#  Hướng Dẫn Cấu Trúc Thư Mục – TOEIC Mobile App
 
 > Dự án sử dụng **Flutter** với kiến trúc phân tầng rõ ràng: `core` → `data` → `providers` → `ui`.  
 > Mục tiêu: dễ bảo trì, dễ mở rộng, tách biệt logic và giao diện.
@@ -7,7 +7,7 @@
 
 File hướng dẫn và code mẫu sẵn cũng chỉ là tham khảo, quan trọng là hiểu được logic và cách áp dụng vào dự án thực tế.
 
-## 🗂️ Tổng Quan Cấu Trúc
+##  Tổng Quan Cấu Trúc
 
 ```
 toeic-mobile-app/
@@ -32,7 +32,7 @@ toeic-mobile-app/
 
 ---
 
-## 📄 `lib/main.dart`
+##  `lib/main.dart`
 
 **Vai trò:** Khởi động toàn bộ ứng dụng.
 
@@ -54,16 +54,16 @@ void main() {
 
 ---
 
-## 🔧 `lib/core/`
+##  `lib/core/`
 
 Chứa những thứ **không thay đổi theo tính năng** – dùng ở mọi nơi trong app.
 
-### 📂 `core/constants/`
+###  `core/constants/`
 
 **Vai trò:** Lưu các giá trị cố định, tránh magic string/number.
 
 ```dart
-// lib/core/constants/app_colors.dart
+// lib/core/constants/app_colors_home.dart
 class AppColors {
   static const Color primary = Color(0xFF1565C0);
   static const Color accent  = Color(0xFF42A5F5);
@@ -91,7 +91,7 @@ class AppSizes {
 
 ---
 
-### 📂 `core/theme/`
+###  `core/theme/`
 
 **Vai trò:** Định nghĩa giao diện toàn cục một lần, áp dụng xuyên suốt app.
 
@@ -121,7 +121,7 @@ MaterialApp(theme: AppTheme.lightTheme, ...)
 
 ---
 
-### 📂 `core/utils/`
+###  `core/utils/`
 
 **Vai trò:** Hàm helper không gắn với business logic cụ thể.
 
@@ -148,11 +148,11 @@ void showSnackbar(BuildContext context, String message) {
 
 ---
 
-## 💾 `lib/data/`
+##  `lib/data/`
 
 Tầng dữ liệu – **không được import bất kỳ widget UI nào** ở đây.
 
-### 📂 `data/models/`
+###  `data/models/`
 
 **Vai trò:** Định nghĩa cấu trúc dữ liệu, parse JSON từ API/Firebase.
 
@@ -198,7 +198,7 @@ Ví dụ: `user_model.dart`, `lesson_model.dart`, `test_result_model.dart`
 
 ---
 
-### 📂 `data/services/`
+### `data/services/`
 
 **Vai trò:** Giao tiếp trực tiếp với nguồn dữ liệu bên ngoài (Firebase, REST API).
 
@@ -240,7 +240,7 @@ Ví dụ: `auth_service.dart`, `lesson_service.dart`, `result_service.dart`
 
 ---
 
-### 📂 `data/repositories/`
+###  `data/repositories/`
 
 **Vai trò:** Lớp trung gian – che giấu nguồn dữ liệu, là nơi duy nhất Providers gọi đến.
 
@@ -262,7 +262,7 @@ class QuestionRepository {
 
 ---
 
-## ⚙️ `lib/providers/`
+##  `lib/providers/`
 
 **Vai trò:** Quản lý state của app – cầu nối giữa `data` và `ui`.
 
@@ -301,11 +301,11 @@ Ví dụ: `auth_provider.dart`, `lesson_provider.dart`, `score_provider.dart`
 
 ---
 
-## 🎨 `lib/ui/`
+##  `lib/ui/`
 
 Tầng giao diện – chỉ được import từ `providers` và `core`. **Không import trực tiếp `services`.**
 
-### 📂 `ui/screens/`
+###  `ui/screens/`
 
 **Vai trò:** Mỗi file là một **màn hình đầy đủ** (fullscreen page), được điều hướng tới bằng `Navigator` hoặc `GoRouter`.
 
@@ -354,7 +354,7 @@ screens/
 
 ---
 
-### 📂 `ui/widgets/`
+###  `ui/widgets/`
 
 **Vai trò:** Widget **tái sử dụng** – được gọi từ nhiều màn hình khác nhau.  
 Đây là kho "linh kiện" của app.
@@ -428,7 +428,7 @@ LessonCard(
 
 ---
 
-### 📂 `ui/shared/`
+###  `ui/shared/`
 
 **Vai trò:** Các thành phần layout **xuất hiện xuyên suốt nhiều màn hình** (không phải widget độc lập).
 
@@ -465,7 +465,7 @@ class AppBottomNav extends StatelessWidget {
 
 ---
 
-## 📦 `assets/` *(Cần tạo thêm)*
+##  `assets/` *(Cần tạo thêm)*
 
 ```
 assets/
@@ -491,7 +491,7 @@ flutter:
 
 ---
 
-## 🔄 Luồng Dữ Liệu
+##  Luồng Dữ Liệu
 
 ```
 Firebase / REST API
@@ -509,7 +509,7 @@ Firebase / REST API
 
 ---
 
-## ✅ Checklist Khi Thêm Tính Năng Mới
+##  Checklist Khi Thêm Tính Năng Mới
 
 Ví dụ thêm tính năng **"Luyện tập Part 5 - Grammar"**:
 
@@ -523,9 +523,9 @@ Ví dụ thêm tính năng **"Luyện tập Part 5 - Grammar"**:
 
 ---
 
-## 🚫 Những Lỗi Thường Gặp
+##  Những Lỗi Thường Gặp
 
-| ❌ Sai | ✅ Đúng |
+|  Sai |  Đúng |
 |--------|---------|
 | Gọi `http.get()` thẳng trong widget | Gọi qua `service` rồi `repository` |
 | Viết logic trong `Screen` | Đưa vào `Provider` |
