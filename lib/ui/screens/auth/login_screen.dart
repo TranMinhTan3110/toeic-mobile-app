@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:toeicmobileapp/core/services/auth_service.dart';
 import 'register_screen.dart';
 
 class LoginView extends StatefulWidget {
@@ -12,6 +14,7 @@ class _LoginViewState extends State<LoginView>
     with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _obscurePassword = true;
   bool _isLoading = false;
   late AnimationController _animController;
@@ -343,7 +346,7 @@ class _LoginViewState extends State<LoginView>
                         width: double.infinity,
                         height: 52,
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: _handleGoogleLogin,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             side: const BorderSide(color: Color(0xFFFFCC80)), // Viền nút cam nhạt
@@ -476,8 +479,59 @@ class _LoginViewState extends State<LoginView>
   }
 
   void _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ Email và Mật khẩu')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (mounted) setState(() => _isLoading = false);
+    
+    try {
+      await _authService.signInWithEmailPassword(email, password);
+      // Đăng nhập thành công, StreamBuilder ở main.dart sẽ tự động đưa về HomeScreen
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        errorMessage = 'Email hoặc mật khẩu không chính xác.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'Định dạng email không hợp lệ.';
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red.shade400,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _handleGoogleLogin() async {
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (user == null) {
+        // User hủy bỏ đăng nhập
+        return;
+      }
+      // Đăng nhập thành công, StreamBuilder tự chuyển trang
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: $e'),
+            backgroundColor: Colors.red.shade400,
+          ),
+        );
+      }
+    }
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:toeicmobileapp/core/services/auth_service.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -13,6 +15,7 @@ class _RegisterViewState extends State<RegisterView>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _isLoading = false;
@@ -417,9 +420,7 @@ class _RegisterViewState extends State<RegisterView>
                         width: double.infinity,
                         height: 52,
                         child: OutlinedButton(
-                          onPressed: () {
-                            // Xử lý logic đăng nhập Google tại đây
-                          },
+                          onPressed: _handleGoogleLogin,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             side: const BorderSide(color: Color(0xFFFFE0B2)),
@@ -602,22 +603,70 @@ class _RegisterViewState extends State<RegisterView>
   }
 
   void _handleRegister() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (mounted) {
-      setState(() => _isLoading = false);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirm = _confirmController.text.trim();
+    final name = _nameController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty || confirm.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            '🎉 Đăng ký thành công!',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: const Color(0xFFFF5722), // Màu cam đậm
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
       );
+      return;
+    }
+
+    if (password != confirm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu xác nhận không khớp')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userCred = await _authService.registerWithEmailPassword(email, password);
+      
+      // Có thể lưu tên người dùng vào profile Firebase
+      await userCred?.user?.updateDisplayName(name);
+
+      // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+      if (e.code == 'weak-password') {
+        errorMessage = 'Mật khẩu quá yếu.';
+      } else if (e.code == 'email-already-in-use') {
+        errorMessage = 'Email này đã được sử dụng.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'Định dạng email không hợp lệ.';
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red.shade400,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _handleGoogleLogin() async {
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (user == null) return;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đăng nhập Google thất bại!'),
+            backgroundColor: Colors.red.shade400,
+          ),
+        );
+      }
     }
   }
 }
