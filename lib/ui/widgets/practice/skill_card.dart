@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
-
 /// Card dùng trong màn hình ôn luyện kỹ năng.
 /// Hiển thị "Phần X – <tên phần>" kèm icon và tiến độ.
 ///
