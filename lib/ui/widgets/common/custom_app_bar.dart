@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
-
-
 /// Widget AppBar dùng chung cho toàn app.
 ///
 /// Cách dùng cơ bản:
