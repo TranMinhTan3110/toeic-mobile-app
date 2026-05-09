@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
-
 /// Model cho 1 đáp án.
 class AnswerOption {
   const AnswerOption({required this.key, required this.text});
