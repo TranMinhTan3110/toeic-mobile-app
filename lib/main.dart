@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
+import 'package:toeicmobileapp/providers/reading_part5_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -13,6 +14,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => VocabularyProvider()),
+        ChangeNotifierProvider(create: (_) => ReadingPart5Provider()),
       ],
       child: const MyApp(),
     ),

@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/section_title.dart';
 import 'reading_detail_screen.dart';
+import 'reading_part5_screen.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/history/reading_history_section.dart';
 import '../../widgets/reading/reading_section_card.dart';
@@ -133,13 +134,7 @@ class ReadingScreen extends StatelessWidget {
             correctCount: '0/0',
             showLock: false,
             onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const ReadingDetailScreen(
-                  title: 'Phần 5 - Điền Vào Câu',
-                  contentEnglish: 'A word or phrase is missing in each of the sentences below. Four answer choices are given below each sentence. Select the best answer to complete the sentence. Then mark the letter (A), (B), (C) or (D) on your answer sheet.',
-                  contentVietnamese: 'Một từ hoặc một cụm từ bị thiếu trong mỗi câu nói dưới đây. Bốn lựa chọn đáp án được đưa ra dưới mỗi câu hỏi. Hãy chọn đáp án phù hợp để hoàn thành câu. Sau đó đánh dấu vào đáp án (A), (B), (C) hoặc (D) trên phiếu trả lời của bạn.',
-                ),
-              ));
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart5Screen()));
             },
           ),
           const SizedBox(height: 12),
