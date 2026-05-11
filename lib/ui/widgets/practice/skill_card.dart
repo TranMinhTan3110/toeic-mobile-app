@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 /// Card dùng trong màn hình ôn luyện kỹ năng.

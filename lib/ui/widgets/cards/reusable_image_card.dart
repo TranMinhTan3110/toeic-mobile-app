@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 class ReusableImageCard extends StatelessWidget {
-  final String imagePath;
+  final String? imageUrl;
+  final String? assetPath;
   final double? width;
   final double? height;
 
   const ReusableImageCard({
     super.key,
-    required this.imagePath,
+    this.imageUrl,
+    this.assetPath,
     this.width,
     this.height,
   });
@@ -16,19 +17,71 @@ class ReusableImageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4.0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         width: width ?? double.infinity,
-        height: height ?? 250.0,
-        padding: const EdgeInsets.all(12.0),
-        color: Colors.white,
-        child: imagePath.isNotEmpty
-            ? Image.asset(imagePath, fit: BoxFit.contain)
-            : const Center(
-                child: Icon(Icons.image, size: 50, color: Colors.grey),
-              ),
+        height: height ?? 250,
+        padding: const EdgeInsets.all(12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: _buildImage(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return Image.network(
+        imageUrl!,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return _loading();
+        },
+        errorBuilder: (_, __, ___) {
+          // fallback sang asset nếu có
+          if (assetPath != null && assetPath!.isNotEmpty) {
+            return Image.asset(
+              assetPath!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _placeholder(),
+            );
+          }
+          return _placeholder();
+        },
+      );
+    }
+
+    if (assetPath != null && assetPath!.isNotEmpty) {
+      return Image.asset(
+        assetPath!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
+    }
+
+    return _placeholder();
+  }
+
+  Widget _loading() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: const Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          size: 40,
+          color: Colors.grey,
+        ),
       ),
     );
   }

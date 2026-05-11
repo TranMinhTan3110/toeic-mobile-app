@@ -40,20 +40,36 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/app/build/
+/android/local.properties
+/android/app/local.properties
+/android/.bundle/
+/android/*/*.iml
+/android/*.iml
+/android/java_pid*.hprof
 
-# Firebase configuration files (Bảo mật thông tin dự án Firebase)
+# Firebase configuration files
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 
-# Local environment variables (Lưu IP của ASP.NET Backend)
+# Local environment variables
 .env
 *.env
 
-# VS Code settings
+# IDE settings
 .vscode/
+.idea/
 
 # MacOS metadata
 .DS_Store
+
+# Binary artifacts
+*.apk
+*.aab
+*.bin
+*.so
+*.hprof
+
