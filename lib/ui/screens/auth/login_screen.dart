@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
 import 'register_screen.dart';
-import '../widgets/auth/login_form.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/utils/validators.dart';
+import '../../widgets/auth/login_form.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
