@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
-import '../widgets/auth/register_form.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/utils/validators.dart';
+import '../../widgets/auth/register_form.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
