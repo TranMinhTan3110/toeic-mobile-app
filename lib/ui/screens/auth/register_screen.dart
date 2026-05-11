@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
-import '../widgets/auth/register_form.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/utils/validators.dart';
+import 'package:toeicmobileapp/ui/widgets/auth/register_form.dart';
+import 'package:toeicmobileapp/core/theme/app_colors.dart';
+import 'package:toeicmobileapp/core/utils/validators.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -36,8 +36,10 @@ class _RegisterViewState extends State<RegisterView>
       duration: const Duration(milliseconds: 900),
     );
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
   }
 
@@ -66,7 +68,10 @@ class _RegisterViewState extends State<RegisterView>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [AppColors.primary.withOpacity(0.12), Colors.transparent],
+                  colors: [
+                    AppColors.primary.withOpacity(0.12),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -80,7 +85,10 @@ class _RegisterViewState extends State<RegisterView>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [AppColors.primaryDark.withOpacity(0.12), Colors.transparent],
+                  colors: [
+                    AppColors.primaryDark.withOpacity(0.12),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -106,7 +114,10 @@ class _RegisterViewState extends State<RegisterView>
                             height: 52,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [AppColors.primary, AppColors.primaryDark],
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primaryDark,
+                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -163,16 +174,26 @@ class _RegisterViewState extends State<RegisterView>
                           obscureConfirm: _obscureConfirm,
                           isLoading: _isLoading,
                           agreeTerms: _agreeTerms,
-                          onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
-                          onToggleConfirm: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                          onToggleAgree: () => setState(() => _agreeTerms = !_agreeTerms),
+                          onTogglePassword: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                          onToggleConfirm: () => setState(
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
+                          onToggleAgree: () =>
+                              setState(() => _agreeTerms = !_agreeTerms),
                           onRegister: () {
-                            final valid = _formKey.currentState?.validate() ?? false;
+                            final valid =
+                                _formKey.currentState?.validate() ?? false;
                             setState(() {});
-                            final agreedError = Validators.mustAgree(_agreeTerms);
+                            final agreedError = Validators.mustAgree(
+                              _agreeTerms,
+                            );
                             if (!valid) return;
                             if (agreedError != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(agreedError)));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(agreedError)),
+                              );
                               return;
                             }
                             _handleRegister();
@@ -180,7 +201,10 @@ class _RegisterViewState extends State<RegisterView>
                           nameValidator: (v) => Validators.name(v),
                           emailValidator: (v) => Validators.email(v),
                           passwordValidator: (v) => Validators.password(v),
-                          confirmValidator: (v) => Validators.confirmPassword(v, _passwordController.text),
+                          confirmValidator: (v) => Validators.confirmPassword(
+                            v,
+                            _passwordController.text,
+                          ),
                         ),
                       ),
 
@@ -190,7 +214,10 @@ class _RegisterViewState extends State<RegisterView>
                       Row(
                         children: [
                           const Expanded(
-                            child: Divider(color: AppColors.primaryLighter, thickness: 1),
+                            child: Divider(
+                              color: AppColors.primaryLighter,
+                              thickness: 1,
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -204,7 +231,10 @@ class _RegisterViewState extends State<RegisterView>
                             ),
                           ),
                           const Expanded(
-                            child: Divider(color: AppColors.primaryLighter, thickness: 1),
+                            child: Divider(
+                              color: AppColors.primaryLighter,
+                              thickness: 1,
+                            ),
                           ),
                         ],
                       ),
@@ -218,7 +248,9 @@ class _RegisterViewState extends State<RegisterView>
                           onPressed: _handleGoogleLogin,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            side: const BorderSide(color: AppColors.primaryLighter),
+                            side: const BorderSide(
+                              color: AppColors.primaryLighter,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -319,8 +351,11 @@ class _RegisterViewState extends State<RegisterView>
     setState(() => _isLoading = true);
 
     try {
-      final userCred = await _authService.registerWithEmailPassword(email, password);
-      
+      final userCred = await _authService.registerWithEmailPassword(
+        email,
+        password,
+      );
+
       // Có thể lưu tên người dùng vào profile Firebase
       await userCred?.user?.updateDisplayName(name);
 
@@ -334,7 +369,7 @@ class _RegisterViewState extends State<RegisterView>
       } else if (e.code == 'invalid-email') {
         errorMessage = 'Định dạng email không hợp lệ.';
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -363,5 +398,4 @@ class _RegisterViewState extends State<RegisterView>
       }
     }
   }
-
 }

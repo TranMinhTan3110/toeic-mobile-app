@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/answer_card.dart';
-import '../../widgets/practice/explanation_widget.dart';
 import '../../widgets/common/audio_player_bar.dart';
 import '../../shared/practice_dialogs.dart';
 import '../../../data/models/listening_data.dart';
@@ -108,8 +107,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
       actions: [
         // Dấu chấm than
         IconButton(
-          icon: const Icon(Icons.error_outline_rounded,
-              color: AppColors.appBarFg, size: 22),
+          icon: const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.appBarFg,
+            size: 22,
+          ),
           onPressed: () => showReportDialog(context),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
@@ -117,8 +119,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         const SizedBox(width: 4),
         // Bánh răng
         IconButton(
-          icon: const Icon(Icons.settings_rounded,
-              color: AppColors.appBarFg, size: 22),
+          icon: const Icon(
+            Icons.settings_rounded,
+            color: AppColors.appBarFg,
+            size: 22,
+          ),
           onPressed: () => showPracticeSettingsDialog(
             context,
             playbackSpeed: _speed,
@@ -135,8 +140,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         const SizedBox(width: 4),
         // Yêu thích
         IconButton(
-          icon: const Icon(Icons.favorite_border_rounded,
-              color: AppColors.appBarFg, size: 22),
+          icon: const Icon(
+            Icons.favorite_border_rounded,
+            color: AppColors.appBarFg,
+            size: 22,
+          ),
           onPressed: () {},
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
@@ -144,12 +152,10 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         const SizedBox(width: 4),
         // Giải thích
         GestureDetector(
-          onTap: () =>
-              setState(() => _showExplanation = !_showExplanation),
+          onTap: () => setState(() => _showExplanation = !_showExplanation),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             child: const Text(
               'Giải thích',
               style: TextStyle(
@@ -174,7 +180,10 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
       children: [
         // Question number strip
         _QuestionStrip(
-            current: _currentQ, total: totalQuestions, partNumber: partNumber),
+          current: _currentQ,
+          total: totalQuestions,
+          partNumber: partNumber,
+        ),
 
         if (partNumber == 1) _buildPart1(),
         if (partNumber == 2) _buildPart2(),
@@ -191,8 +200,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   }
 
   bool get _allSubSubmitted =>
-      _subSubmitted.length >= 3 &&
-      _subSubmitted.values.every((v) => v != null);
+      _subSubmitted.length >= 3 && _subSubmitted.values.every((v) => v != null);
 
   // ── Part 1: photo + A B C D ──────────────────────────────────────────────
 
@@ -207,9 +215,10 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
               BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 10,
-                  offset: Offset(0, 3)),
+                color: AppColors.shadow,
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Column(
@@ -219,13 +228,17 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
               // Image placeholder
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(0)),
+                  bottom: Radius.circular(0),
+                ),
                 child: Container(
                   height: 220,
                   width: double.infinity,
                   color: Colors.grey[300],
-                  child: const Icon(Icons.image_rounded,
-                      size: 60, color: Colors.grey),
+                  child: const Icon(
+                    Icons.image_rounded,
+                    size: 60,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             ],
@@ -265,9 +278,10 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
               BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 10,
-                  offset: Offset(0, 3)),
+                color: AppColors.shadow,
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Column(
@@ -284,13 +298,18 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.volume_up_rounded,
-                        color: AppColors.primary, size: 28),
+                    Icon(
+                      Icons.volume_up_rounded,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
                     SizedBox(width: 10),
                     Text(
                       'Hãy lắng nghe câu hỏi',
                       style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 14),
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -333,16 +352,16 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: const [
                 BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 8,
-                    offset: Offset(0, 2)),
+                  color: AppColors.shadow,
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
               ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: const Center(
-                child: Icon(Icons.image_rounded,
-                    size: 60, color: Colors.grey),
+                child: Icon(Icons.image_rounded, size: 60, color: Colors.grey),
               ),
             ),
           ),
@@ -366,8 +385,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                 ? (k) => setState(() => _subAnswers[i] = k)
                 : null,
             onSubmit: _subAnswers[i] != null && _subSubmitted[i] == null
-                ? () => setState(
-                    () => _subSubmitted[i] = _subAnswers[i])
+                ? () => setState(() => _subSubmitted[i] = _subAnswers[i])
                 : null,
           );
         }),
@@ -393,19 +411,19 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
       'A project deadline',
       'A company policy',
       'A new product launch',
-      'A client meeting'
+      'A client meeting',
     ],
     [
       'Asking for more time',
       'Hiring extra staff',
       'Changing the schedule',
-      'Contacting the client'
+      'Contacting the client',
     ],
     [
       'Send an email',
       'Call a colleague',
       'Review a report',
-      'Attend a workshop'
+      'Attend a workshop',
     ],
   ];
 }
@@ -441,16 +459,16 @@ class _SubQuestion extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 6,
-                    offset: Offset(0, 2)),
+                  color: AppColors.shadow,
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
               ],
             ),
             child: Row(
@@ -463,20 +481,26 @@ class _SubQuestion extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Center(
-                    child: Text('$number',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700)),
+                    child: Text(
+                      '$number',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(questionText,
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500)),
+                  child: Text(
+                    questionText,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -500,11 +524,14 @@ class _SubQuestion extends StatelessWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.textOnPrimary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text('Xác nhận',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Xác nhận',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ),
@@ -516,10 +543,11 @@ class _SubQuestion extends StatelessWidget {
 // ── Shared small widgets ─────────────────────────────────────────────────────
 
 class _QuestionStrip extends StatelessWidget {
-  const _QuestionStrip(
-      {required this.current,
-      required this.total,
-      required this.partNumber});
+  const _QuestionStrip({
+    required this.current,
+    required this.total,
+    required this.partNumber,
+  });
   final int current, total, partNumber;
 
   @override
@@ -529,8 +557,7 @@ class _QuestionStrip extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(20),
@@ -538,9 +565,10 @@ class _QuestionStrip extends StatelessWidget {
             child: Text(
               'Part $partNumber',
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700),
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -550,18 +578,22 @@ class _QuestionStrip extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: current / total,
                 backgroundColor: AppColors.primaryLighter,
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
                 minHeight: 5,
               ),
             ),
           ),
           const SizedBox(width: 10),
-          Text('$current/$total',
-              style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700)),
+          Text(
+            '$current/$total',
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -584,8 +616,9 @@ class _SelectAnswerHeader extends StatelessWidget {
           children: [
             TextSpan(text: 'Select the '),
             TextSpan(
-                text: 'answer',
-                style: TextStyle(fontWeight: FontWeight.w800)),
+              text: 'answer',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ],
         ),
       ),
@@ -609,12 +642,14 @@ class _SubmitButton extends StatelessWidget {
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.textOnPrimary,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+              borderRadius: BorderRadius.circular(12),
+            ),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-          child: const Text('Xác nhận',
-              style:
-                  TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          child: const Text(
+            'Xác nhận',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
         ),
       ),
     );
@@ -634,14 +669,16 @@ class _NextButton extends StatelessWidget {
         child: ElevatedButton.icon(
           onPressed: onTap,
           icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-          label: const Text('Câu tiếp theo',
-              style:
-                  TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          label: const Text(
+            'Câu tiếp theo',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryDark,
             foregroundColor: AppColors.textOnPrimary,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+              borderRadius: BorderRadius.circular(12),
+            ),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
@@ -709,7 +746,9 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
                     labelColor: Colors.white,
                     unselectedLabelColor: Colors.white60,
                     labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 14),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
                     indicatorColor: Colors.white,
                     indicatorWeight: 3,
                     tabs: const [
@@ -728,8 +767,11 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
                       color: Colors.white30,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close_rounded,
-                        color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
               ],
@@ -741,21 +783,24 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
               controller: _tab,
               children: [
                 _ExplanationText(
-                    'A. They\'re folding some papers\n'
-                    'B. They\'re putting a picture in a frame\n'
-                    'C. They\'re studying a drawing\n'
-                    'D. They\'re closing a window'),
+                  'A. They\'re folding some papers\n'
+                  'B. They\'re putting a picture in a frame\n'
+                  'C. They\'re studying a drawing\n'
+                  'D. They\'re closing a window',
+                ),
                 _ExplanationText(
-                    'A. Họ đang gấp một số tờ giấy\n'
-                    'B. Họ đang đặt một bức tranh vào khung\n'
-                    'C. Họ đang nghiên cứu một bản vẽ\n'
-                    'D. Họ đang đóng cửa sổ'),
+                  'A. Họ đang gấp một số tờ giấy\n'
+                  'B. Họ đang đặt một bức tranh vào khung\n'
+                  'C. Họ đang nghiên cứu một bản vẽ\n'
+                  'D. Họ đang đóng cửa sổ',
+                ),
                 _ExplanationText(
-                    '🔑 fold: gấp\n'
-                    '🔑 picture: bức tranh\n'
-                    '🔑 frame: khung\n'
-                    '🔑 study: nghiên cứu\n'
-                    '🔑 window: cửa sổ'),
+                  '🔑 fold: gấp\n'
+                  '🔑 picture: bức tranh\n'
+                  '🔑 frame: khung\n'
+                  '🔑 study: nghiên cứu\n'
+                  '🔑 window: cửa sổ',
+                ),
               ],
             ),
           ),
@@ -773,9 +818,10 @@ class _ExplanationText extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Text(text,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 14, height: 1.7)),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.7),
+      ),
     );
   }
 }

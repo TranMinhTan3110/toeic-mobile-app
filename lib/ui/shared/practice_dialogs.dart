@@ -22,21 +22,28 @@ void showReportDialog(BuildContext context) {
                     color: AppColors.primaryLighter,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.flag_rounded,
-                      color: AppColors.primary, size: 20),
+                  child: const Icon(
+                    Icons.flag_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                const Text('Báo lỗi câu hỏi',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary)),
+                const Text(
+                  'Báo lỗi câu hỏi',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text('Chọn loại lỗi:',
-                style: TextStyle(
-                    color: AppColors.textSecondary, fontSize: 13)),
+            const Text(
+              'Chọn loại lỗi:',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
             const SizedBox(height: 10),
             ...[
               'Sai đáp án',
@@ -53,11 +60,14 @@ void showReportDialog(BuildContext context) {
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.textOnPrimary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text('Gửi báo cáo',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text(
+                  'Gửi báo cáo',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ),
           ],
@@ -76,11 +86,15 @@ class _ReportOption extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.radio_button_unchecked_rounded,
-          color: AppColors.primary, size: 20),
-      title: Text(label,
-          style: const TextStyle(
-              color: AppColors.textPrimary, fontSize: 14)),
+      leading: const Icon(
+        Icons.radio_button_unchecked_rounded,
+        color: AppColors.primary,
+        size: 20,
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+      ),
       onTap: () => Navigator.pop(context),
     );
   }
@@ -163,31 +177,43 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                     color: AppColors.primaryLighter,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.settings_rounded,
-                      color: AppColors.primary, size: 20),
+                  child: const Icon(
+                    Icons.settings_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                const Text('Cài đặt',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary)),
+                const Text(
+                  'Cài đặt',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close_rounded,
-                      color: AppColors.textSecondary, size: 20),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
 
             // Speed
-            const Text('Tốc độ phát âm thanh',
-                style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14)),
+            const Text(
+              'Tốc độ phát âm thanh',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,7 +223,9 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                   onTap: () => setState(() => _speed = speed),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.primary
@@ -251,11 +279,14 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.textOnPrimary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text('Lưu cài đặt',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text(
+                  'Lưu cài đặt',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ),
           ],
@@ -285,13 +316,15 @@ class _SwitchRow extends StatelessWidget {
         Icon(icon, color: AppColors.primary, size: 20),
         const SizedBox(width: 10),
         Expanded(
-            child: Text(label,
-                style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: 14))),
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+          ),
+        ),
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.primary,
+          activeThumbColor: AppColors.primary,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ],
