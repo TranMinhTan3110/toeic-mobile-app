@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/promo_banner.dart';
@@ -13,7 +14,7 @@ import '../reading/reading_screen.dart';
 import '../practice/writing/writing_screen.dart';
 import '../listening/listening_screen.dart';
 import '../exam/test_list_screen.dart';
-import '../Vocabulary/vocabulary_screen.dart';
+import '../Vocabulary/vocabulary_hub_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _navIndex = 0;
 
   // ── Dữ liệu luyện tập ──────────────────────────────────────────────
-  static const _practiceItems = [
+  static final _practiceItems = [
     (
       label: 'Nghe Hiểu',
       icon: Icons.headphones,
@@ -51,17 +52,17 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Viết',
-      icon: Icons.edit,
+      icon: LucideIcons.edit3,
       color: AppColors.purple,
       bg: AppColors.purpleBg,
       progress: 0.20,
     ),
   ];
 
-  static const _examItems = [
+  static final _examItems = [
     (
       label: 'Thi Thử',
-      icon: Icons.assignment_turned_in,
+      icon: LucideIcons.graduationCap,
       color: AppColors.primary,
       bg: AppColors.primaryPale,
       badge: 'HOT',
@@ -69,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Từ Vựng',
-      icon: Icons.translate,
+      icon: LucideIcons.bookOpenCheck,
       color: AppColors.green,
       bg: AppColors.greenBg,
       badge: null,
@@ -77,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Ngữ Pháp',
-      icon: Icons.spellcheck,
+      icon: LucideIcons.checkCheck,
       color: AppColors.blue,
       bg: AppColors.blueBg,
       badge: null,
@@ -85,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Cài Đặt',
-      icon: Icons.settings,
+      icon: LucideIcons.settings,
       color: AppColors.primary,
       bg: AppColors.primaryPale,
       badge: null,
@@ -186,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onVocabReview: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const VocabularyScreen()),
+                        MaterialPageRoute(builder: (context) => const VocabularyHubScreen()),
                       );
                     },
                     onQuestionReview: () {},
@@ -279,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const VocabularyScreen(),
+                              builder: (context) => const VocabularyHubScreen(),
                             ),
                           );
                         } else {

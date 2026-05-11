@@ -27,14 +27,34 @@ Tầm nhìn của bạn rất chính xác! Để Gamification (Streak & EP) phá
 
 ---
 
-## 2. Tính Năng Lõi: Flashcard Thông Minh
-Nơi sản sinh ra điểm EP đầu tiên của App.
+- **Cơ chế EP đa dạng (Học là có điểm):**
+  - Quẹt Flashcard (Đã thuộc): +5 EP/từ.
+  - Trả lời đúng câu hỏi Practice: +10 EP/câu.
+  - Hoàn thành 1 bài Test: +50 EP Bonus.
+  - Xem giải thích chi tiết: +2 EP (Khuyến khích học kỹ).
+- **Cơ chế Streak:**
+  - Mục tiêu ngày (Daily Goal): Tích lũy đủ 50 EP để giữ Streak.
+  - Hiệu ứng: Lửa Streak trên trang chủ sẽ bùng cháy khi đạt mục tiêu.
 
-- **Chạm để Lật (Tap to Flip):** Xem định nghĩa, phiên âm, ví dụ.
-- **Vuốt Tinder (Swipe to Sort):**
-  - Quẹt phải (Đã thuộc): +10 EP. Thẻ bay đi kèm hiệu ứng.
-  - Quẹt trái (Chưa thuộc): Thẻ vò lại nhét vào cuối xấp.
-- **Hoàn thành xấp bài:** +50 EP Bonus. Cập nhật `last_study_date` để tăng Streak.
+## 2. Tính Năng Lõi: Flashcard & Hệ thống Ôn tập (SRS)
+Giải quyết vấn đề "từ chưa thuộc" và quản lý tiến trình học.
+
+- **Thuật toán Spaced Repetition (SRS) đơn giản:**
+  - **New (Mới):** Từ vừa mới gặp lần đầu.
+  - **Learning (Đang học):** Từ quẹt trái (Chưa thuộc) hoặc mới thuộc 1 lần.
+  - **Mastered (Đã thuộc):** Từ đã quẹt phải 3 lần ở các phiên học khác nhau.
+- **Trang "Ôn Tập Hôm Nay":**
+  - Tự động gom các từ `Learning` và các từ `Mastered` đã đến hạn ôn (ví dụ sau 3 ngày) vào một xấp bài riêng.
+  - **EP Thưởng:** Ôn tập từ cũ sẽ được nhiều EP hơn học từ mới (khuyến khích ôn tập).
+
+## 3. Tính Năng Sổ Tay (Personal Notebook) & Note
+Giải quyết vấn đề "lưu từ hay/ghi chú".
+
+- **Nút "Lưu vào Sổ tay" (Star icon):** Xuất hiện ở mọi nơi có từ vựng (Flashcard, List từ, Giải thích câu hỏi).
+- **Trang Sổ tay:**
+  - Hiển thị danh sách từ đã lưu.
+  - **Ghi chú (Quick Note):** Cho phép User nhấn vào từ để gõ thêm câu ví dụ cá nhân hoặc mẹo nhớ.
+  - **Mini-game Sổ tay:** Chỉ học flashcard dựa trên chính các từ User đã lưu.
 
 ---
 

@@ -8,6 +8,7 @@ import '../../widgets/vocabulary/vocabulary_card.dart';
 import '../../../core/services/tts_service.dart';
 import 'vocabulary_quiz_screen.dart';
 import 'vocabulary_matching_screen.dart';
+import 'vocabulary_ai_writing_screen.dart';
 import 'quiz_helper.dart';
 
 import '../../widgets/common/custom_app_bar.dart';
@@ -222,7 +223,17 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   }
                 },
                 onMakeSentence: () {
-                  
+                  if (provider.words.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VocabularyAiWritingScreen(
+                          words: provider.words,
+                          initialIndex: 0,
+                        ),
+                      ),
+                    );
+                  }
                 }, 
                 onSpeaking: () {
                  

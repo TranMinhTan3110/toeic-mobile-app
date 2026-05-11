@@ -7,6 +7,7 @@ import '../../widgets/vocabulary/detail_tabs/related_words_tab.dart';
 import '../../../core/services/tts_service.dart'; 
 
 import '../../widgets/common/custom_app_bar.dart';
+import 'vocabulary_ai_writing_screen.dart';
 class VocabularyDetailScreen extends StatefulWidget {
   final VocabularyModel word;
 
@@ -131,6 +132,40 @@ class _VocabularyDetailScreenState extends State<VocabularyDetailScreen> {
                     collocations: widget.word.collocations,
                   ),
                 ],
+              ),
+            ),
+
+            // AI Practice Button
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VocabularyAiWritingScreen(
+                          words: [widget.word],
+                          initialIndex: 0,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.auto_awesome, color: Colors.white),
+                  label: const Text(
+                    'Luyện viết câu với AI',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                  ),
+                ),
               ),
             ),
           ],
