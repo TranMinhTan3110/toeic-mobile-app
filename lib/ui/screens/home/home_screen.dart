@@ -14,6 +14,7 @@ import '../practice/writing/writing_screen.dart';
 import '../listening/listening_screen.dart';
 import '../exam/test_list_screen.dart';
 import '../Vocabulary/vocabulary_screen.dart';
+import '../speaking/speaking_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -234,9 +235,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       builder: (_) => const WritingScreen(),
                     ));
                   } else if (e.label == 'Luyện Nói') {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Chức năng Luyện Nói đang được phát triển.')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const SpeakingScreen(),
+                    ));
                   }
                 },
               ),
