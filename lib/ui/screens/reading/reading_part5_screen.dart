@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/reading_part5_model.dart';
 import '../../../providers/reading_part5_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import 'reading_part5_quiz_screen.dart';
 import '../../widgets/common/practice_result_view.dart';
+
 
 class ReadingPart5Screen extends StatefulWidget {
   const ReadingPart5Screen({super.key});
@@ -65,7 +68,18 @@ class _ReadingPart5ScreenState extends State<ReadingPart5Screen> {
                   Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBg, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.article, color: Colors.white)),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [Text('Luyện Part 5', style: TextStyle(fontWeight: FontWeight.w700)), SizedBox(height: 6), Text('Bài tập điền vào chỗ trống, chọn đáp án đúng.')])),
-                  ElevatedButton(onPressed: questions.isEmpty ? null : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReadingPart5QuizScreen(questions: questions))), style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary), child: const Text('Làm bài')),
+                  ElevatedButton(
+                    onPressed: questions.isEmpty
+                        ? null
+                        : () {
+                            final pool = List<ReadingPart5Question>.from(questions);
+                            pool.shuffle(Random());
+                            final quizQuestions = pool.length <= 30 ? pool : pool.sublist(0, 30);
+                            Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReadingPart5QuizScreen(questions: quizQuestions)));
+                          },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                    child: const Text('Làm bài'),
+                  ),
                 ]),
               ),
 
