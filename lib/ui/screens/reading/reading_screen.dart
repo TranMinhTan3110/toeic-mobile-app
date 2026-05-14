@@ -130,24 +130,37 @@ class ReadingScreen extends StatelessWidget {
       child: Column(
         children: [
           ReadingSectionCard(
+            badgeText: 'P5',
             title: 'Phần 5 - Điền Vào Câu',
             correctCount: '0/0',
             showLock: false,
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart5Screen()));
             },
+            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 24),
           ),
           const SizedBox(height: 12),
           ReadingSectionCard(
+            badgeText: 'P6',
             title: 'Phần 6 - Điền Vào Đoạn Văn',
             correctCount: '0/0',
             showLock: false,
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart6Screen()));
             },
+            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 24),
           ),
           const SizedBox(height: 12),
-          ReadingSectionCard(title: 'Phần 7 - Đọc Hiểu Đoạn Văn', correctCount: '0/0', showLock: false, onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart7Screen())); }),
+          ReadingSectionCard(
+            badgeText: 'P7',
+            title: 'Phần 7 - Đọc Hiểu Đoạn Văn',
+            correctCount: '0/0',
+            showLock: false,
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart7Screen()));
+            },
+            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 24),
+          ),
         ],
       ),
     );

@@ -4,13 +4,17 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/reading_part7_model.dart';
 import '../../../providers/reading_part7_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../../widgets/practice/answer_card.dart';
 import '../../widgets/common/practice_result_view.dart';
 
 class ReadingPart7QuizScreen extends StatefulWidget {
   final ReadingPart7Passage passage;
   final int startIndex;
+  /// When true, return result map via Navigator.pop instead of showing
+  /// the built-in result view. Used by multi-passages flow.
+  final bool returnResultMap;
 
-  const ReadingPart7QuizScreen({super.key, required this.passage, this.startIndex = 0});
+  const ReadingPart7QuizScreen({super.key, required this.passage, this.startIndex = 0, this.returnResultMap = false});
 
   @override
   State<ReadingPart7QuizScreen> createState() => _ReadingPart7QuizScreenState();
@@ -88,7 +92,12 @@ class _ReadingPart7QuizScreenState extends State<ReadingPart7QuizScreen> {
             onBack: () => Navigator.of(context).pop(),
           ),
         );
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => resultView));
+
+        if (widget.returnResultMap) {
+          Navigator.of(context).pop({'score': _score, 'total': widget.passage.questions.length});
+        } else {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => resultView));
+        }
       }
     }
   }
@@ -159,21 +168,17 @@ class _ReadingPart7QuizScreenState extends State<ReadingPart7QuizScreen> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Container(width: double.infinity, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.all(16), child: Text(q.prompt, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
                       const SizedBox(height: 16),
-                      ...List.generate(q.options.length, (oi) {
-                        final border = _optionBorder(index, oi);
-                        final label = String.fromCharCode(65 + oi);
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: InkWell(
-                            onTap: () => _select(index, oi),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: border),
-                              child: Row(children: [CircleAvatar(radius: 16, backgroundColor: AppColors.primary.withOpacity(0.06), child: Text(label)), const SizedBox(width: 12), Expanded(child: Text(q.options[oi]))]),
-                            ),
-                          ),
-                        );
-                      }),
+                      AnswerCard(
+                        options: List.generate(q.options.length, (oi) => AnswerOption(key: String.fromCharCode(65 + oi), text: q.options[oi])),
+                        selectedKey: _selected[index] == null ? null : String.fromCharCode(65 + (_selected[index] as int)),
+                        correctKey: _correctIndices[index] == null
+                            ? null
+                            : (_correctIndices[index]! >= 0 ? String.fromCharCode(65 + _correctIndices[index]!) : null),
+                        onSelect: (key) {
+                          final idx = key.codeUnitAt(0) - 65;
+                          _select(index, idx);
+                        },
+                      ),
                     ]),
                   ),
                 ),
@@ -187,7 +192,7 @@ class _ReadingPart7QuizScreenState extends State<ReadingPart7QuizScreen> {
                       ElevatedButton(
                         onPressed: (_isSubmitted[index] || _selected[index] != null) ? () => _confirmOrNext(index) : null,
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0), child: Text(_isSubmitted[index] ? (index < widget.passage.questions.length - 1 ? 'Tiếp tục' : 'Xem kết quả') : 'Xác nhận', style: const TextStyle(fontWeight: FontWeight.bold))),
+                        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0), child: Text(_isSubmitted[index] ? (index < widget.passage.questions.length - 1 ? 'Tiếp tục' : 'Xem kết quả') : 'Xác nhận', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFAFAFA)))),
                       ),
                     ]),
                   ),

@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/reading_part5_model.dart';
 import '../../../providers/reading_part5_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../../widgets/practice/answer_card.dart';
 import 'reading_result_screen.dart';
 import 'reading_quiz_screen.dart';
 import '../../widgets/common/practice_result_view.dart';
@@ -155,25 +156,18 @@ class _ReadingPart5QuizScreenState extends State<ReadingPart5QuizScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Container(width: double.infinity, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.all(16), child: Text(q.prompt, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
                     const SizedBox(height: 20),
-                    ...List.generate(q.options.length, (oi) {
-                      final border = _optionBorder(index, oi);
-                      final label = String.fromCharCode(65 + oi);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: InkWell(
-                          onTap: () => _select(index, oi),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: border),
-                            child: Row(children: [
-                              CircleAvatar(radius: 16, backgroundColor: AppColors.primary.withOpacity(0.06), child: Text(label)),
-                              const SizedBox(width: 12),
-                              Expanded(child: Text(q.options[oi])),
-                            ]),
-                          ),
-                        ),
-                      );
-                    }),
+                    // Use AnswerCard widget for options
+                    AnswerCard(
+                      options: List.generate(q.options.length, (oi) => AnswerOption(key: String.fromCharCode(65 + oi), text: q.options[oi])),
+                      selectedKey: _selected[index] == null ? null : String.fromCharCode(65 + (_selected[index] as int)),
+                      correctKey: _correctIndices[index] == null
+                          ? null
+                          : (_correctIndices[index]! >= 0 ? String.fromCharCode(65 + _correctIndices[index]!) : null),
+                      onSelect: (key) {
+                        final idx = key.codeUnitAt(0) - 65;
+                        _select(index, idx);
+                      },
+                    ),
                   ]),
                 ),
               ),
@@ -194,7 +188,7 @@ class _ReadingPart5QuizScreenState extends State<ReadingPart5QuizScreen> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-                        child: Text(_isSubmitted[index] ? (index < widget.questions.length - 1 ? 'Tiếp tục' : 'Xem kết quả') : 'Xác nhận', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(_isSubmitted[index] ? (index < widget.questions.length - 1 ? 'Tiếp tục' : 'Xem kết quả') : 'Xác nhận', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(  0xFFFAFAFA))),
                       ),
                     ),
                   ]),
