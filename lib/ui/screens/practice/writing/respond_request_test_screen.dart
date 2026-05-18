@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../data/models/writing_question.dart';
+import '../../../../data/repositories/writing_repository.dart';
+import '../../../widgets/common/custom_app_bar.dart';
 import '../../../widgets/shared/bold_text_label.dart';
-import '../../../widgets/inputs/description_input_box.dart';
-import '../../../widgets/practice/practice_bottom_bar.dart';
 import '../../../widgets/cards/email_card.dart';
-import '../../../../data/models/writing_question_model.dart';
 
 class RespondRequestTestScreen extends StatefulWidget {
-  final List<WritingQuestion> questions;
-  final int initialIndex;
-
-  const RespondRequestTestScreen({
-    super.key,
-    required this.questions,
-    this.initialIndex = 0,
-  });
+  const RespondRequestTestScreen({super.key});
 
   @override
   State<RespondRequestTestScreen> createState() =>
@@ -22,16 +15,45 @@ class RespondRequestTestScreen extends StatefulWidget {
 }
 
 class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
-  late final TextEditingController _controller;
-  late final Map<int, String> _answers;
-  late int _currentQuestionIndex;
+  late WritingRepository _repository;
+  late List<WritingQuestion> _questions;
+  int _currentQ = 0;
+  bool _isLoading = true;
+  String? _error;
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _currentQuestionIndex = widget.initialIndex;
-    _answers = {};
-    _controller = TextEditingController();
+    _repository = WritingRepository();
+    _loadQuestions();
+  }
+
+  Future<void> _loadQuestions() async {
+    try {
+      final questions = await _repository.getByTaskType('respond_email');
+      setState(() {
+        _questions = questions;
+        _currentQ = 0;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _nextQuestion() {
+    setState(() {
+      if (_currentQ < _questions.length - 1) {
+        _currentQ++;
+        _controller.clear();
+      } else {
+        Navigator.pop(context);
+      }
+    });
   }
 
   @override
@@ -40,114 +62,208 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
     super.dispose();
   }
 
-  WritingQuestion get _currentQuestion =>
-      widget.questions[_currentQuestionIndex];
-
-  void _saveAnswer() {
-    _answers[_currentQuestionIndex] = _controller.text;
-  }
-
-  void _goToNextQuestion() {
-    _saveAnswer();
-    if (_currentQuestionIndex < widget.questions.length - 1) {
-      setState(() {
-        _currentQuestionIndex++;
-        _controller.text = _answers[_currentQuestionIndex] ?? '';
-      });
-    } else {
-      _showCompletionDialog();
-    }
-  }
-
-  void _submitTest() {
-    _saveAnswer();
-    _showCompletionDialog();
-  }
-
-  void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Hoàn thành bài thi'),
-          content: Text(
-            'Bạn đã hoàn thành ${widget.questions.length} câu hỏi.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: const Text('Quay lại'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final emailContent = _currentQuestion.emailContent ??
-        'Nội dung email chưa có sẵn. Vui lòng kiểm tra dữ liệu từ backend.';
-    final emailQuestions = _currentQuestion.emailQuestions;
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const CustomAppBar(title: 'Đang tải...'),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_error != null || _questions.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const CustomAppBar(title: 'Lỗi'),
+        body: Center(
+          child: Text('Không có câu hỏi: ${_error ?? ""}'),
+        ),
+      );
+    }
+
+    final currentQuestion = _questions[_currentQ];
+    final questionNumber = _currentQ + 1;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        title: Text('Câu ${_currentQuestionIndex + 1}/${widget.questions.length}'),
+      appBar: CustomAppBar(
+        title: 'Câu $questionNumber',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.error_outline_rounded,
+                color: AppColors.appBarFg, size: 22),
+            onPressed: () {},
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.settings_rounded,
+                color: AppColors.appBarFg, size: 22),
+            onPressed: () {},
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.favorite_border_rounded,
+                color: AppColors.appBarFg, size: 22),
+            onPressed: () {},
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Phản hồi yêu cầu',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            EmailCard(
-              from: 'Author',
-              subject: _currentQuestion.promptText,
-              content: emailContent,
-            ),
-            const SizedBox(height: 24),
-            if (emailQuestions.isNotEmpty) ...[
-              const Text(
-                'Các yêu cầu cần trả lời:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text(
+              'Câu $questionNumber/${_questions.length}',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(height: 8),
-              ...emailQuestions.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('• ', style: TextStyle(fontSize: 16)),
-                      Expanded(child: Text(item)),
-                    ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text(
+              'Trả lời yêu cầu',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: EmailCard(
+              from: 'sender@example.com',
+              subject: 'Email',
+              content: currentQuestion.emailContent ?? 'No email content',
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lightbulb_rounded,
+                      size: 20, color: AppColors.primary),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: BoldTextLabel(text: 'Write your response'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.divider),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _controller,
+              maxLines: 10,
+              decoration: InputDecoration(
+                hintText: 'Viết câu trả lời của bạn...',
+                hintStyle: const TextStyle(
+                  color: AppColors.textHint,
+                  fontSize: 14,
+                ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    'Thoát',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _nextQuestion,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textOnPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 4,
+                  ),
+                  child: Text(
+                    _currentQ >= _questions.length - 1 ? 'Xong' : 'Tiếp',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
             ],
-            const BoldTextLabel(text: 'Write a reply to this email'),
-            const SizedBox(height: 16),
-            DescriptionInputBox(
-              controller: _controller,
-              hintText: 'Viết email trả lời...',
-            ),
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
-      ),
-      bottomNavigationBar: PracticeBottomBar(
-        onSubmit: _submitTest,
-        onNext: _goToNextQuestion,
       ),
     );
   }
