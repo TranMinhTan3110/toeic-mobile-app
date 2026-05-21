@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
 import '../../widgets/vocabulary/detail_tabs/basic_info_tab.dart';
@@ -7,6 +8,7 @@ import '../../widgets/vocabulary/detail_tabs/related_words_tab.dart';
 import '../../../core/services/tts_service.dart'; 
 
 import '../../widgets/common/custom_app_bar.dart';
+import 'vocabulary_ai_writing_screen.dart';
 class VocabularyDetailScreen extends StatefulWidget {
   final VocabularyModel word;
 
@@ -36,7 +38,7 @@ class _VocabularyDetailScreenState extends State<VocabularyDetailScreen> {
           centerTitle: true,
           actions: [
             AppBarIconAction(
-              icon: _isStarred ? Icons.star : Icons.star_border,
+              icon: _isStarred ? Boxicons.bxs_star : Boxicons.bx_star,
               color: _isStarred ? AppColors.star : Colors.white,
               onTap: () {
                 setState(() {
@@ -106,8 +108,8 @@ class _VocabularyDetailScreenState extends State<VocabularyDetailScreen> {
                             color: Colors.white24,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.volume_up,
+                          child: Icon(
+                            Boxicons.bx_volume_full,
                             color: Colors.white,
                             size: 20,
                           ),
@@ -131,6 +133,40 @@ class _VocabularyDetailScreenState extends State<VocabularyDetailScreen> {
                     collocations: widget.word.collocations,
                   ),
                 ],
+              ),
+            ),
+
+            // AI Practice Button
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VocabularyAiWritingScreen(
+                          words: [widget.word],
+                          initialIndex: 0,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Boxicons.bxs_magic_wand, color: Colors.white),
+                  label: const Text(
+                    'Luyện viết câu với AI',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                  ),
+                ),
               ),
             ),
           ],

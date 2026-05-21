@@ -64,15 +64,24 @@ class AuthService {
   // 2. Đăng ký bằng Email / Password
   Future<UserCredential?> registerWithEmailPassword(
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? displayName,
+  }) async {
     try {
       final UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       if (result.user != null) {
-        await _syncUserWithBackend(result.user!);
+        // ⚠️ Set displayName TRƯỚC khi sync backend
+        // vì backend đọc claim "name" từ Firebase token
+        // nếu sync trước thì claim chưa có → lưu thành "TOEIC User"
+        if (displayName != null && displayName.isNotEmpty) {
+          await result.user!.updateDisplayName(displayName);
+          await result.user!.reload(); // Force refresh token claims
+        }
+        final currentUser = _auth.currentUser ?? result.user!;
+        await _syncUserWithBackend(currentUser, forceRefresh: true);
       }
       return result;
     } on FirebaseAuthException catch (e) {
@@ -92,7 +101,7 @@ class AuthService {
         password: password,
       );
       if (result.user != null) {
-        await _syncUserWithBackend(result.user!);
+        await _syncUserWithBackend(result.user!, forceRefresh: true);
       }
       return result;
     } on FirebaseAuthException catch (e) {
@@ -121,11 +130,35 @@ class AuthService {
     }
   }
 
+  /// Lấy ID token hiện tại (dùng cho API Bearer / test Scalar).
+  Future<String?> getIdToken({bool forceRefresh = false}) async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return user.getIdToken(forceRefresh);
+  }
+
+  void _logIdTokenForApiTesting(String idToken, User user) {
+    debugPrint('');
+    debugPrint('╔══════════════════════════════════════════════════════════╗');
+    debugPrint('║  FIREBASE ID TOKEN — copy dán vào Scalar / Postman       ║');
+    debugPrint('╚══════════════════════════════════════════════════════════╝');
+    debugPrint('UID: ${user.uid}');
+    debugPrint('Email: ${user.email}');
+    debugPrint('--- TOKEN START ---');
+    debugPrint(idToken);
+    debugPrint('--- TOKEN END ---');
+    debugPrint('Scalar sync body: { "token": "<paste above>" }');
+    debugPrint('Các API khác: Authorization: Bearer <paste above>');
+    debugPrint('');
+  }
+
   // 5. Đồng bộ User với Backend
-  Future<void> _syncUserWithBackend(User user) async {
+  Future<void> _syncUserWithBackend(User user, {bool forceRefresh = false}) async {
     try {
-      final String? idToken = await user.getIdToken();
+      final String? idToken = await user.getIdToken(forceRefresh);
       if (idToken == null) return;
+
+      _logIdTokenForApiTesting(idToken, user);
 
       final response = await _dio.post(
         '${AppConstants.baseUrl}/Auth/sync',

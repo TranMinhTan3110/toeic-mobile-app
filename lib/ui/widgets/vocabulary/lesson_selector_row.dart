@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// Widget hàng chọn Bài học + Cấp độ (dropdown).
@@ -60,7 +61,7 @@ class LessonSelectorRow extends StatelessWidget {
           isExpanded: true,
           borderRadius: BorderRadius.circular(12), 
           dropdownColor: AppColors.surface,        
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary), 
+          icon: const Icon(Boxicons.bx_chevron_down, color: AppColors.textSecondary), 
           style: const TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
