@@ -105,7 +105,7 @@ class _RegisterViewState extends State<RegisterView>
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [AppColors.primary, AppColors.primaryDark],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -189,7 +189,7 @@ class _RegisterViewState extends State<RegisterView>
                       // Hoặc đăng nhập với Google
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Divider(color: AppColors.primaryLighter, thickness: 1),
                           ),
                           Padding(
@@ -203,7 +203,7 @@ class _RegisterViewState extends State<RegisterView>
                               ),
                             ),
                           ),
-                          const Expanded(
+                          Expanded(
                             child: Divider(color: AppColors.primaryLighter, thickness: 1),
                           ),
                         ],
@@ -218,7 +218,7 @@ class _RegisterViewState extends State<RegisterView>
                           onPressed: _handleGoogleLogin,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            side: const BorderSide(color: AppColors.primaryLighter),
+                            side: BorderSide(color: AppColors.primaryLighter),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -326,6 +326,9 @@ class _RegisterViewState extends State<RegisterView>
       );
       
       // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'weak-password') {
@@ -353,6 +356,10 @@ class _RegisterViewState extends State<RegisterView>
     try {
       final user = await _authService.signInWithGoogle();
       if (user == null) return;
+      
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

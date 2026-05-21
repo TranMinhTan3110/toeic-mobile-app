@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/utils/validators.dart';
-import 'register_screen.dart';
 import 'package:toeicmobileapp/ui/widgets/auth/login_form.dart';
+import 'register_screen.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -177,7 +177,7 @@ class _LoginViewState extends State<LoginView>
                       // Divider
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Divider(color: AppColors.primaryLighter),
                           ),
                           Padding(
@@ -190,7 +190,7 @@ class _LoginViewState extends State<LoginView>
                               ),
                             ),
                           ),
-                          const Expanded(
+                          Expanded(
                             child: Divider(color: AppColors.primaryLighter),
                           ),
                         ],
