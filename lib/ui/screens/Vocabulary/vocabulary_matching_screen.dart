@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
@@ -7,6 +9,7 @@ import '../../widgets/common/custom_app_bar.dart';
 import '../../../core/services/tts_service.dart';
 import '../../widgets/vocabulary/matching_card.dart';
 import '../../widgets/common/practice_result_view.dart';
+import '../../../providers/user_provider.dart';
 
 class VocabularyMatchingScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -37,6 +40,8 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   int _batchIndex = 0;
   bool _isFinished = false;
   bool _showContinueButton = false;
+  int  _epAwarded = 0;
+  bool _epLoading = false;
 
   late AnimationController _shakeController;
 
@@ -52,7 +57,8 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   void _loadNextBatch() {
     final start = _batchIndex * 5;
     if (start >= _allWords.length) {
-      setState(() => _isFinished = true);
+      // Hoàn thành tất cả — cộng EP
+      _awardEpAndFinish();
       return;
     }
 
@@ -225,7 +231,7 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle, color: AppColors.success, size: 14),
+          const Icon(Boxicons.bx_check_circle, color: AppColors.success, size: 14),
           const SizedBox(width: 6),
           Text(
             '${word.word} (${word.wordType}): ${word.definitionVi}',
@@ -285,12 +291,30 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
             children: [
               Text('TIẾP TỤC', style: TextStyle(color: AppColors.textOnPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
               SizedBox(width: 8),
-              Icon(Icons.arrow_forward_rounded, color: AppColors.textOnPrimary),
+              Icon(Boxicons.bx_right_arrow_alt, color: AppColors.textOnPrimary),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _awardEpAndFinish() async {
+    setState(() {
+      _isFinished = true;
+      _epLoading  = true;
+    });
+    final result = await context.read<UserProvider>().recordActivity(
+      activityType  : 'VocabMatching',
+      correctAnswers: _totalMatched,
+      totalAnswers  : _allWords.length,
+    );
+    if (mounted) {
+      setState(() {
+        _epAwarded = result?.epAwarded ?? 0;
+        _epLoading = false;
+      });
+    }
   }
 
   void _resetGame() {
@@ -309,11 +333,13 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
     return Scaffold(
       backgroundColor: AppColors.background,
       body: PracticeResultView(
-        score: _totalMatched,
-        total: _allWords.length,
-        mistakes: _mistakes,
-        onRetry: _resetGame,
-        onBack: () => Navigator.pop(context),
+        score    : _totalMatched,
+        total    : _allWords.length,
+        mistakes : _mistakes,
+        epAwarded: _epAwarded,
+        epLoading: _epLoading,
+        onRetry  : _resetGame,
+        onBack   : () => Navigator.pop(context),
       ),
     );
   }

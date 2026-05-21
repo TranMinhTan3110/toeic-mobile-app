@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
 import '../../../data/services/ai_service.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../../providers/user_provider.dart';
 
 class VocabularyAiWritingScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -29,6 +31,9 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
   bool _isLoadingScenario = false;
   String? _aiResponse;
   String? _scenario;
+  int  _epAwarded   = 0;    // EP nhận được sau khi AI check
+  bool _epLoading   = false;
+  bool _epShownForCurrentWord = false; // tránh cộng EP 2 lần cho cùng 1 từ
 
   @override
   void initState() {
@@ -64,6 +69,10 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
     if (_currentIndex < widget.words.length - 1) {
       setState(() {
         _currentIndex++;
+        // Reset EP cho từ mới
+        _epAwarded = 0;
+        _epLoading = false;
+        _epShownForCurrentWord = false;
       });
       _fetchScenario();
     } else {
@@ -100,6 +109,22 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
         _isAnalyzing = false;
         _aiResponse = response['result'];
       });
+
+      // Cộng EP sau khi AI check thành công (chỉ 1 lần mỗi từ)
+      if (!_epShownForCurrentWord) {
+        _epShownForCurrentWord = true;
+        setState(() => _epLoading = true);
+        final ep = await context.read<UserProvider>().recordActivity(
+          activityType: 'VocabSentence',
+          referenceId : '${_currentWord.id}_sentence',
+        );
+        if (mounted) {
+          setState(() {
+            _epAwarded = ep?.epAwarded ?? 0;
+            _epLoading = false;
+          });
+        }
+      }
     } catch (e) {
       setState(() {
         _isAnalyzing = false;
@@ -175,7 +200,7 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.sparkles, color: Colors.purple, size: 20),
+                      const Icon(Boxicons.bxs_magic_wand, color: Colors.purple, size: 20),
                       const SizedBox(width: 8),
                       const Text(
                         'Thử thách từ AI Mentor:',
@@ -187,7 +212,7 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(LucideIcons.rotateCcw, color: Colors.purple, size: 18),
+                        icon: const Icon(Boxicons.bx_rotate_left, color: Colors.purple, size: 18),
                         onPressed: _isLoadingScenario ? null : _fetchScenario,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -253,7 +278,7 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                 ),
                 icon: _isAnalyzing 
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(LucideIcons.wand2),
+                  : const Icon(Boxicons.bxs_magic_wand),
                 label: Text(_isAnalyzing ? 'AI đang phân tích...' : 'AI Kiểm tra câu'),
               ),
             ),
@@ -263,7 +288,12 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
             // ── Kết quả AI ──────────────────────────────────────────────────
             if (_aiResponse != null) ...[
               _buildResultSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // ── EP Badge ─────────────────────────────────────────────────
+              _buildEpBadge(),
+
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -273,12 +303,77 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                     side: const BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  icon: const Icon(LucideIcons.arrowRight),
+                  icon: const Icon(Boxicons.bx_right_arrow_alt),
                   label: const Text('Học từ tiếp theo'),
                 ),
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEpBadge() {
+    if (_epLoading) {
+      return Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.primarySurface,
+            borderRadius: BorderRadius.circular(40),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 14, height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+              ),
+              SizedBox(width: 8),
+              Text('Đang tính EP...', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_epAwarded <= 0) return const SizedBox.shrink();
+
+    return Center(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.elasticOut,
+        builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            borderRadius: BorderRadius.circular(40),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('⚡', style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 8),
+              Text(
+                '+$_epAwarded EP',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -344,37 +439,37 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
 
           switch (tag) {
             case 'SCORE':
-              icon = LucideIcons.trophy;
+              icon = Boxicons.bx_trophy;
               title = 'Điểm đánh giá';
               accentColor = Colors.orange.shade700;
               bgColor = Colors.orange.shade50;
               break;
             case 'ANALYSIS':
-              icon = LucideIcons.searchCode;
+              icon = Boxicons.bx_search_alt;
               title = 'Chi tiết lỗi sai';
               accentColor = Colors.blue.shade700;
               bgColor = Colors.blue.shade50;
               break;
             case 'REVISION':
-              icon = LucideIcons.checkCircle2;
+              icon = Boxicons.bx_check_circle;
               title = 'Câu sửa lại';
               accentColor = Colors.teal.shade700;
               bgColor = Colors.teal.shade50;
               break;
             case 'SAMPLE':
-              icon = LucideIcons.lightbulb;
+              icon = Boxicons.bx_bulb;
               title = 'Câu mẫu nên học';
               accentColor = Colors.purple.shade700;
               bgColor = Colors.purple.shade50;
               break;
             case 'EXPLANATION':
-              icon = LucideIcons.bookOpenCheck;
+              icon = Boxicons.bx_book_open;
               title = 'Cấu trúc cần nhớ';
               accentColor = Colors.indigo.shade700;
               bgColor = Colors.indigo.shade50;
               break;
             default:
-              icon = LucideIcons.info;
+              icon = Boxicons.bx_info_circle;
               title = 'Thông tin thêm';
               accentColor = Colors.grey.shade700;
               bgColor = Colors.grey.shade50;
@@ -428,7 +523,7 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                         ),
                         const Spacer(),
                         Icon(
-                          isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                          isExpanded ? Boxicons.bx_chevron_up : Boxicons.bx_chevron_down,
                           color: accentColor.withOpacity(0.5),
                           size: 18,
                         ),

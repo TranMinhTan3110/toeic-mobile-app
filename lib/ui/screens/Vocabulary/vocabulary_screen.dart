@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/vocabulary/lesson_selector_row.dart';
@@ -84,7 +85,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     color: Colors.yellow.shade200,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.face, color: Colors.orange, size: 30),
+                  child: const Icon(Boxicons.bx_smile, color: Colors.orange, size: 30),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

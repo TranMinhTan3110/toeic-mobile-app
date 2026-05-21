@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import 'vocabulary_screen.dart';
+import 'vocabulary_notebook_screen.dart';
+import 'vocabulary_review_screen.dart';
+import 'review_schedule_screen.dart';
 
 class VocabularyHubScreen extends StatefulWidget {
   const VocabularyHubScreen({super.key});
@@ -16,9 +20,10 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
   @override
   void initState() {
     super.initState();
-    // Chúng ta vẫn fetch metadata để có dữ liệu cho các phần khác nếu cần
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<VocabularyProvider>().fetchMetadata();
+      final provider = context.read<VocabularyProvider>();
+      provider.fetchMetadata();
+      provider.fetchHubStats();
     });
   }
 
@@ -30,119 +35,241 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
         title: 'Học Từ Vựng',
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Phần Ôn tập & Sổ tay ──────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildHubCard(
-                      title: 'Sổ tay của tôi',
-                      subtitle: '24 từ đã lưu',
-                      icon: Icons.bookmark_rounded,
-                      color: AppColors.primary,
-                      onTap: () {
-                        // TODO: Navigate to Notebook
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildHubCard(
-                      title: 'Ôn tập ngay',
-                      subtitle: '15 từ cần ôn',
-                      icon: Icons.history_rounded,
-                      color: AppColors.green,
-                      onTap: () {
-                        // TODO: Navigate to Review
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      body: Consumer<VocabularyProvider>(
+        builder: (context, provider, _) {
+          final stats = provider.hubStats;
+          final isLoading = provider.isLoadingHub;
 
-            // ── Banner Tiến độ ───────────────────────────────────────────
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => provider.fetchHubStats(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.auto_graph_rounded, color: Colors.white, size: 40),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // ── Phần Ôn tập & Sổ tay ──────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
                       children: [
-                        const Text(
-                          'Tiến độ học tập',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        Expanded(
+                          child: _buildHubCard(
+                            title: 'Sổ tay của tôi',
+                            subtitle: isLoading
+                                ? '...'
+                                : '${stats?.starredCount ?? 0} từ đã lưu',
+                            icon: Boxicons.bx_bookmark,
+                            color: AppColors.primary,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const VocabularyNotebookScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Bạn đã thuộc 120/500 từ mục tiêu',
-                          style: TextStyle(color: Colors.white, fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: 120 / 500,
-                            backgroundColor: Colors.white.withOpacity(0.3),
-                            valueColor: const AlwaysStoppedAnimation(Colors.white),
-                            minHeight: 6,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildHubCard(
+                            title: 'Ôn tập ngay',
+                            subtitle: isLoading
+                                ? '...'
+                                : '${stats?.dueCount ?? 0} từ cần ôn',
+                            icon: Boxicons.bx_history,
+                            color: AppColors.green,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ReviewScheduleScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  // ── Banner Tiến độ ────────────────────────────────────────
+                  _buildProgressBanner(stats, isLoading),
+
+                  const SizedBox(height: 16),
+
+                  // ── Stats Grid ────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildMiniStat(
+                            label: 'Đã học',
+                            value: isLoading ? '...' : '${stats?.studiedCount ?? 0}',
+                            icon: Boxicons.bx_book_reader,
+                            color: AppColors.blue,
+                            bgColor: AppColors.blueBg,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildMiniStat(
+                            label: 'Thành thạo',
+                            value: isLoading ? '...' : '${stats?.masteredCount ?? 0}',
+                            icon: Boxicons.bx_medal,
+                            color: AppColors.green,
+                            bgColor: AppColors.greenBg,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildMiniStat(
+                            label: 'Cần ôn',
+                            value: isLoading ? '...' : '${stats?.dueCount ?? 0}',
+                            icon: Boxicons.bx_time,
+                            color: AppColors.primary,
+                            bgColor: AppColors.primarySurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  
+                  // ── Nút Học từ vựng mới ────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildBigActionCard(
+                      title: 'Học từ vựng mới',
+                      subtitle: 'Khám phá các chủ đề và cấp độ bài học',
+                      icon: Boxicons.bx_book_open,
+                      color: AppColors.purple,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const VocabularyScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
+          );
+        },
+      ),
+    );
+  }
 
-            const SizedBox(height: 24),
-            
-            // ── Nút Học từ vựng mới (Thay thế danh sách chủ đề) ──────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildBigActionCard(
-                title: 'Học từ vựng mới',
-                subtitle: 'Khám phá các chủ đề và cấp độ bài học',
-                icon: Icons.auto_stories_rounded,
-                color: AppColors.purple,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const VocabularyScreen(),
-                    ),
-                  );
-                },
-              ),
+  Widget _buildProgressBanner(dynamic stats, bool isLoading) {
+    final studied = stats?.studiedCount ?? 0;
+    final total = stats?.totalCount ?? 1;
+    final progress = total > 0 ? studied / total : 0.0;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Boxicons.bx_trending_up, color: Colors.white, size: 40),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Tiến độ học tập',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isLoading
+                      ? 'Đang tải...'
+                      : 'Bạn đã thuộc $studied/$total từ mục tiêu',
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: isLoading ? 0 : progress,
+                    backgroundColor: Colors.white.withOpacity(0.3),
+                    valueColor: const AlwaysStoppedAnimation(Colors.white),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 32),
-          ],
-        ),
+  Widget _buildMiniStat({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+        boxShadow: const [
+          BoxShadow(color: AppColors.shadow, blurRadius: 6, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -262,7 +389,7 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textHint, size: 16),
+            const Icon(Boxicons.bx_chevron_right, color: AppColors.textHint, size: 16),
           ],
         ),
       ),

@@ -319,11 +319,12 @@ class _RegisterViewState extends State<RegisterView>
     setState(() => _isLoading = true);
 
     try {
-      final userCred = await _authService.registerWithEmailPassword(email, password);
+      final userCred = await _authService.registerWithEmailPassword(
+        email,
+        password,
+        displayName: name, // Truyền tên để set TRƯỚC khi sync backend
+      );
       
-      // Có thể lưu tên người dùng vào profile Firebase
-      await userCred?.user?.updateDisplayName(name);
-
       // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';

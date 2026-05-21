@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// Hàng nút hành động: Chọn, Flashcards, Chọn từ, Định nghĩa, Đặt câu, Luyện nói 
@@ -67,8 +68,8 @@ class _SelectToggle extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              active ? Icons.check_box : Icons.check_box_outline_blank,
-              size: 16,
+              active ? Boxicons.bxs_checkbox_checked : Boxicons.bx_checkbox,
+              size: 18,
               color: active ? AppColors.primary : AppColors.textSecondary,
             ),
             const SizedBox(width: 4),

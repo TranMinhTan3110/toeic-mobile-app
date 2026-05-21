@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
 import '../../widgets/practice/answer_card.dart';
@@ -6,6 +8,7 @@ import '../../widgets/common/custom_app_bar.dart';
 import '../../../core/services/tts_service.dart';
 import 'quiz_helper.dart';
 import '../../widgets/common/practice_result_view.dart';
+import '../../../providers/user_provider.dart';
 
 class VocabularyQuizScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -28,6 +31,8 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
   bool _isSubmitted = false;
   int _score = 0;
   bool _isFinished = false;
+  int  _epAwarded  = 0;
+  bool _epLoading  = false;
 
   @override
   void initState() {
@@ -69,8 +74,26 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
       });
       _playCurrentAudio();
     } else {
+      // Hoàn thành — cộng EP
+      _awardEpAndFinish();
+    }
+  }
+
+  Future<void> _awardEpAndFinish() async {
+    // Hiện màn kết quả ngay, EP đang load
+    setState(() {
+      _isFinished = true;
+      _epLoading  = true;
+    });
+    final result = await context.read<UserProvider>().recordActivity(
+      activityType  : 'VocabTyping',
+      correctAnswers: _score,
+      totalAnswers  : _questions.length,
+    );
+    if (mounted) {
       setState(() {
-        _isFinished = true;
+        _epAwarded = result?.epAwarded ?? 0;
+        _epLoading = false;
       });
     }
   }
@@ -207,7 +230,7 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
                 const SizedBox(width: 12),
                 IconButton(
                   onPressed: () => TtsService().speak(question),
-                  icon: const Icon(Icons.volume_up, color: AppColors.primary),
+                  icon: const Icon(Boxicons.bx_volume_full, color: AppColors.primary),
                 ),
               ],
             ],
@@ -267,10 +290,12 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: PracticeResultView(
-        score: _score,
-        total: _questions.length,
-        onRetry: _resetQuiz,
-        onBack: () => Navigator.pop(context),
+        score    : _score,
+        total    : _questions.length,
+        epAwarded: _epAwarded,
+        epLoading: _epLoading,
+        onRetry  : _resetQuiz,
+        onBack   : () => Navigator.pop(context),
       ),
     );
   }

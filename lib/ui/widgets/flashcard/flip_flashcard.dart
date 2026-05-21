@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flip_card/flip_card.dart';
 import '../../../../data/models/vocabulary_model.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -58,7 +59,7 @@ class FlipFlashcard extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             IconButton(
-              icon: const Icon(Icons.volume_up_rounded, size: 40),
+              icon: Icon(Boxicons.bx_volume_full, size: 40),
               color: AppColors.primary,
               onPressed: () {
                 _ttsService.speak(vocabulary.word);
@@ -67,11 +68,8 @@ class FlipFlashcard extends StatelessWidget {
             const SizedBox(height: 20),
             const Text(
               "Chạm để xem định nghĩa",
-              style: TextStyle(
-                color: AppColors.textHint,
-                fontSize: 14,
-              ),
-            )
+              style: TextStyle(color: AppColors.textHint, fontSize: 14),
+            ),
           ],
         ),
       ),
@@ -84,7 +82,10 @@ class FlipFlashcard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primaryLight.withOpacity(0.5), width: 1.5),
+        border: Border.all(
+          color: AppColors.primaryLight.withOpacity(0.5),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withOpacity(0.15),
@@ -112,7 +113,10 @@ class FlipFlashcard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppColors.primary, AppColors.primaryLight],
@@ -124,16 +128,21 @@ class FlipFlashcard extends StatelessWidget {
                       blurRadius: 5,
                       offset: const Offset(0, 3),
                     ),
-                  ]
+                  ],
                 ),
                 child: Text(
                   vocabulary.wordType.toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
             ],
           ),
-          
+
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16.0),
             child: Divider(color: AppColors.divider, thickness: 1.5),
@@ -149,21 +158,33 @@ class FlipFlashcard extends StatelessWidget {
                   color: AppColors.primarySurface,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 20),
+                child: Icon(
+                  Boxicons.bx_book_open,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 10),
               const Text(
                 "Định nghĩa",
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             vocabulary.definitionVi,
-            style: const TextStyle(fontSize: 22, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 22,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          
+
           if (vocabulary.examples.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16.0),
@@ -178,12 +199,20 @@ class FlipFlashcard extends StatelessWidget {
                     color: AppColors.primarySurface,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.lightbulb_outline_rounded, color: AppColors.warning, size: 20),
+                  child: Icon(
+                    Boxicons.bx_bulb,
+                    color: AppColors.warning,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   "Ví dụ",
-                  style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -200,17 +229,25 @@ class FlipFlashcard extends StatelessWidget {
                 children: [
                   Text(
                     "\"${vocabulary.examples.first.sentence}\"",
-                    style: const TextStyle(fontSize: 18, color: AppColors.textPrimary, fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: AppColors.textPrimary,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     vocabulary.examples.first.sentenceVi,
-                    style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-          ]
+          ],
         ],
       ),
     );
