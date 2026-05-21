@@ -5,8 +5,9 @@ class PracticeResultView extends StatefulWidget {
   final int score;
   final int total;
   final int mistakes;
-  final int epAwarded;        // EP được cộng (0 = chưa load / không có)
-  final bool epLoading;       // đang chờ API EP
+  final int epAwarded;
+  final bool epLoading;
+  final bool isRetry;         // true = đang luyện lại (EP giảm một nửa)
   final VoidCallback onRetry;
   final VoidCallback onBack;
   final String title;
@@ -18,6 +19,7 @@ class PracticeResultView extends StatefulWidget {
     this.mistakes = 0,
     this.epAwarded = 0,
     this.epLoading = false,
+    this.isRetry = false,
     required this.onRetry,
     required this.onBack,
     this.title = 'Hoàn thành buổi học!',
@@ -183,38 +185,50 @@ class _PracticeResultViewState extends State<PracticeResultView>
     }
 
     // Có EP — hiện badge với animation pop
-    return ScaleTransition(
-      scale: _scaleAnim,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(40),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ScaleTransition(
+          scale: _scaleAnim,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(40),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('⚡', style: TextStyle(fontSize: 22)),
-            const SizedBox(width: 8),
-            Text(
-              '+${widget.epAwarded} EP',
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('⚡', style: TextStyle(fontSize: 22)),
+                const SizedBox(width: 8),
+                Text(
+                  '+${widget.epAwarded} EP',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        if (widget.isRetry) ...[
+          const SizedBox(height: 8),
+          const Text(
+            '(Luyện lại — EP ×½)',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+        ],
+      ],
     );
   }
 }

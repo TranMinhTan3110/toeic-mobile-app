@@ -40,8 +40,9 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   int _batchIndex = 0;
   bool _isFinished = false;
   bool _showContinueButton = false;
-  int  _epAwarded = 0;
-  bool _epLoading = false;
+  int  _epAwarded   = 0;
+  bool _epLoading   = false;
+  int  _attemptCount = 0;  // 0 = lần đầu, 1+ = luyện lại
 
   late AnimationController _shakeController;
 
@@ -304,9 +305,10 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
       _isFinished = true;
       _epLoading  = true;
     });
+    final effectiveCorrect = _attemptCount == 0 ? _totalMatched : (_totalMatched ~/ 2);
     final result = await context.read<UserProvider>().recordActivity(
       activityType  : 'VocabMatching',
-      correctAnswers: _totalMatched,
+      correctAnswers: effectiveCorrect,
       totalAnswers  : _allWords.length,
     );
     if (mounted) {
@@ -320,13 +322,16 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   void _resetGame() {
     setState(() {
       _allWords.shuffle();
-      _batchIndex = 0;
-      _mistakes = 0;
+      _batchIndex   = 0;
+      _mistakes     = 0;
       _totalMatched = 0;
-      _isFinished = false;
+      _isFinished   = false;
       _showContinueButton = false;
-      _loadNextBatch();
+      _epAwarded    = 0;
+      _epLoading    = false;
+      _attemptCount++;
     });
+    _loadNextBatch();
   }
 
   Widget _buildResultScreen() {
@@ -338,6 +343,7 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
         mistakes : _mistakes,
         epAwarded: _epAwarded,
         epLoading: _epLoading,
+        isRetry  : _attemptCount > 0,
         onRetry  : _resetGame,
         onBack   : () => Navigator.pop(context),
       ),
