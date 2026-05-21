@@ -80,7 +80,8 @@ class AuthService {
           await result.user!.updateDisplayName(displayName);
           await result.user!.reload(); // Force refresh token claims
         }
-        await _syncUserWithBackend(result.user!);
+        final currentUser = _auth.currentUser ?? result.user!;
+        await _syncUserWithBackend(currentUser, forceRefresh: true);
       }
       return result;
     } on FirebaseAuthException catch (e) {
@@ -100,7 +101,7 @@ class AuthService {
         password: password,
       );
       if (result.user != null) {
-        await _syncUserWithBackend(result.user!);
+        await _syncUserWithBackend(result.user!, forceRefresh: true);
       }
       return result;
     } on FirebaseAuthException catch (e) {
@@ -152,9 +153,9 @@ class AuthService {
   }
 
   // 5. Đồng bộ User với Backend
-  Future<void> _syncUserWithBackend(User user) async {
+  Future<void> _syncUserWithBackend(User user, {bool forceRefresh = false}) async {
     try {
-      final String? idToken = await user.getIdToken();
+      final String? idToken = await user.getIdToken(forceRefresh);
       if (idToken == null) return;
 
       _logIdTokenForApiTesting(idToken, user);
