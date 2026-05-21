@@ -3,6 +3,7 @@ import 'ui/screens/auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
 import 'package:toeicmobileapp/providers/user_provider.dart';
+import 'package:toeicmobileapp/providers/speaking_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -24,6 +25,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => VocabularyProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => SpeakingProvider()),
       ],
       child: const MyApp(),
     ),
