@@ -8,6 +8,7 @@ class ListeningQuestion {
   final String correctAnswer;
   final String? explanation;
   final String? explanationVi;
+  final String? script;
   final String? groupId;
   final String difficulty;
 
@@ -21,6 +22,7 @@ class ListeningQuestion {
     required this.correctAnswer,
     this.explanation,
     this.explanationVi,
+    this.script,
     this.groupId,
     this.difficulty = 'medium',
   });
@@ -36,6 +38,7 @@ class ListeningQuestion {
       correctAnswer: json['correctAnswer'] ?? '',
       explanation: json['explanation'],
       explanationVi: json['explanationVi'],
+      script: json['script'],
       groupId: json['groupId'],
       difficulty: json['difficulty'] ?? 'medium',
     );
@@ -46,6 +49,7 @@ class ListeningGroup {
   final String id;
   final int part;
   final String? passageText;
+  final String? script;
   final String? imageUrl;
   final String? audioUrl;
   final List<ListeningQuestion> questions;
@@ -55,6 +59,7 @@ class ListeningGroup {
     required this.id,
     required this.part,
     this.passageText,
+    this.script,
     this.imageUrl,
     this.audioUrl,
     required this.questions,
@@ -66,6 +71,7 @@ class ListeningGroup {
       id: json['id'] ?? '',
       part: json['part'] ?? 0,
       passageText: json['passageText'],
+      script: json['script'],
       imageUrl: json['imageUrl'],
       audioUrl: json['audioUrl'],
       questions: (json['questions'] as List?)

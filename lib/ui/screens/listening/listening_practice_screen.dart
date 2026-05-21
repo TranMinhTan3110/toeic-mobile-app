@@ -97,9 +97,33 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     super.dispose();
   }
 
+  String? _lastAudioUrl;
+
+  void _initAudio(String? url) {
+    if (url == null || url == _lastAudioUrl) return;
+    _lastAudioUrl = url;
+
+    setState(() {
+      _duration = Duration.zero;
+      _position = Duration.zero;
+      _audioProgress = 0.0;
+    });
+
+    _audioPlayer.setSource(UrlSource(url)).then((_) {
+      if (_autoPlay) {
+        _audioPlayer.resume();
+      }
+    }).catchError((e) {
+      debugPrint('Error setting audio source: $e');
+    });
+  }
+
   Future<void> _playAudio(String url) async {
     try {
-      await _audioPlayer.play(UrlSource(url));
+      if (_audioPlayer.source == null || ( _audioPlayer.source as UrlSource).url != url) {
+        await _audioPlayer.setSource(UrlSource(url));
+      }
+      await _audioPlayer.resume();
       await _audioPlayer.setPlaybackRate(_speed);
     } catch (e) {
       debugPrint('Error playing audio: $e');
@@ -144,6 +168,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         _position = Duration.zero;
         _duration = Duration.zero;
         _isPlaying = false;
+        _lastAudioUrl = null; // Reset to force reload for next question
         _subAnswers.clear();
         _subSubmitted.clear();
       } else {
@@ -153,6 +178,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   }
 
   String _formatDuration(Duration d) {
+    if (d == Duration.zero) return '0:00';
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
@@ -190,6 +216,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           currentAudioUrl = provider.questions[_currentIdx].audioUrl;
         } else {
           currentAudioUrl = provider.groups[_currentIdx].audioUrl;
+        }
+
+        // Tải metadata audio ngay khi có URL để lấy thời gian tổng (Duration)
+        if (currentAudioUrl != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _initAudio(currentAudioUrl));
         }
 
         return Scaffold(
@@ -448,18 +479,35 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   }
 
   Widget _buildExplanationPanel(ListeningProvider provider) {
+    String script = '';
     String explanation = '';
     String explanationVi = '';
     
     if (partNumber <= 2) {
       final q = provider.questions[_currentIdx];
-      explanation = q.explanation ?? 'Không có phụ đề cho câu hỏi này.';
+      script = q.script ?? 'Không có phụ đề cho câu hỏi này.';
+      explanation = q.explanation ?? 'Không có lời giải cho câu hỏi này.';
       explanationVi = q.explanationVi ?? 'Không có lời dịch cho câu hỏi này.';
     } else {
       final group = provider.groups[_currentIdx];
-      explanation = group.passageText ?? 'Không có phụ đề cho bài nghe này.';
-      // Part 3/4 explanation_vi có thể lấy từ câu đầu tiên hoặc group (nếu backend hỗ trợ)
-      explanationVi = 'Xem lời dịch chi tiết từng câu hỏi bên dưới.';
+      script = group.script ?? group.passageText ?? 'Không có phụ đề cho bài nghe này.';
+      
+      if (group.questions.isNotEmpty) {
+        explanation = group.questions.map((q) {
+          final idx = group.questions.indexOf(q) + 1;
+          final qText = q.questionText != null ? ' (${q.questionText})' : '';
+          return 'Câu $idx$qText:\n${q.explanation ?? "Chưa có lời giải."}';
+        }).join('\n\n---\n\n');
+        
+        explanationVi = group.questions.map((q) {
+          final idx = group.questions.indexOf(q) + 1;
+          final qText = q.questionText != null ? ' (${q.questionText})' : '';
+          return 'Câu $idx$qText:\n${q.explanationVi ?? "Chưa có lời dịch."}';
+        }).join('\n\n---\n\n');
+      } else {
+        explanation = 'Không có lời giải cho bài nghe này.';
+        explanationVi = 'Không có lời dịch cho bài nghe này.';
+      }
     }
 
     return Positioned(
@@ -467,6 +515,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
       right: 0,
       bottom: 0,
       child: _ExplanationPanel(
+        script: script,
         explanation: explanation,
         explanationVi: explanationVi,
         onClose: () => setState(() => _showExplanation = false),
@@ -681,7 +730,13 @@ class _NextButton extends StatelessWidget {
 }
 
 class _ExplanationPanel extends StatefulWidget {
-  const _ExplanationPanel({required this.explanation, required this.explanationVi, required this.onClose});
+  const _ExplanationPanel({
+    required this.script,
+    required this.explanation,
+    required this.explanationVi,
+    required this.onClose,
+  });
+  final String script;
   final String explanation;
   final String explanationVi;
   final VoidCallback onClose;
@@ -727,7 +782,7 @@ class _ExplanationPanelState extends State<_ExplanationPanel> with SingleTickerP
                     labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                     indicatorColor: Colors.white,
                     indicatorWeight: 3,
-                    tabs: const [Tab(text: 'Phụ đề'), Tab(text: 'Lời dịch'), Tab(text: 'Từ khoá')],
+                    tabs: const [Tab(text: 'Phụ đề'), Tab(text: 'Lời dịch'), Tab(text: 'Lời giải')],
                   ),
                 ),
                 GestureDetector(
@@ -747,9 +802,9 @@ class _ExplanationPanelState extends State<_ExplanationPanel> with SingleTickerP
             child: TabBarView(
               controller: _tab,
               children: [
-                _ExplanationText(widget.explanation),
+                _ExplanationText(widget.script),
                 _ExplanationText(widget.explanationVi),
-                const _ExplanationText('Đang cập nhật từ khoá cho câu hỏi này...'),
+                _ExplanationText(widget.explanation),
               ],
             ),
           ),

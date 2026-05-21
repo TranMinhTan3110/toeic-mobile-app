@@ -69,7 +69,7 @@ class AudioPlayerBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(total,
+          Text(total == '0:00' ? '--:--' : total,
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 12)),
         ],
