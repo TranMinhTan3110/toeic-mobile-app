@@ -45,6 +45,7 @@ class VocabularyModel {
       collocations: List<String>.from(json['collocations'] ?? []),
       audioUrl: json['audioUrl'],
       imageUrl: json['imageUrl'],
+      isStarred: json['isStarred'] ?? false,
     );
   }
 

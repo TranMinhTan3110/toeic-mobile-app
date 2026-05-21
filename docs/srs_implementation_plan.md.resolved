@@ -1,0 +1,53 @@
+# Kế Hoạch Triển Khai: Hệ Thống Ôn Tập Thông Minh (Spaced Repetition)
+
+Rất tuyệt vời, làm việc chỉn chu và hướng đến tính năng chuyên nghiệp (như Duolingo / Quizlet) sẽ giúp đồ án của bạn đạt điểm tối đa ở phần System Design và UX.
+
+Để làm được **Hướng 1** (Lưu tiến độ và nhắc nhở ôn tập), ứng dụng không thể "tay không bắt giặc" mà cần có sự phối hợp giữa Backend và Frontend. Dưới đây là kiến trúc hệ thống bạn cần xây dựng:
+
+## 1. Yêu cầu tiên quyết (Prerequisites)
+Hiện tại tôi đã kiểm tra source code Frontend và chưa thấy hệ thống **Đăng nhập (Authentication)**.
+Để lưu được trạng thái từ vựng (Từ nào đã thuộc, từ nào chưa), Backend bắt buộc phải biết "Ai đang học". 
+👉 **Việc cần làm:** Bạn phải hoàn thiện hệ thống Đăng ký / Đăng nhập trước, hoặc tạo một User ID mặc định (Mock User) để test API.
+
+## 2. Thiết kế Database (Backend)
+Bạn cần thêm một bảng mới trong Database (SQL hoặc Firebase) tên là `user_vocab_progress`:
+
+| Cột (Column) | Kiểu dữ liệu | Ý nghĩa |
+| :--- | :--- | :--- |
+| `user_id` | String | ID của người dùng |
+| `vocab_id` | String | ID của từ vựng |
+| `box_level` | Int | Cấp độ thuộc (0: Chưa học, 1: Mới học, 2: Nhớ sương sương, 3: Đã thuộc sâu) |
+| `next_review_date` | DateTime | Ngày tiếp theo cần ôn lại từ này |
+
+## 3. Thuật toán Ôn Tập (Leitner System)
+Chúng ta sẽ áp dụng thuật toán lặp lại ngắt quãng (Spaced Repetition) tương tự Anki:
+- **Mới học (Box 0):** Quẹt phải (Thuộc) ➡️ Lên Box 1 (Ngày mai ôn lại).
+- **Ôn tập (Box 1):** Quẹt phải ➡️ Lên Box 2 (3 ngày sau ôn lại).
+- **Lỡ quên (Quẹt trái ở bất kỳ Box nào):** ➡️ Trả về Box 0 (Phải ôn lại ngay hôm nay).
+
+## 4. API Cần Xây Dựng (Backend)
+1. **API Lấy danh sách từ cần học hôm nay:**
+   `GET /api/user-vocabularies/today-review?userId=123`
+   (Backend sẽ lọc và trả về những từ có `next_review_date` <= Ngày hiện tại).
+2. **API Cập nhật tiến độ:**
+   `POST /api/user-vocabularies/update-progress`
+   (Frontend gửi lên `vocab_id` và hành động `swipe_right` hoặc `swipe_left`. Backend tự tính toán tăng/giảm `box_level` và tính `next_review_date`).
+
+## 5. Thay đổi trên Giao diện (Frontend)
+- Nút "Học Flashcard" sẽ được tách thành 2 nút:
+  - **"Học bài mới"**: Lấy các từ có `box_level = 0`.
+  - **"Ôn tập hôm nay"**: Lấy các từ đã tới hạn ôn tập (`next_review_date` <= Now).
+- Tích hợp gọi API cập nhật tiến độ vào hàm `_onSwipe` của Flashcard.
+
+---
+
+> [!WARNING]
+> ## User Review Required
+> 
+> Hệ thống này là một tính năng cốt lõi (Core Feature) và đòi hỏi bạn phải code Backend API (C#.NET hoặc Firebase) trước thì Frontend mới có chỗ để gửi dữ liệu lên.
+> 
+> **Câu hỏi dành cho bạn:**
+> 1. Bạn đã có hệ thống Đăng nhập / User Authentication ở Backend chưa?
+> 2. Bạn muốn tự code các bảng Database và API ở Backend trước rồi tôi mới nối Frontend, hay bạn muốn tôi code **Mô phỏng (Mock)** tính năng này bằng Local Storage (SQLite/SharedPreferences) chạy tạm trên máy để có giao diện đi chấm điểm trước, rồi sau này bạn nối Backend sau?
+
+Hãy đọc kỹ bản kế hoạch trên và cho tôi biết quyết định của bạn nhé!

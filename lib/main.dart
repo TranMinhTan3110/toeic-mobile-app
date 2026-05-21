@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'ui/screens/auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
+import 'package:toeicmobileapp/providers/user_provider.dart';
 import 'package:toeicmobileapp/providers/speaking_provider.dart';
 import 'package:toeicmobileapp/providers/listening_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
@@ -9,6 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:toeicmobileapp/ui/screens/settings/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +25,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => VocabularyProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => SpeakingProvider()),
         ChangeNotifierProvider(create: (_) => ListeningProvider()),
       ],
