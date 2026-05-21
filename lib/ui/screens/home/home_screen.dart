@@ -19,6 +19,7 @@ import '../exam/test_list_screen.dart';
 import '../Vocabulary/vocabulary_hub_screen.dart';
 import '../profile/profile_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
+import '../settings/settings_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -180,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const TestListScreen(),   // 1: Đề thi
           const LeaderboardScreen(),// 2: BXH
           const ProfileScreen(),    // 3: Hồ sơ
-          const SizedBox(),         // 4: Cài đặt
+          const SettingsScreen(),   // 4: Cài đặt
         ],
       ),
       bottomNavigationBar: HomeBottomNav(
@@ -352,8 +353,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               builder: (context) => const VocabularyHubScreen(),
                             ),
                           );
+                        } else if (e.label == 'Cài Đặt') {
+                          setState(() => _navIndex = 4);
                         } else {
-                          // TODO: Xử lý cho Ngữ Pháp, Cài Đặt
+                          // TODO: Xử lý cho Ngữ Pháp
                         }
                       },
                     ),

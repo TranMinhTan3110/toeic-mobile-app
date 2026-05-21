@@ -7,11 +7,13 @@ class ProfileHeader extends StatelessWidget {
     this.isLoggedIn = false,
     this.userName,
     this.avatarUrl,
+    this.onLogout,
   });
 
   final bool isLoggedIn;
   final String? userName;
   final String? avatarUrl;
+  final VoidCallback? onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +98,7 @@ class ProfileHeader extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: () {},
+          onTap: onLogout,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Text('Đăng xuất',

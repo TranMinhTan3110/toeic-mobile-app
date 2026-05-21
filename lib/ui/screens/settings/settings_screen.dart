@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/ui/widgets/common/custom_app_bar.dart';
+import 'package:toeicmobileapp/providers/user_provider.dart';
+import 'package:toeicmobileapp/core/services/auth_service.dart';
 import '../../widgets/settings/profile_header.dart';
 import '../../widgets/settings/setting_tile.dart';
 import 'profile_edit_screen.dart';
@@ -19,6 +22,12 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final profile = userProvider.profile;
+    final bool resolvedIsLoggedIn = profile != null;
+    final String? resolvedUserName = profile?.displayName;
+    final String? resolvedAvatarUrl = profile?.avatarUrl;
+
     return Scaffold(
       appBar: const CustomAppBar(title: 'Cài đặt', centerTitle: true),
       body: SingleChildScrollView(
@@ -26,9 +35,16 @@ class SettingsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ProfileHeader(
-              isLoggedIn: isLoggedIn,
-              userName: userName,
-              avatarUrl: avatarUrl,
+              isLoggedIn: resolvedIsLoggedIn,
+              userName: resolvedUserName,
+              avatarUrl: resolvedAvatarUrl,
+              onLogout: () async {
+                // Thực hiện đăng xuất
+                await AuthService().signOut();
+                if (context.mounted) {
+                  context.read<UserProvider>().clear();
+                }
+              },
             ),
 
             const Divider(height: 1, thickness: 1, color: AppColors.divider),
