@@ -18,7 +18,6 @@ import '../listening/listening_screen.dart';
 import '../exam/test_list_screen.dart';
 import '../Vocabulary/vocabulary_hub_screen.dart';
 import '../profile/profile_screen.dart';
-import '../settings/settings_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
 
 
@@ -181,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const TestListScreen(),   // 1: Đề thi
           const LeaderboardScreen(),// 2: BXH
           const ProfileScreen(),    // 3: Hồ sơ
-          const SettingsScreen(),   // 4: Cài đặt
+          const SizedBox(),         // 4: Cài đặt
         ],
       ),
       bottomNavigationBar: HomeBottomNav(
