@@ -9,6 +9,7 @@ import '../../shared/practice_dialogs.dart';
 import '../../../data/models/listening_data.dart';
 import '../../../providers/listening_provider.dart';
 import '../../../data/models/listening_question.dart';
+import '../../../core/utils/practice_option_parser.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 /// Màn hình làm bài nghe – dùng chung cho cả 4 part.
@@ -320,7 +321,8 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         if (partNumber == 2) _buildPart2(provider.questions[_currentIdx]),
         if (partNumber == 3) _buildPart3or4(provider.groups[_currentIdx], withImage: true),
         if (partNumber == 4) _buildPart3or4(provider.groups[_currentIdx], withImage: false),
-        if (_submittedKey != null || (partNumber >= 3 && _allSubSubmitted))
+        if (_submittedKey != null ||
+            (partNumber >= 3 && _allSubSubmittedFor(provider.groups[_currentIdx].questions.length)))
           _NextButton(onTap: _nextQuestion)
         else if (_selectedKey != null && partNumber <= 2)
           _SubmitButton(onTap: _submit),
@@ -328,9 +330,13 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  bool get _allSubSubmitted =>
-      _subSubmitted.length >= 3 &&
-      _subSubmitted.values.every((v) => v != null);
+  bool _allSubSubmittedFor(int questionCount) {
+    if (questionCount <= 0) return false;
+    for (var i = 0; i < questionCount; i++) {
+      if (_subSubmitted[i] == null) return false;
+    }
+    return true;
+  }
 
   Widget _buildPart1(ListeningQuestion q) {
     return Column(
@@ -374,9 +380,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           ),
         ),
         AnswerCard(
-          options: q.options.map((opt) => AnswerOption(key: opt.split('.')[0].trim(), text: opt)).toList(),
+          options: PracticeOptionParser.toAnswerOptions(q.options),
           selectedKey: _selectedKey,
-          correctKey: _submittedKey != null ? q.correctAnswer : null,
+          correctKey: _submittedKey != null
+              ? PracticeOptionParser.normalizeCorrectKey(q.correctAnswer, options: q.options)
+              : null,
           onSelect: _submittedKey == null ? (k) => setState(() => _selectedKey = k) : null,
           title: '',
         ),
@@ -423,9 +431,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           ),
         ),
         AnswerCard(
-          options: q.options.map((opt) => AnswerOption(key: opt.split('.')[0].trim(), text: opt)).toList(),
+          options: PracticeOptionParser.toAnswerOptions(q.options),
           selectedKey: _selectedKey,
-          correctKey: _submittedKey != null ? q.correctAnswer : null,
+          correctKey: _submittedKey != null
+              ? PracticeOptionParser.normalizeCorrectKey(q.correctAnswer, options: q.options)
+              : null,
           onSelect: _submittedKey == null ? (k) => setState(() => _selectedKey = k) : null,
           title: '',
         ),
@@ -464,10 +474,10 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           return _SubQuestion(
             number: i + 1,
             questionText: q.questionText ?? '',
-            options: q.options.map((opt) => AnswerOption(key: opt.split('.')[0].trim(), text: opt)).toList(),
+            options: PracticeOptionParser.toAnswerOptions(q.options),
             selectedKey: _subAnswers[i],
             submittedKey: _subSubmitted[i],
-            correctKey: q.correctAnswer,
+            correctKey: PracticeOptionParser.normalizeCorrectKey(q.correctAnswer, options: q.options),
             onSelect: _subSubmitted[i] == null ? (k) => setState(() => _subAnswers[i] = k) : null,
             onSubmit: _subAnswers[i] != null && _subSubmitted[i] == null
                 ? () => setState(() => _subSubmitted[i] = _subAnswers[i])
