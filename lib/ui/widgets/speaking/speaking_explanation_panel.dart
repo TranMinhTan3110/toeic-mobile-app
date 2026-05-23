@@ -1,25 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
+import '../../../data/models/speaking_question.dart';
 
 class SpeakingExplanationPanel extends StatefulWidget {
   final bool isVisible;
-  final int partNumber;
-  final String? transcript;
-  final String? translation;
-  final List<KeywordItem> keywords;
-  final String? sampleAnswer;
-  final String? sampleTranslation;
+  final SpeakingQuestion? question;
   final VoidCallback onClose;
 
   const SpeakingExplanationPanel({
     super.key,
     required this.isVisible,
-    required this.partNumber,
-    this.transcript,
-    this.translation,
-    this.keywords = const [],
-    this.sampleAnswer,
-    this.sampleTranslation,
+    this.question,
     required this.onClose,
   });
 
@@ -42,19 +33,19 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
   @override
   void didUpdateWidget(SpeakingExplanationPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.partNumber != widget.partNumber) {
+    if (oldWidget.question?.taskNumber != widget.question?.taskNumber) {
       _initTabs();
     }
   }
 
   void _initTabs() {
-    if (widget.partNumber == 1) {
+    final taskNum = widget.question?.taskNumber ?? 1;
+    if (taskNum == 1) {
       _tabs = ['Phụ đề', 'Lời dịch', 'Từ khoá'];
-    } else if (widget.partNumber == 2) {
-      _tabs = ['Từ khoá'];
+    } else if (taskNum == 2) {
+      _tabs = ['Từ khoá', 'Dịch ngữ cảnh'];
     } else {
-      // Parts 3, 4, 5
-      _tabs = ['Lời dịch', 'Bài mẫu', 'Dịch bài mẫu'];
+      _tabs = ['Dịch câu hỏi', 'Bài mẫu', 'Dịch bài mẫu'];
     }
     _tabController = TabController(length: _tabs.length, vsync: this);
   }
@@ -106,66 +97,56 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
               controller: _tabController,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white60,
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              indicator: const UnderlineTabIndicator(
-                borderSide: BorderSide(color: Colors.white, width: 2.5),
-                insets: EdgeInsets.symmetric(horizontal: 16),
-              ),
+              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              indicatorColor: Colors.white,
               dividerColor: Colors.transparent,
               tabs: _tabs.map((t) => Tab(text: t)).toList(),
             ),
           ),
-          GestureDetector(
-            onTap: widget.onClose,
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              width: 28,
-              height: 28,
-              decoration: const BoxDecoration(
-                color: Colors.white24,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close_rounded,
-                  color: Colors.white, size: 16),
-            ),
+          IconButton(
+            onPressed: widget.onClose,
+            icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
           ),
         ],
       ),
     );
   }
 
+  String _joinList(List<String> list) {
+    if (list.isEmpty) return 'Chưa có dữ liệu.';
+    return list.asMap().entries.map((e) => 'Câu ${e.key + 1}: ${e.value}').join('\n\n');
+  }
+
   Widget _buildTabContent() {
+    if (widget.question == null) return const SizedBox(height: 200);
+    
+    final exp = widget.question!.explanation;
     List<Widget> children = [];
     
     for (var tab in _tabs) {
       if (tab == 'Phụ đề') {
-        children.add(_ScrollableText(text: widget.transcript ?? 'Chưa có phụ đề.'));
+        children.add(_ScrollableText(text: widget.question!.text));
       } else if (tab == 'Lời dịch') {
-        children.add(_ScrollableText(text: widget.translation ?? 'Chưa có lời dịch.'));
+        children.add(_ScrollableText(text: exp?.translation ?? 'Chưa có lời dịch.'));
       } else if (tab == 'Từ khoá') {
-        children.add(widget.keywords.isEmpty
-            ? const _ScrollableText(text: 'Chưa có từ khoá.')
-            : _KeywordList(keywords: widget.keywords));
+        children.add(_KeywordList(keywords: exp?.keywords ?? []));
+      } else if (tab == 'Dịch ngữ cảnh') {
+        children.add(_ScrollableText(text: exp?.contextTranslation ?? 'Chưa có dịch ngữ cảnh.'));
+      } else if (tab == 'Dịch câu hỏi') {
+        children.add(_ScrollableText(text: _joinList(exp?.questionsTranslation ?? [])));
       } else if (tab == 'Bài mẫu') {
-        children.add(_ScrollableText(text: widget.sampleAnswer ?? 'Chưa có bài mẫu.'));
+        final text = (exp != null && exp.sampleAnswers.isNotEmpty) 
+            ? _joinList(exp.sampleAnswers) 
+            : (widget.question!.sampleAnswer ?? 'Chưa có bài mẫu.');
+        children.add(_ScrollableText(text: text));
       } else if (tab == 'Dịch bài mẫu') {
-        children.add(_ScrollableText(text: widget.sampleTranslation ?? 'Chưa có dịch bài mẫu.'));
+        children.add(_ScrollableText(text: _joinList(exp?.sampleAnswersTranslation ?? [])));
       }
     }
 
     return SizedBox(
-      height: 200,
-      child: TabBarView(
-        controller: _tabController,
-        children: children,
-      ),
+      height: 250,
+      child: TabBarView(controller: _tabController, children: children),
     );
   }
 }
@@ -177,15 +158,8 @@ class _ScrollableText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          height: 1.75,
-        ),
-      ),
+      padding: const EdgeInsets.all(20),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.6)),
     );
   }
 }
@@ -196,45 +170,27 @@ class _KeywordList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (keywords.isEmpty) return const _ScrollableText(text: 'Chưa có từ khoá.');
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      padding: const EdgeInsets.all(20),
       itemCount: keywords.length,
-      separatorBuilder: (_, __) =>
-      const Divider(color: Colors.white24, height: 14),
+      separatorBuilder: (_, __) => const Divider(color: Colors.white24, height: 20),
       itemBuilder: (_, i) {
         final kw = keywords[i];
-        return Row(
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 130,
-              child: Text(
-                kw.word,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+            Row(
+              children: [
+                Text(kw.word, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                if (kw.ipa != null) Text('  /${kw.ipa}/', style: const TextStyle(color: Colors.white70, fontSize: 13, fontStyle: FontStyle.italic)),
+              ],
             ),
-            Expanded(
-              child: Text(
-                kw.meaning,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                ),
-              ),
-            ),
+            const SizedBox(height: 4),
+            Text(kw.meaning, style: const TextStyle(color: Colors.white, fontSize: 13)),
           ],
         );
       },
     );
   }
-}
-
-class KeywordItem {
-  final String word;
-  final String meaning;
-  const KeywordItem({required this.word, required this.meaning});
 }

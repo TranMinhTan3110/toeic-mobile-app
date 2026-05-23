@@ -13,7 +13,7 @@ class SpeakingProvider with ChangeNotifier {
   List<SpeakingQuestion> get questions => _questionsByPart.values.expand((e) => e).toList();
 
   /// Lấy danh sách câu hỏi của một Part cụ thể
-  List<SpeakingQuestion> getQuestionsForPart(int partNumber) => 
+  List<SpeakingQuestion> getQuestionsForPart(int partNumber) =>
       _questionsByPart[partNumber] ?? [];
 
   bool _isLoading = false;
