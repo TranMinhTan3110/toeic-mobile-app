@@ -37,9 +37,15 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
 
     // Tải dữ liệu để biết tổng số câu
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SpeakingProvider>().fetchQuestionsByPart(widget.part.partNumber).then((_) {
+      context
+          .read<SpeakingProvider>()
+          .fetchQuestionsByPart(widget.part.partNumber, practiceMode: true)
+          .then((_) {
         if (mounted) {
-          final total = context.read<SpeakingProvider>().getQuestionsForPart(widget.part.partNumber).length;
+          final total = context
+              .read<SpeakingProvider>()
+              .getQuestionsForPart(widget.part.partNumber, practiceMode: true)
+              .length;
           setState(() {
             _generateOptions(total);
           });
@@ -56,14 +62,16 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
     }
     
     List<int> options = [];
-    // Bước nhảy 2: 2, 4, 6...
-    for (int i = 2; i <= total; i += 2) {
-      options.add(i);
-    }
-    
-    // Đảm bảo số lượng lớn nhất luôn có mặt nếu là số lẻ
-    if (total > 0 && !options.contains(total)) {
-      options.add(total);
+    if (total == 1) {
+      options.add(1);
+    } else {
+      // Bước nhảy 2: 2, 4, 6... đến tổng số câu luyện tập
+      for (int i = 2; i <= total; i += 2) {
+        options.add(i);
+      }
+      if (!options.contains(total)) {
+        options.add(total);
+      }
     }
 
     _questionOptions = options;

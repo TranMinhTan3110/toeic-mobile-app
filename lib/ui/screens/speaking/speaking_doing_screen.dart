@@ -79,15 +79,20 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     _progressAnim = Tween<double>(begin: 0, end: 0).animate(_progressCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final practiceMode = !widget.examMode;
       context
           .read<SpeakingProvider>()
-          .fetchQuestionsByPart(widget.part.partNumber)
+          .fetchQuestionsByPart(
+            widget.part.partNumber,
+            practiceMode: practiceMode,
+          )
           .then((_) {
         if (mounted) {
           setState(() {
-            final all = context
-                .read<SpeakingProvider>()
-                .getQuestionsForPart(widget.part.partNumber);
+            final all = context.read<SpeakingProvider>().getQuestionsForPart(
+                  widget.part.partNumber,
+                  practiceMode: practiceMode,
+                );
             _tasks = all.take(widget.questionCount).toList();
             _isInitialized = true;
 
@@ -377,11 +382,9 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildPromptCard(task),
-          if (task.imageUrl != null && task.imageUrl!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _buildImage(task.imageUrl!),
-          ],
+          // Gộp Card tiêu đề và Hình ảnh vào 1 Container duy nhất
+          _buildPromptAndImage(task),
+          
           const SizedBox(height: 20),
           if (task.questions.isNotEmpty)
             _buildCurrentQuestionCard(task)
@@ -394,16 +397,68 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     );
   }
 
-  Widget _buildImage(String imageUrl) {
+  Widget _buildPromptAndImage(SpeakingQuestion task) {
+    final String promptText = task.text.trim();
+    final bool hasImage = task.imageUrl != null && task.imageUrl!.isNotEmpty;
+    final bool isPart1 = widget.part.partNumber == 1;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Phần Text Hướng dẫn
+          Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_getPromptLabel(widget.part.partNumber), 
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    if (promptText.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(promptText, style: TextStyle(fontSize: 14 * _fontSizeFactor, height: 1.5, fontStyle: FontStyle.italic)),
+                    ],
+                  ],
+                ),
+              ),
+              if (isPart1 && promptText.isNotEmpty)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton(
+                    icon: const Icon(Icons.volume_up_rounded, color: AppColors.primary, size: 22),
+                    onPressed: () => TtsService().speak(promptText),
+                  ),
+                ),
+            ],
+          ),
+          // Phần Hình ảnh (nằm ngay dưới text, không khoảng trống)
+          if (hasImage)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+              child: _buildImageOnly(task.imageUrl!),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageOnly(String imageUrl) {
     final isAsset = !imageUrl.startsWith('http');
     return Container(
       width: double.infinity,
       height: 220,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: isAsset ? Image.asset(imageUrl, fit: BoxFit.cover) : Image.network(imageUrl, fit: BoxFit.cover),
-      ),
+      child: isAsset 
+          ? Image.asset(imageUrl, fit: BoxFit.cover) 
+          : Image.network(imageUrl, fit: BoxFit.cover),
     );
   }
 
@@ -422,42 +477,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       default:
         return 'Ngữ cảnh';
     }
-  }
-
-  Widget _buildPromptCard(SpeakingQuestion task) {
-    final String promptText = task.text.trim();
-    final bool isPart1 = widget.part.partNumber == 1;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
-      ),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_getPromptLabel(widget.part.partNumber), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
-              const SizedBox(height: 6),
-              Text(promptText, style: TextStyle(fontSize: 14 * _fontSizeFactor, height: 1.5, fontStyle: FontStyle.italic)),
-            ],
-          ),
-          if (isPart1)
-            Positioned(
-              top: -8,
-              right: -8,
-              child: IconButton(
-                icon: const Icon(Icons.volume_up_rounded, color: AppColors.primary, size: 22),
-                onPressed: () => TtsService().speak(promptText),
-              ),
-            ),
-        ],
-      ),
-    );
   }
 
   Widget _buildCurrentQuestionCard(SpeakingQuestion task) {
@@ -529,6 +548,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       child: SpeakingExplanationPanel(
         isVisible: _showPanel,
         question: _currentTask,
+        partNumber: widget.part.partNumber,
         onClose: () => setState(() => _showPanel = false),
       ),
     );
@@ -572,30 +592,149 @@ class _SettingsDialog extends StatefulWidget {
   final double currentTtsRate;
   final double currentFontSizeFactor;
   final Function(double, double) onSave;
-  const _SettingsDialog({required this.currentTtsRate, required this.currentFontSizeFactor, required this.onSave});
+
+  const _SettingsDialog({
+    required this.currentTtsRate,
+    required this.currentFontSizeFactor,
+    required this.onSave,
+  });
+
   @override
   State<_SettingsDialog> createState() => _SettingsDialogState();
 }
 
 class _SettingsDialogState extends State<_SettingsDialog> {
-  late double _rate;
-  late double _size;
+  late double _tempTtsRate;
+  late double _tempFontSize;
+
+  final List<double> _rates = [0.25, 0.375, 0.5, 0.625, 0.75];
+  final List<String> _rateLabels = ['0.5x', '0.75x', '1x', '1.25x', '1.5x'];
+
+  final List<double> _fontSizes = [0.8, 1.0, 1.2, 1.4];
+  final List<String> _fontSizeLabels = ['Nhỏ', 'Vừa', 'Lớn', 'Rất lớn'];
+
   @override
-  void initState() { super.initState(); _rate = widget.currentTtsRate; _size = widget.currentFontSizeFactor; }
+  void initState() {
+    super.initState();
+    _tempTtsRate = widget.currentTtsRate;
+    _tempFontSize = widget.currentFontSizeFactor;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Cài đặt'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Tốc độ đọc'),
-          Slider(value: _rate, min: 0.25, max: 0.75, activeColor: Colors.orange, onChanged: (v) => setState(() => _rate = v)),
-          const Text('Cỡ chữ'),
-          Slider(value: _size, min: 0.8, max: 1.4, activeColor: Colors.orange, onChanged: (v) => setState(() => _size = v)),
-        ],
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.settings, color: Colors.orange, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Cài đặt',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Tốc độ phát âm thanh',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(_rates.length, (index) {
+                final isSelected = _tempTtsRate == _rates[index];
+                return GestureDetector(
+                  onTap: () => setState(() => _tempTtsRate = _rates[index]),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.orange : Colors.orange.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _rateLabels[index],
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Kích thước chữ',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(_fontSizes.length, (index) {
+                final isSelected = _tempFontSize == _fontSizes[index];
+                return GestureDetector(
+                  onTap: () => setState(() => _tempFontSize = _fontSizes[index]),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.orange : Colors.orange.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _fontSizeLabels[index],
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onSave(_tempTtsRate, _tempFontSize);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Lưu cài đặt',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      actions: [TextButton(onPressed: () { widget.onSave(_rate, _size); Navigator.pop(context); }, child: const Text('Lưu', style: TextStyle(color: Colors.orange)))],
     );
   }
 }

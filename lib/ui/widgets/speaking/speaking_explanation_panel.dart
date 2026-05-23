@@ -5,12 +5,14 @@ import '../../../data/models/speaking_question.dart';
 class SpeakingExplanationPanel extends StatefulWidget {
   final bool isVisible;
   final SpeakingQuestion? question;
+  final int partNumber;
   final VoidCallback onClose;
 
   const SpeakingExplanationPanel({
     super.key,
     required this.isVisible,
     this.question,
+    required this.partNumber,
     required this.onClose,
   });
 
@@ -21,7 +23,7 @@ class SpeakingExplanationPanel extends StatefulWidget {
 
 class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
     with TickerProviderStateMixin {
-  late TabController _tabController;
+  TabController? _tabController;
   List<String> _tabs = [];
 
   @override
@@ -33,26 +35,50 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
   @override
   void didUpdateWidget(SpeakingExplanationPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.question?.taskNumber != widget.question?.taskNumber) {
+    // Cập nhật lại tabs nếu câu hỏi thay đổi hoặc dữ liệu (như keywords) được load
+    if (oldWidget.question?.id != widget.question?.id || 
+        oldWidget.partNumber != widget.partNumber ||
+        oldWidget.question?.explanation?.keywords.length != widget.question?.explanation?.keywords.length) {
       _initTabs();
     }
   }
 
   void _initTabs() {
-    final taskNum = widget.question?.taskNumber ?? 1;
+    final taskNum = widget.partNumber;
+    final exp = widget.question?.explanation;
+    final List<String> newTabs = [];
+
     if (taskNum == 1) {
-      _tabs = ['Phụ đề', 'Lời dịch', 'Từ khoá'];
+      newTabs.addAll(['Phụ đề', 'Lời dịch']);
     } else if (taskNum == 2) {
-      _tabs = ['Từ khoá', 'Dịch ngữ cảnh'];
+      // Part 2 thường chỉ có từ khóa
     } else {
-      _tabs = ['Dịch câu hỏi', 'Bài mẫu', 'Dịch bài mẫu'];
+      // Parts 3, 4, 5
+      newTabs.add('Dịch câu hỏi');
     }
-    _tabController = TabController(length: _tabs.length, vsync: this);
+
+    // Chỉ thêm tab Từ khoá nếu có dữ liệu
+    if (exp != null && exp.keywords.isNotEmpty) {
+      newTabs.add('Từ khoá');
+    }
+
+    if (taskNum >= 3) {
+      newTabs.addAll(['Bài mẫu', 'Dịch bài mẫu']);
+    }
+
+    // Fallback nếu không có gì để hiện
+    if (newTabs.isEmpty) newTabs.add('Thông tin');
+
+    setState(() {
+      _tabs = newTabs;
+      _tabController?.dispose();
+      _tabController = TabController(length: _tabs.length, vsync: this);
+    });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _tabController?.dispose();
     super.dispose();
   }
 
@@ -79,7 +105,7 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildTabBar(),
+          if (_tabs.isNotEmpty) _buildTabBar(),
           const Divider(height: 1, color: Colors.white24),
           _buildTabContent(),
         ],
@@ -95,6 +121,7 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
           Expanded(
             child: TabBar(
               controller: _tabController,
+              isScrollable: _tabs.length > 3,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white60,
               labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
@@ -112,41 +139,59 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
     );
   }
 
-  String _joinList(List<String> list) {
+  List<String> _sampleAnswers(SpeakingExplanation? exp) {
+    if (exp != null && exp.sampleAnswers.isNotEmpty) return exp.sampleAnswers;
+    final top = widget.question?.sampleAnswer?.trim();
+    if (top != null && top.isNotEmpty) return [top];
+    return const [];
+  }
+
+  List<String> _sampleAnswersTranslation(SpeakingExplanation? exp) =>
+      exp?.sampleAnswersTranslation ?? const [];
+
+  String _joinList(List<String> list, bool isSingle) {
     if (list.isEmpty) return 'Chưa có dữ liệu.';
+    if (isSingle || list.length == 1) return list.first;
     return list.asMap().entries.map((e) => 'Câu ${e.key + 1}: ${e.value}').join('\n\n');
   }
 
   Widget _buildTabContent() {
-    if (widget.question == null) return const SizedBox(height: 200);
+    if (widget.question == null || _tabController == null) return const SizedBox(height: 200);
     
     final exp = widget.question!.explanation;
+    final isPart5 = widget.partNumber == 5;
     List<Widget> children = [];
     
     for (var tab in _tabs) {
-      if (tab == 'Phụ đề') {
-        children.add(_ScrollableText(text: widget.question!.text));
-      } else if (tab == 'Lời dịch') {
-        children.add(_ScrollableText(text: exp?.translation ?? 'Chưa có lời dịch.'));
-      } else if (tab == 'Từ khoá') {
-        children.add(_KeywordList(keywords: exp?.keywords ?? []));
-      } else if (tab == 'Dịch ngữ cảnh') {
-        children.add(_ScrollableText(text: exp?.contextTranslation ?? 'Chưa có dịch ngữ cảnh.'));
-      } else if (tab == 'Dịch câu hỏi') {
-        children.add(_ScrollableText(text: _joinList(exp?.questionsTranslation ?? [])));
-      } else if (tab == 'Bài mẫu') {
-        final text = (exp != null && exp.sampleAnswers.isNotEmpty) 
-            ? _joinList(exp.sampleAnswers) 
-            : (widget.question!.sampleAnswer ?? 'Chưa có bài mẫu.');
-        children.add(_ScrollableText(text: text));
-      } else if (tab == 'Dịch bài mẫu') {
-        children.add(_ScrollableText(text: _joinList(exp?.sampleAnswersTranslation ?? [])));
+      switch (tab) {
+        case 'Phụ đề':
+          children.add(_ScrollableText(text: widget.question!.text));
+          break;
+        case 'Lời dịch':
+          children.add(_ScrollableText(text: exp?.translation ?? 'Chưa có lời dịch.'));
+          break;
+        case 'Từ khoá':
+          children.add(_KeywordList(keywords: exp?.keywords ?? []));
+          break;
+        case 'Dịch câu hỏi':
+          // Với Part 5, lấy bản dịch chính của câu hỏi
+          final text = isPart5 ? (exp?.translation ?? 'Chưa có bản dịch.') : _joinList(exp?.questionsTranslation ?? [], false);
+          children.add(_ScrollableText(text: text));
+          break;
+        case 'Bài mẫu':
+          children.add(_ScrollableText(text: _joinList(_sampleAnswers(exp), isPart5)));
+          break;
+        case 'Dịch bài mẫu':
+          children.add(_ScrollableText(text: _joinList(_sampleAnswersTranslation(exp), isPart5)));
+          break;
+        default:
+          children.add(const _ScrollableText(text: 'Đang cập nhật dữ liệu...'));
       }
     }
 
     return SizedBox(
       height: 250,
-      child: TabBarView(controller: _tabController, children: children),
+      child: TabBarView(controller: _tabController!, children: children),
     );
   }
 }
@@ -170,7 +215,6 @@ class _KeywordList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (keywords.isEmpty) return const _ScrollableText(text: 'Chưa có từ khoá.');
     return ListView.separated(
       padding: const EdgeInsets.all(20),
       itemCount: keywords.length,

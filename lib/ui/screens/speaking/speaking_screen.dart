@@ -23,7 +23,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<SpeakingProvider>();
       for (var part in SpeakingPartInfo.parts) {
-        provider.fetchQuestionsByPart(part.partNumber);
+        provider.fetchQuestionsByPart(part.partNumber, practiceMode: true);
       }
     });
   }
@@ -90,7 +90,10 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
               // ── Danh sách SkillCard ───────────────────
               ...SpeakingPartInfo.parts.map(
                 (part) {
-                  final questions = provider.getQuestionsForPart(part.partNumber);
+                  final questions = provider.getQuestionsForPart(
+                    part.partNumber,
+                    practiceMode: true,
+                  );
                   final totalCount = questions.length;
                   
                   return SkillCard(
