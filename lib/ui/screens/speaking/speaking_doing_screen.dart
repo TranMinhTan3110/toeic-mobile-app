@@ -463,15 +463,15 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   String _getPromptLabel(int partNumber) {
     switch (partNumber) {
       case 1:
-        return 'Phần 1 - Đọc văn bản';
+        return 'Đọc văn bản';
       case 2:
-        return 'Phần 2 - Mô tả tranh';
+        return 'Mô tả tranh';
       case 3:
-        return 'Phần 3 - Trả lời câu hỏi';
+        return 'Trả lời câu hỏi';
       case 4:
-        return 'Phần 4 - Trả lời câu hỏi';
+        return 'Trả lời câu hỏi';
       case 5:
-        return 'Phần 5 - Bày tỏ quan điểm';
+        return 'Bày tỏ quan điểm';
       default:
         return 'Ngữ cảnh';
     }
@@ -707,9 +707,12 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       bottom: 0,
       child: SpeakingExplanationPanel(
         isVisible: _showPanel,
+        partNumber: widget.part.partNumber,
         transcript: _currentTask?.transcriptText,
         translation: _currentTask?.translationText,
         keywords: _currentTask?.keywords ?? [],
+        sampleAnswer: _currentTask?.sampleAnswer,
+        sampleTranslation: _currentTask?.sampleTranslation,
         onClose: () => setState(() => _showPanel = false),
       ),
     );

@@ -19,6 +19,8 @@ class SpeakingQuestion {
   final String? transcriptText;
   final String? translationText;
   final List<KeywordItem> keywords;
+  final String? sampleAnswer;
+  final String? sampleTranslation;
 
   const SpeakingQuestion({
     required this.id,
@@ -35,6 +37,8 @@ class SpeakingQuestion {
     this.transcriptText,
     this.translationText,
     this.keywords = const [],
+    this.sampleAnswer,
+    this.sampleTranslation,
   });
 
   factory SpeakingQuestion.fromJson(Map<String, dynamic> json) {
@@ -82,6 +86,8 @@ class SpeakingQuestion {
               ))
           .toList() ??
           const [],
+      sampleAnswer: json['sampleAnswer'],
+      sampleTranslation: json['sampleTranslation'],
     );
   }
 }

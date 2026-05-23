@@ -1,37 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
-/// Panel trượt lên từ dưới màn hình, hiển thị 3 tab:
-/// Phụ đề · Lời dịch · Từ khoá.
-///
-/// Cách dùng: nhúng thẳng vào Stack bên dưới nội dung chính,
-/// hiển thị/ẩn bằng [isVisible].
-///
-/// ```dart
-/// Stack(children: [
-///   _buildBody(),
-///   SpeakingExplanationPanel(
-///     isVisible: _showPanel,
-///     transcript: '...',
-///     translation: '...',
-///     keywords: [KeywordItem(word: 'personnel', meaning: 'nhân sự')],
-///     onClose: () => setState(() => _showPanel = false),
-///   ),
-/// ])
-/// ```
 class SpeakingExplanationPanel extends StatefulWidget {
   final bool isVisible;
+  final int partNumber;
   final String? transcript;
   final String? translation;
   final List<KeywordItem> keywords;
+  final String? sampleAnswer;
+  final String? sampleTranslation;
   final VoidCallback onClose;
 
   const SpeakingExplanationPanel({
     super.key,
     required this.isVisible,
+    required this.partNumber,
     this.transcript,
     this.translation,
     this.keywords = const [],
+    this.sampleAnswer,
+    this.sampleTranslation,
     required this.onClose,
   });
 
@@ -41,13 +29,34 @@ class SpeakingExplanationPanel extends StatefulWidget {
 }
 
 class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+  List<String> _tabs = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _initTabs();
+  }
+
+  @override
+  void didUpdateWidget(SpeakingExplanationPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.partNumber != widget.partNumber) {
+      _initTabs();
+    }
+  }
+
+  void _initTabs() {
+    if (widget.partNumber == 1) {
+      _tabs = ['Phụ đề', 'Lời dịch', 'Từ khoá'];
+    } else if (widget.partNumber == 2) {
+      _tabs = ['Từ khoá'];
+    } else {
+      // Parts 3, 4, 5
+      _tabs = ['Lời dịch', 'Bài mẫu', 'Dịch bài mẫu'];
+    }
+    _tabController = TabController(length: _tabs.length, vsync: this);
   }
 
   @override
@@ -87,7 +96,6 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
     );
   }
 
-  // ── Tab bar ──────────────────────────────────────────────────────────────
   Widget _buildTabBar() {
     return Padding(
       padding: const EdgeInsets.only(right: 4),
@@ -111,21 +119,16 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
                 insets: EdgeInsets.symmetric(horizontal: 16),
               ),
               dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Phụ đề'),
-                Tab(text: 'Lời dịch'),
-                Tab(text: 'Từ khoá'),
-              ],
+              tabs: _tabs.map((t) => Tab(text: t)).toList(),
             ),
           ),
-          // nút đóng
           GestureDetector(
             onTap: widget.onClose,
             child: Container(
               margin: const EdgeInsets.only(right: 8),
               width: 28,
               height: 28,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
@@ -138,36 +141,35 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
     );
   }
 
-  // ── Nội dung các tab ─────────────────────────────────────────────────────
   Widget _buildTabContent() {
+    List<Widget> children = [];
+    
+    for (var tab in _tabs) {
+      if (tab == 'Phụ đề') {
+        children.add(_ScrollableText(text: widget.transcript ?? 'Chưa có phụ đề.'));
+      } else if (tab == 'Lời dịch') {
+        children.add(_ScrollableText(text: widget.translation ?? 'Chưa có lời dịch.'));
+      } else if (tab == 'Từ khoá') {
+        children.add(widget.keywords.isEmpty
+            ? const _ScrollableText(text: 'Chưa có từ khoá.')
+            : _KeywordList(keywords: widget.keywords));
+      } else if (tab == 'Bài mẫu') {
+        children.add(_ScrollableText(text: widget.sampleAnswer ?? 'Chưa có bài mẫu.'));
+      } else if (tab == 'Dịch bài mẫu') {
+        children.add(_ScrollableText(text: widget.sampleTranslation ?? 'Chưa có dịch bài mẫu.'));
+      }
+    }
+
     return SizedBox(
-      height: 180,
+      height: 200,
       child: TabBarView(
         controller: _tabController,
-        children: [
-          // Tab 1: Phụ đề (transcript)
-          _ScrollableText(
-            text: widget.transcript ??
-                'Chưa có phụ đề cho câu hỏi này.',
-          ),
-
-          // Tab 2: Lời dịch (translation)
-          _ScrollableText(
-            text: widget.translation ??
-                'Chưa có lời dịch cho câu hỏi này.',
-          ),
-
-          // Tab 3: Từ khoá
-          widget.keywords.isEmpty
-              ? _ScrollableText(text: 'Chưa có từ khoá.')
-              : _KeywordList(keywords: widget.keywords),
-        ],
+        children: children,
       ),
     );
   }
 }
 
-// ── Scrollable text tab ───────────────────────────────────────────────────────
 class _ScrollableText extends StatelessWidget {
   final String text;
   const _ScrollableText({required this.text});
@@ -188,7 +190,6 @@ class _ScrollableText extends StatelessWidget {
   }
 }
 
-// ── Keyword list tab ──────────────────────────────────────────────────────────
 class _KeywordList extends StatelessWidget {
   final List<KeywordItem> keywords;
   const _KeywordList({required this.keywords});
@@ -205,7 +206,6 @@ class _KeywordList extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // từ tiếng Anh
             SizedBox(
               width: 130,
               child: Text(
@@ -217,7 +217,6 @@ class _KeywordList extends StatelessWidget {
                 ),
               ),
             ),
-            // nghĩa tiếng Việt
             Expanded(
               child: Text(
                 kw.meaning,
@@ -234,7 +233,6 @@ class _KeywordList extends StatelessWidget {
   }
 }
 
-// ── Data model từ khoá ────────────────────────────────────────────────────────
 class KeywordItem {
   final String word;
   final String meaning;
