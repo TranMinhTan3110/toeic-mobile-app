@@ -6,8 +6,15 @@ import '../data/repositories/speaking_repository.dart';
 class SpeakingProvider with ChangeNotifier {
   final SpeakingRepository _repository = SpeakingRepository();
 
-  List<SpeakingQuestion> _questions = [];
-  List<SpeakingQuestion> get questions => _questions;
+  // Lưu trữ câu hỏi theo từng part để tránh bị ghi đè khi tải nhiều part
+  final Map<int, List<SpeakingQuestion>> _questionsByPart = {};
+  
+  /// Trả về tất cả câu hỏi đã tải
+  List<SpeakingQuestion> get questions => _questionsByPart.values.expand((e) => e).toList();
+
+  /// Lấy danh sách câu hỏi của một Part cụ thể
+  List<SpeakingQuestion> getQuestionsForPart(int partNumber) => 
+      _questionsByPart[partNumber] ?? [];
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -21,44 +28,32 @@ class SpeakingProvider with ChangeNotifier {
   SpeakingEvaluation? _lastEvaluation;
   SpeakingEvaluation? get lastEvaluation => _lastEvaluation;
 
-  /// Tải câu hỏi dựa trên Part (Index) khớp trực tiếp với Task Number của Backend:
-  /// Part 1 -> Task 1, Part 2 -> Task 2, Part 3 -> Task 3 (3 câu con), Part 5 -> Task 5
-  Future<void> fetchQuestionsByPart(int partIndex) async {
+  /// Tải câu hỏi dựa trên Part (Task Number)
+  Future<void> fetchQuestionsByPart(int partNumber) async {
     _isLoading = true;
     _errorMessage = null;
-    _questions = [];
     notifyListeners();
 
     try {
-      List<int> taskNumbers = [partIndex];
-
-      List<SpeakingQuestion> allFetched = [];
-      for (var taskNum in taskNumbers) {
-        try {
-          final results = await _repository.getQuestionsByTaskNumber(taskNum);
-          allFetched.addAll(results);
-        } catch (e) {
-          debugPrint('Error fetching task $taskNum: $e');
-        }
-      }
-
-      if (allFetched.isEmpty) {
-        _questions = SpeakingQuestionData.byPart[partIndex] ?? [];
+      final results = await _repository.getQuestionsByTaskNumber(partNumber);
+      
+      if (results.isEmpty) {
+        _questionsByPart[partNumber] = SpeakingQuestionData.byPart[partNumber] ?? [];
       } else {
-        _questions = allFetched;
+        _questionsByPart[partNumber] = results;
       }
       
     } catch (e) {
+      debugPrint('Error fetching part $partNumber: $e');
       _errorMessage = 'Lỗi kết nối API. Đang dùng dữ liệu mẫu.';
-      _questions = SpeakingQuestionData.byPart[partIndex] ?? [];
+      _questionsByPart[partNumber] = SpeakingQuestionData.byPart[partNumber] ?? [];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Gửi bài nói lên AI để chấm điểm.
-  /// Đối với Task 3 & 4, truyền subQuestionIndex (0, 1, 2) để Backend chấm đúng câu hỏi.
+  /// Gửi bài nói lên AI để chấm điểm
   Future<SpeakingEvaluation?> evaluateAnswer(
     String questionId, 
     String audioPath, {
