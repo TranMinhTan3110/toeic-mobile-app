@@ -11,6 +11,9 @@ class ListeningProvider with ChangeNotifier {
   List<ListeningGroup> _groups = [];
   List<ListeningGroup> get groups => _groups;
 
+  /// Cache toàn bộ nhóm Part 3/4 — tránh gọi API lại mỗi lần vào ôn luyện.
+  final Map<int, List<ListeningGroup>> _groupsCache = {};
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -30,9 +33,15 @@ class ListeningProvider with ChangeNotifier {
         results.shuffle();
         _questions = results.take(requestedCount).toList();
       } else if (partNumber == 3 || partNumber == 4) {
-        final results = await _repository.getGroupsByPart(partNumber);
-        results.shuffle();
-        _groups = results.take(requestedCount).toList();
+        List<ListeningGroup> pool;
+        if (_groupsCache.containsKey(partNumber)) {
+          pool = List<ListeningGroup>.from(_groupsCache[partNumber]!);
+        } else {
+          pool = await _repository.getGroupsByPart(partNumber);
+          _groupsCache[partNumber] = pool;
+        }
+        pool.shuffle();
+        _groups = pool.take(requestedCount).toList();
       }
     } catch (e) {
       _errorMessage = 'Lỗi kết nối API: $e';
@@ -41,4 +50,6 @@ class ListeningProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearGroupsCache() => _groupsCache.clear();
 }

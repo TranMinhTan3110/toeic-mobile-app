@@ -208,12 +208,14 @@ class _AnswerTile extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  option.key,
+                  option.key.length == 1 ? option.key : option.key[0].toUpperCase(),
                   style: TextStyle(
                     color: _keyFg,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
                 ),
               ),
             ),
