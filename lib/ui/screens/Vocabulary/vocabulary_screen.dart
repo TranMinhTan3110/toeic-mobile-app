@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/vocabulary_model.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/vocabulary/lesson_selector_row.dart';
 import '../../widgets/vocabulary/action_button_row.dart';
@@ -10,6 +11,7 @@ import '../../../core/services/tts_service.dart';
 import 'vocabulary_quiz_screen.dart';
 import 'vocabulary_matching_screen.dart';
 import 'vocabulary_ai_writing_screen.dart';
+import 'vocabulary_speaking_screen.dart';
 import 'quiz_helper.dart';
 
 import '../../widgets/common/custom_app_bar.dart';
@@ -27,6 +29,23 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   String? _selectedLevel;
   bool _isInit = true;
   bool _isSelectMode = false;
+  final Set<String> _selectedWordIds = {};
+
+  void _showNoSelectionWarning() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Vui lòng chọn ít nhất 1 từ vựng để luyện tập!'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
+  List<VocabularyModel> _getTargetWords(List<VocabularyModel> allWords) {
+    if (_isSelectMode && _selectedWordIds.isNotEmpty) {
+      return allWords.where((w) => _selectedWordIds.contains(w.id)).toList();
+    }
+    return allWords;
+  }
 
   @override
   void initState() {
@@ -184,27 +203,40 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                 onToggleSelect: () {
                   setState(() {
                     _isSelectMode = !_isSelectMode;
+                    if (!_isSelectMode) {
+                      _selectedWordIds.clear();
+                    }
                   });
                 },
                 onFlashcards: () {
-                  if (provider.words.isNotEmpty) {
+                  if (_isSelectMode && _selectedWordIds.isEmpty) {
+                    _showNoSelectionWarning();
+                    return;
+                  }
+                  final target = _getTargetWords(provider.words);
+                  if (target.isNotEmpty) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => FlashcardScreen(
-                          vocabularies: provider.words,
+                          vocabularies: target,
                         ),
                       ),
                     );
                   }
                 },
                 onChooseWord: () {
-                  if (provider.words.isNotEmpty) {
+                  if (_isSelectMode && _selectedWordIds.isEmpty) {
+                    _showNoSelectionWarning();
+                    return;
+                  }
+                  final target = _getTargetWords(provider.words);
+                  if (target.isNotEmpty) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => VocabularyQuizScreen(
-                          words: provider.words,
+                          words: target,
                           quizType: QuizType.wordToDefinition,
                         ),
                       ),
@@ -212,24 +244,34 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   }
                 },
                 onDefinition: () {
-                  if (provider.words.isNotEmpty) {
+                  if (_isSelectMode && _selectedWordIds.isEmpty) {
+                    _showNoSelectionWarning();
+                    return;
+                  }
+                  final target = _getTargetWords(provider.words);
+                  if (target.isNotEmpty) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => VocabularyMatchingScreen(
-                          words: provider.words,
+                          words: target,
                         ),
                       ),
                     );
                   }
                 },
                 onMakeSentence: () {
-                  if (provider.words.isNotEmpty) {
+                  if (_isSelectMode && _selectedWordIds.isEmpty) {
+                    _showNoSelectionWarning();
+                    return;
+                  }
+                  final target = _getTargetWords(provider.words);
+                  if (target.isNotEmpty) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => VocabularyAiWritingScreen(
-                          words: provider.words,
+                          words: target,
                           initialIndex: 0,
                         ),
                       ),
@@ -237,7 +279,22 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   }
                 }, 
                 onSpeaking: () {
-                 
+                  if (_isSelectMode && _selectedWordIds.isEmpty) {
+                    _showNoSelectionWarning();
+                    return;
+                  }
+                  final target = _getTargetWords(provider.words);
+                  if (target.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VocabularySpeakingScreen(
+                          words: target,
+                          initialIndex: 0,
+                        ),
+                      ),
+                    );
+                  }
                 },
               );
             },
@@ -279,8 +336,16 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     return VocabularyCard(
                       word: item,
                       isSelectMode: _isSelectMode,
-                      isSelected: false,
-                      onSelect: () {},
+                      isSelected: _selectedWordIds.contains(item.id),
+                      onSelect: () {
+                        setState(() {
+                          if (_selectedWordIds.contains(item.id)) {
+                            _selectedWordIds.remove(item.id);
+                          } else {
+                            _selectedWordIds.add(item.id);
+                          }
+                        });
+                      },
                       onAudio: () {
                         // Phát âm từ ngay tại danh sách
                         TtsService().speak(item.word);
