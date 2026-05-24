@@ -360,6 +360,8 @@ class _RegisterViewState extends State<RegisterView>
         email,
         password,
         displayName: name,
+      );
+
       // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
       if (mounted) {
         showPremiumSuccessDialog(
