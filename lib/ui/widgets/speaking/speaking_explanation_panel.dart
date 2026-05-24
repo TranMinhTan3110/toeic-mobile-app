@@ -36,11 +36,23 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
   void didUpdateWidget(SpeakingExplanationPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Cập nhật lại tabs nếu câu hỏi thay đổi hoặc dữ liệu (như keywords) được load
-    if (oldWidget.question?.id != widget.question?.id || 
+    if (oldWidget.question?.id != widget.question?.id ||
         oldWidget.partNumber != widget.partNumber ||
-        oldWidget.question?.explanation?.keywords.length != widget.question?.explanation?.keywords.length) {
+        oldWidget.question?.explanation?.keywords.length !=
+            widget.question?.explanation?.keywords.length ||
+        oldWidget.question?.explanation?.sampleAnswers.length !=
+            widget.question?.explanation?.sampleAnswers.length) {
       _initTabs();
     }
+  }
+
+  bool _hasSampleContent(SpeakingExplanation? exp) {
+    if (exp == null) return false;
+    if (exp.sampleAnswers.isNotEmpty || exp.sampleAnswersTranslation.isNotEmpty) {
+      return true;
+    }
+    final top = widget.question?.sampleAnswer?.trim();
+    return top != null && top.isNotEmpty;
   }
 
   void _initTabs() {
@@ -50,20 +62,19 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
 
     if (taskNum == 1) {
       newTabs.addAll(['Phụ đề', 'Lời dịch']);
-    } else if (taskNum == 2) {
-      // Part 2 thường chỉ có từ khóa
-    } else {
+    }  else if (taskNum != 2){
       // Parts 3, 4, 5
       newTabs.add('Dịch câu hỏi');
     }
 
-    // Chỉ thêm tab Từ khoá nếu có dữ liệu
+    if (taskNum == 2 || taskNum >= 3) {
+      if (_hasSampleContent(exp)) {
+        newTabs.addAll(['Bài mẫu', 'Dịch bài mẫu']);
+      }
+    }
+     // Chỉ thêm tab Từ khoá nếu có dữ liệu
     if (exp != null && exp.keywords.isNotEmpty) {
       newTabs.add('Từ khoá');
-    }
-
-    if (taskNum >= 3) {
-      newTabs.addAll(['Bài mẫu', 'Dịch bài mẫu']);
     }
 
     // Fallback nếu không có gì để hiện
@@ -146,8 +157,12 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
     return const [];
   }
 
-  List<String> _sampleAnswersTranslation(SpeakingExplanation? exp) =>
-      exp?.sampleAnswersTranslation ?? const [];
+  List<String> _sampleAnswersTranslation(SpeakingExplanation? exp) {
+    if (exp != null && exp.sampleAnswersTranslation.isNotEmpty) {
+      return exp.sampleAnswersTranslation;
+    }
+    return const [];
+  }
 
   String _joinList(List<String> list, bool isSingle) {
     if (list.isEmpty) return 'Chưa có dữ liệu.';
@@ -159,9 +174,9 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
     if (widget.question == null || _tabController == null) return const SizedBox(height: 200);
     
     final exp = widget.question!.explanation;
-    final isPart5 = widget.partNumber == 5;
+    final isSingleAnswer = widget.partNumber == 2 || widget.partNumber == 5;
     List<Widget> children = [];
-    
+
     for (var tab in _tabs) {
       switch (tab) {
         case 'Phụ đề':
@@ -174,15 +189,18 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
           children.add(_KeywordList(keywords: exp?.keywords ?? []));
           break;
         case 'Dịch câu hỏi':
-          // Với Part 5, lấy bản dịch chính của câu hỏi
-          final text = isPart5 ? (exp?.translation ?? 'Chưa có bản dịch.') : _joinList(exp?.questionsTranslation ?? [], false);
+          final text = widget.partNumber == 5
+              ? (exp?.translation ?? 'Chưa có bản dịch.')
+              : _joinList(exp?.questionsTranslation ?? [], false);
           children.add(_ScrollableText(text: text));
           break;
         case 'Bài mẫu':
-          children.add(_ScrollableText(text: _joinList(_sampleAnswers(exp), isPart5)));
+          children.add(_ScrollableText(text: _joinList(_sampleAnswers(exp), isSingleAnswer)));
           break;
         case 'Dịch bài mẫu':
-          children.add(_ScrollableText(text: _joinList(_sampleAnswersTranslation(exp), isPart5)));
+          children.add(_ScrollableText(
+            text: _joinList(_sampleAnswersTranslation(exp), isSingleAnswer),
+          ));
           break;
         default:
           children.add(const _ScrollableText(text: 'Đang cập nhật dữ liệu...'));
