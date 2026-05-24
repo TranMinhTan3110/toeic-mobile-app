@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 /// Widget AppBar dùng chung cho toàn app.
@@ -103,7 +104,7 @@ class _BackButton extends StatelessWidget {
           color: AppColors.appBarIconBg.withOpacity(0.5),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(Icons.arrow_back_ios_new_rounded, color: color, size: 18),
+        child: Icon(Boxicons.bx_chevron_left, color: color, size: 24),
       ),
     );
   }

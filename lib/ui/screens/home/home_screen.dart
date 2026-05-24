@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../providers/user_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/skill_card.dart';
@@ -13,7 +16,11 @@ import '../reading/reading_screen.dart';
 import '../practice/writing/writing_screen.dart';
 import '../listening/listening_screen.dart';
 import '../exam/test_list_screen.dart';
-import '../Vocabulary/vocabulary_screen.dart';
+import '../Vocabulary/vocabulary_hub_screen.dart';
+import '../profile/profile_screen.dart';
+import '../leaderboard/leaderboard_screen.dart';
+import '../settings/settings_screen.dart';
+import '../speaking/speaking_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -26,8 +33,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _navIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (mounted) {
+        context.read<UserProvider>().fetchProfile();
+      }
+    });
+  }
+
   // ── Dữ liệu luyện tập ──────────────────────────────────────────────
-  static const _practiceItems = [
+  static final _practiceItems = [
     (
       label: 'Nghe Hiểu',
       icon: Icons.headphones,
@@ -51,17 +68,17 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Viết',
-      icon: Icons.edit,
+      icon: Boxicons.bx_edit_alt,
       color: AppColors.purple,
       bg: AppColors.purpleBg,
       progress: 0.20,
     ),
   ];
 
-  static const _examItems = [
+  static final _examItems = [
     (
       label: 'Thi Thử',
-      icon: Icons.assignment_turned_in,
+      icon: Boxicons.bxs_graduation,
       color: AppColors.primary,
       bg: AppColors.primaryPale,
       badge: 'HOT',
@@ -69,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Từ Vựng',
-      icon: Icons.translate,
+      icon: Boxicons.bx_book_open,
       color: AppColors.green,
       bg: AppColors.greenBg,
       badge: null,
@@ -77,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Ngữ Pháp',
-      icon: Icons.spellcheck,
+      icon: Boxicons.bx_check_double,
       color: AppColors.blue,
       bg: AppColors.blueBg,
       badge: null,
@@ -85,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     (
       label: 'Cài Đặt',
-      icon: Icons.settings,
+      icon: Boxicons.bx_cog,
       color: AppColors.primary,
       bg: AppColors.primaryPale,
       badge: null,
@@ -158,50 +175,105 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
+      body: IndexedStack(
+        index: _navIndex,
         children: [
-          const CustomAppBar(
-            title: 'Trang chủ',
-            centerTitle: true,
-            showBackButton: false,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const PromoBanner(),
-                  _buildPracticeSection(),
-                  _buildExamSection(),
-                  // ── Lịch sử ──────────────────────────────────
-                  HistorySection(
-                    practiceItems: _practiceHistory,
-                    examItems: _examHistory,
-                    previewCount: 5,
-                  ),
-                  // ── Sổ tay ───────────────────────────────────
-                  NotebookSection(
-                    vocabularyCount: 0,       // TODO: lấy từ DB
-                    questionCount: 0,          // TODO: lấy từ DB
-                    onVocabReview: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const VocabularyScreen()),
-                      );
-                    },
-                    onQuestionReview: () {},
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
+          _buildHomeTabContent(),   // 0: Trang Chủ
+          const TestListScreen(),   // 1: Đề thi
+          const LeaderboardScreen(),// 2: BXH
+          const ProfileScreen(),    // 3: Hồ sơ
+          const SettingsScreen(),   // 4: Cài đặt
         ],
       ),
       bottomNavigationBar: HomeBottomNav(
         currentIndex: _navIndex,
         onTap: (i) => setState(() => _navIndex = i),
       ),
+    );
+  }
+
+  Widget _buildHomeTabContent() {
+    return Column(
+      children: [
+        Consumer<UserProvider>(
+          builder: (context, userProvider, child) {
+            final profile = userProvider.profile;
+            final streak = profile?.streakDays ?? 0;
+            final ep = profile?.experiencePoints ?? 0;
+
+            return CustomAppBar(
+              title: 'TOEIC Master',
+              centerTitle: false,
+              showBackButton: false,
+              actions: [
+                // Icon Lửa Streak
+                Row(
+                  children: [
+                    const Icon(Boxicons.bxs_flame, color: Colors.white, size: 20),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$streak',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                // Icon Điểm EP
+                Row(
+                  children: [
+                    const Icon(Boxicons.bxs_star, color: Colors.white, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$ep EP',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+              ],
+            );
+          },
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const PromoBanner(),
+                _buildPracticeSection(),
+                _buildExamSection(),
+                // ── Lịch sử ──────────────────────────────────
+                HistorySection(
+                  practiceItems: _practiceHistory,
+                  examItems: _examHistory,
+                  previewCount: 5,
+                ),
+                // ── Sổ tay ───────────────────────────────────
+                NotebookSection(
+                  vocabularyCount: 0,       // TODO: lấy từ DB
+                  questionCount: 0,          // TODO: lấy từ DB
+                  onVocabReview: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const VocabularyHubScreen()),
+                    );
+                  },
+                  onQuestionReview: () {},
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -234,9 +306,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       builder: (_) => const WritingScreen(),
                     ));
                   } else if (e.label == 'Luyện Nói') {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Chức năng Luyện Nói đang được phát triển.')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const SpeakingScreen(),
+                    ));
                   }
                 },
               ),
@@ -279,11 +351,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const VocabularyScreen(),
+                              builder: (context) => const VocabularyHubScreen(),
                             ),
                           );
+                        } else if (e.label == 'Cài Đặt') {
+                          setState(() => _navIndex = 4);
                         } else {
-                          // TODO: Xử lý cho Ngữ Pháp, Cài Đặt
+                          // TODO: Xử lý cho Ngữ Pháp
                         }
                       },
                     ),

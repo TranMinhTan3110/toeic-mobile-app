@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
-import 'package:toeicmobileapp/ui/widgets/auth/register_form.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/utils/validators.dart';
+import 'package:toeicmobileapp/ui/widgets/auth/register_form.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -113,7 +113,7 @@ class _RegisterViewState extends State<RegisterView>
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [
                                   AppColors.primary,
                                   AppColors.primaryDark,
@@ -213,7 +213,7 @@ class _RegisterViewState extends State<RegisterView>
                       // Hoặc đăng nhập với Google
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Divider(
                               color: AppColors.primaryLighter,
                               thickness: 1,
@@ -230,7 +230,7 @@ class _RegisterViewState extends State<RegisterView>
                               ),
                             ),
                           ),
-                          const Expanded(
+                          Expanded(
                             child: Divider(
                               color: AppColors.primaryLighter,
                               thickness: 1,
@@ -248,9 +248,7 @@ class _RegisterViewState extends State<RegisterView>
                           onPressed: _handleGoogleLogin,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            side: const BorderSide(
-                              color: AppColors.primaryLighter,
-                            ),
+                            side: BorderSide(color: AppColors.primaryLighter),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -354,12 +352,13 @@ class _RegisterViewState extends State<RegisterView>
       final userCred = await _authService.registerWithEmailPassword(
         email,
         password,
+        displayName: name, // Truyền tên để set TRƯỚC khi sync backend
       );
 
-      // Có thể lưu tên người dùng vào profile Firebase
-      await userCred?.user?.updateDisplayName(name);
-
       // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'weak-password') {
@@ -387,6 +386,10 @@ class _RegisterViewState extends State<RegisterView>
     try {
       final user = await _authService.signInWithGoogle();
       if (user == null) return;
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/vocabulary/lesson_selector_row.dart';
@@ -8,9 +9,11 @@ import '../../widgets/vocabulary/vocabulary_card.dart';
 import '../../../core/services/tts_service.dart';
 import 'vocabulary_quiz_screen.dart';
 import 'vocabulary_matching_screen.dart';
+import 'vocabulary_ai_writing_screen.dart';
 import 'quiz_helper.dart';
 
 import '../../widgets/common/custom_app_bar.dart';
+import '../practice/flashcard/flashcard_screen.dart';
 
 class VocabularyScreen extends StatefulWidget {
   const VocabularyScreen({super.key});
@@ -82,7 +85,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     color: Colors.yellow.shade200,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.face, color: Colors.orange, size: 30),
+                  child: const Icon(Boxicons.bx_smile, color: Colors.orange, size: 30),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -184,7 +187,16 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   });
                 },
                 onFlashcards: () {
-                  // Chuyển sang màn hình Flashcards (Sẽ làm sau)
+                  if (provider.words.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FlashcardScreen(
+                          vocabularies: provider.words,
+                        ),
+                      ),
+                    );
+                  }
                 },
                 onChooseWord: () {
                   if (provider.words.isNotEmpty) {
@@ -212,7 +224,17 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   }
                 },
                 onMakeSentence: () {
-                  
+                  if (provider.words.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VocabularyAiWritingScreen(
+                          words: provider.words,
+                          initialIndex: 0,
+                        ),
+                      ),
+                    );
+                  }
                 }, 
                 onSpeaking: () {
                  

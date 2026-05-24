@@ -44,9 +44,9 @@ class PracticeStatsCard extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                _row('Số câu đã làm', '$totalDone'),
+                _row('Số câu đã làm:', '$totalDone'),
                 const SizedBox(height: 8),
-                _row('Trả lời đúng', '$correct'),
+                _row('Trả lời đúng:', '$correct'),
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
                   value: progress,
@@ -64,9 +64,11 @@ class PracticeStatsCard extends StatelessWidget {
 
   Widget _row(String l, String v) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        Text(l, style: const TextStyle(color: AppColors.textSecondary)),
+        Text(l, style: const TextStyle(fontWeight: FontWeight.bold)),
+        // Text(l, style: const TextStyle(color: AppColors.textSecondary)),
+        const SizedBox(width: 12),
         Text(v, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );

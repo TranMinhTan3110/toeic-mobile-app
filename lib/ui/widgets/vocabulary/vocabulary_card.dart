@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
 import '../../screens/Vocabulary/vocabulary_detail_screen.dart';
@@ -110,7 +111,7 @@ class VocabularyCard extends StatelessWidget {
               GestureDetector(
                 onTap: onStar,
                 child: Icon(
-                  word.isStarred ? Icons.star : Icons.star_border,
+                  word.isStarred ? Boxicons.bxs_star : Boxicons.bx_star,
                   color: word.isStarred ? AppColors.star : AppColors.textHint,
                   size: 22,
                 ),
@@ -168,7 +169,7 @@ class _AudioButton extends StatelessWidget {
           color: AppColors.primarySurface,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.volume_up, color: AppColors.primary, size: 18),
+        child: const Icon(Boxicons.bx_volume_full, color: AppColors.primary, size: 18),
       ),
     );
   }

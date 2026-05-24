@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
 import '../../widgets/practice/answer_card.dart';
@@ -6,6 +8,7 @@ import '../../widgets/common/custom_app_bar.dart';
 import '../../../core/services/tts_service.dart';
 import 'quiz_helper.dart';
 import '../../widgets/common/practice_result_view.dart';
+import '../../../providers/user_provider.dart';
 
 class VocabularyQuizScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -26,8 +29,11 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
   int _currentIndex = 0;
   String? _selectedKey;
   bool _isSubmitted = false;
-  int _score = 0;
-  bool _isFinished = false;
+  int _score        = 0;
+  bool _isFinished  = false;
+  int  _epAwarded   = 0;
+  bool _epLoading   = false;
+  int  _attemptCount = 0;   // 0 = lần đầu, 1+ = luyện lại
 
   @override
   void initState() {
@@ -69,8 +75,27 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
       });
       _playCurrentAudio();
     } else {
+      // Hoàn thành — cộng EP
+      _awardEpAndFinish();
+    }
+  }
+
+  Future<void> _awardEpAndFinish() async {
+    setState(() {
+      _isFinished = true;
+      _epLoading  = true;
+    });
+    // Lần luyện lại: correctAnswers giảm một nửa (làm tròn xuống)
+    final effectiveCorrect = _attemptCount == 0 ? _score : (_score ~/ 2);
+    final result = await context.read<UserProvider>().recordActivity(
+      activityType  : 'VocabTyping',
+      correctAnswers: effectiveCorrect,
+      totalAnswers  : _questions.length,
+    );
+    if (mounted) {
       setState(() {
-        _isFinished = true;
+        _epAwarded = result?.epAwarded ?? 0;
+        _epLoading = false;
       });
     }
   }
@@ -207,7 +232,7 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
                 const SizedBox(width: 12),
                 IconButton(
                   onPressed: () => TtsService().speak(question),
-                  icon: const Icon(Icons.volume_up, color: AppColors.primary),
+                  icon: const Icon(Boxicons.bx_volume_full, color: AppColors.primary),
                 ),
               ],
             ],
@@ -253,12 +278,15 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
 
   void _resetQuiz() {
     setState(() {
-      _questions = QuizHelper.generateQuiz(widget.words, widget.quizType);
+      _questions  = QuizHelper.generateQuiz(widget.words, widget.quizType);
       _currentIndex = 0;
-      _score = 0;
+      _score      = 0;
       _isFinished = false;
       _isSubmitted = false;
       _selectedKey = null;
+      _epAwarded  = 0;
+      _epLoading  = false;
+      _attemptCount++; // tăng số lần làm lại
     });
     _playCurrentAudio();
   }
@@ -267,10 +295,13 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: PracticeResultView(
-        score: _score,
-        total: _questions.length,
-        onRetry: _resetQuiz,
-        onBack: () => Navigator.pop(context),
+        score    : _score,
+        total    : _questions.length,
+        epAwarded: _epAwarded,
+        epLoading: _epLoading,
+        isRetry  : _attemptCount > 0,
+        onRetry  : _resetQuiz,
+        onBack   : () => Navigator.pop(context),
       ),
     );
   }

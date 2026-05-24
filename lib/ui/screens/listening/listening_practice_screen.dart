@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/answer_card.dart';
 import '../../widgets/common/audio_player_bar.dart';
 import '../../shared/practice_dialogs.dart';
 import '../../../data/models/listening_data.dart';
+import '../../../providers/listening_provider.dart';
+import '../../../data/models/listening_question.dart';
+import '../../../core/utils/practice_option_parser.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 /// Màn hình làm bài nghe – dùng chung cho cả 4 part.
-/// Layout thay đổi theo partNumber:
-///   Part 1 → có ảnh + 4 đáp án A-D
-///   Part 2 → chỉ audio + 3 đáp án A-B-C
-///   Part 3 → có ảnh đoạn hội thoại + 3 câu hỏi con
-///   Part 4 → như part 3 nhưng không có ảnh
 class ListeningPracticeScreen extends StatefulWidget {
   const ListeningPracticeScreen({
     super.key,
@@ -28,36 +28,154 @@ class ListeningPracticeScreen extends StatefulWidget {
 }
 
 class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
-  int _currentQ = 1;
+  late AudioPlayer _audioPlayer;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+
+  int _currentIdx = 0;
   String? _selectedKey;
   String? _submittedKey;
   bool _showExplanation = false;
-  bool _isPlaying = true;
-  double _audioProgress = 0.1;
+  bool _isPlaying = false;
+  double _audioProgress = 0.0;
 
   // Settings state
   double _speed = 1.0;
   bool _autoPlay = true;
   bool _showTranscriptSetting = false;
 
-  // Part 3/4: sub-question index
-  int _subQ = 0;
+  // Part 3/4: sub-question answers
   final _subAnswers = <int, String?>{};
   final _subSubmitted = <int, String?>{};
 
-  int get totalQuestions => widget.questionCount;
   int get partNumber => widget.part.partNumber;
 
-  void _nextQuestion() {
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+
+    _audioPlayer.onDurationChanged.listen((d) {
+      if (mounted) setState(() => _duration = d);
+    });
+
+    _audioPlayer.onPositionChanged.listen((p) {
+      if (mounted) {
+        setState(() {
+          _position = p;
+          if (_duration.inMilliseconds > 0) {
+            _audioProgress =
+                _position.inMilliseconds / _duration.inMilliseconds;
+          }
+        });
+      }
+    });
+
+    _audioPlayer.onPlayerStateChanged.listen((s) {
+      if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
+    });
+
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _audioProgress = 1.0;
+        });
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ListeningProvider>().fetchQuestionsByPart(
+        widget.part.partNumber,
+        widget.questionCount,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  String? _lastAudioUrl;
+
+  void _initAudio(String? url) {
+    if (url == null || url == _lastAudioUrl) return;
+    _lastAudioUrl = url;
+
     setState(() {
-      if (_currentQ < totalQuestions) {
-        _currentQ++;
+      _duration = Duration.zero;
+      _position = Duration.zero;
+      _audioProgress = 0.0;
+    });
+
+    _audioPlayer
+        .setSource(UrlSource(url))
+        .then((_) {
+          if (_autoPlay) {
+            _audioPlayer.resume();
+          }
+        })
+        .catchError((e) {
+          debugPrint('Error setting audio source: $e');
+        });
+  }
+
+  Future<void> _playAudio(String url) async {
+    try {
+      if (_audioPlayer.source == null ||
+          (_audioPlayer.source as UrlSource).url != url) {
+        await _audioPlayer.setSource(UrlSource(url));
+      }
+      await _audioPlayer.resume();
+      await _audioPlayer.setPlaybackRate(_speed);
+    } catch (e) {
+      debugPrint('Error playing audio: $e');
+    }
+  }
+
+  void _togglePlayPause(String? url) {
+    if (url == null) return;
+    if (_isPlaying) {
+      _audioPlayer.pause();
+    } else {
+      if (_audioProgress >= 0.99) {
+        _audioPlayer.seek(Duration.zero);
+      }
+      _playAudio(url);
+    }
+  }
+
+  void _rewind() {
+    final newPos = _position - const Duration(seconds: 5);
+    _audioPlayer.seek(newPos < Duration.zero ? Duration.zero : newPos);
+  }
+
+  void _forward() {
+    final newPos = _position + const Duration(seconds: 5);
+    _audioPlayer.seek(newPos > _duration ? _duration : newPos);
+  }
+
+  void _nextQuestion() {
+    final provider = context.read<ListeningProvider>();
+    final total = partNumber <= 2
+        ? provider.questions.length
+        : provider.groups.length;
+
+    _audioPlayer.stop();
+
+    setState(() {
+      if (_currentIdx < total - 1) {
+        _currentIdx++;
         _selectedKey = null;
         _submittedKey = null;
         _showExplanation = false;
-        _audioProgress = 0.05;
-        _isPlaying = true;
-        _subQ = 0;
+        _audioProgress = 0.0;
+        _position = Duration.zero;
+        _duration = Duration.zero;
+        _isPlaying = false;
+        _lastAudioUrl = null; // Reset to force reload for next question
         _subAnswers.clear();
         _subSubmitted.clear();
       } else {
@@ -66,46 +184,98 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     });
   }
 
+  String _formatDuration(Duration d) {
+    if (d == Duration.zero) return '0:00';
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   void _submit() => setState(() => _submittedKey = _selectedKey);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          // Audio player
-          AudioPlayerBar(
-            isPlaying: _isPlaying,
-            progress: _audioProgress,
-            elapsed: '00:02',
-            total: partNumber == 1 ? '0:22' : '1:15',
-            onPlayPause: () => setState(() => _isPlaying = !_isPlaying),
-          ),
-          const Divider(height: 1, color: AppColors.divider),
+    return Consumer<ListeningProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-          // Content
-          Expanded(
-            child: Stack(
-              children: [
-                _buildContent(),
-                if (_showExplanation) _buildExplanationPanel(),
-              ],
+        if (provider.errorMessage != null) {
+          return Scaffold(
+            appBar: CustomAppBar(title: 'Lỗi'),
+            body: Center(child: Text(provider.errorMessage!)),
+          );
+        }
+
+        final total = partNumber <= 2
+            ? provider.questions.length
+            : provider.groups.length;
+        if (total == 0) {
+          return Scaffold(
+            appBar: CustomAppBar(title: 'Không có dữ liệu'),
+            body: const Center(
+              child: Text('Không tìm thấy câu hỏi cho phần này.'),
             ),
+          );
+        }
+
+        String? currentAudioUrl;
+        if (partNumber <= 2) {
+          currentAudioUrl = provider.questions[_currentIdx].audioUrl;
+        } else {
+          currentAudioUrl = provider.groups[_currentIdx].audioUrl;
+        }
+
+        // Tải metadata audio ngay khi có URL để lấy thời gian tổng (Duration)
+        if (currentAudioUrl != null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _initAudio(currentAudioUrl),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: _buildAppBar(),
+          body: Column(
+            children: [
+              AudioPlayerBar(
+                isPlaying: _isPlaying,
+                progress: _audioProgress,
+                elapsed: _formatDuration(_position),
+                total: _formatDuration(_duration),
+                onPlayPause: () => _togglePlayPause(currentAudioUrl),
+                onRewind: _rewind,
+                onForward: _forward,
+                onSeek: (value) {
+                  final newPos = Duration(
+                    milliseconds: (value * _duration.inMilliseconds).toInt(),
+                  );
+                  _audioPlayer.seek(newPos);
+                },
+              ),
+              const Divider(height: 1, color: AppColors.divider),
+              Expanded(
+                child: Stack(
+                  children: [
+                    _buildContent(provider, total),
+                    if (_showExplanation) _buildExplanationPanel(provider),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  // ── AppBar ───────────────────────────────────────────────────────────────
-
   CustomAppBar _buildAppBar() {
     return CustomAppBar(
-      title: 'Câu $_currentQ',
+      title: 'Câu ${_currentIdx + 1}',
       actions: [
-        // Dấu chấm than
         IconButton(
           icon: const Icon(
             Icons.error_outline_rounded,
@@ -117,7 +287,6 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           constraints: const BoxConstraints(),
         ),
         const SizedBox(width: 4),
-        // Bánh răng
         IconButton(
           icon: const Icon(
             Icons.settings_rounded,
@@ -138,7 +307,6 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           constraints: const BoxConstraints(),
         ),
         const SizedBox(width: 4),
-        // Yêu thích
         IconButton(
           icon: const Icon(
             Icons.favorite_border_rounded,
@@ -150,7 +318,6 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           constraints: const BoxConstraints(),
         ),
         const SizedBox(width: 4),
-        // Giải thích
         GestureDetector(
           onTap: () => setState(() => _showExplanation = !_showExplanation),
           child: Container(
@@ -172,26 +339,26 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  // ── Content by part ──────────────────────────────────────────────────────
-
-  Widget _buildContent() {
+  Widget _buildContent(ListeningProvider provider, int total) {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
-        // Question number strip
         _QuestionStrip(
-          current: _currentQ,
-          total: totalQuestions,
+          current: _currentIdx + 1,
+          total: total,
           partNumber: partNumber,
         ),
-
-        if (partNumber == 1) _buildPart1(),
-        if (partNumber == 2) _buildPart2(),
-        if (partNumber == 3) _buildPart3or4(withImage: true),
-        if (partNumber == 4) _buildPart3or4(withImage: false),
-
-        // Next / Submit button
-        if (_submittedKey != null || (partNumber >= 3 && _allSubSubmitted))
+        if (partNumber == 1) _buildPart1(provider.questions[_currentIdx]),
+        if (partNumber == 2) _buildPart2(provider.questions[_currentIdx]),
+        if (partNumber == 3)
+          _buildPart3or4(provider.groups[_currentIdx], withImage: true),
+        if (partNumber == 4)
+          _buildPart3or4(provider.groups[_currentIdx], withImage: false),
+        if (_submittedKey != null ||
+            (partNumber >= 3 &&
+                _allSubSubmittedFor(
+                  provider.groups[_currentIdx].questions.length,
+                )))
           _NextButton(onTap: _nextQuestion)
         else if (_selectedKey != null && partNumber <= 2)
           _SubmitButton(onTap: _submit),
@@ -199,15 +366,17 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  bool get _allSubSubmitted =>
-      _subSubmitted.length >= 3 && _subSubmitted.values.every((v) => v != null);
+  bool _allSubSubmittedFor(int questionCount) {
+    if (questionCount <= 0) return false;
+    for (var i = 0; i < questionCount; i++) {
+      if (_subSubmitted[i] == null) return false;
+    }
+    return true;
+  }
 
-  // ── Part 1: photo + A B C D ──────────────────────────────────────────────
-
-  Widget _buildPart1() {
+  Widget _buildPart1(ListeningQuestion q) {
     return Column(
       children: [
-        // "Select the answer" header + image
         Container(
           margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           decoration: BoxDecoration(
@@ -225,12 +394,29 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SelectAnswerHeader(),
-              // Image placeholder
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(0),
-                ),
-                child: Container(
+              if (q.imageUrl != null)
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
+                  child: Image.network(
+                    q.imageUrl!,
+                    height: 220,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 220,
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.broken_image,
+                        size: 60,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Container(
                   height: 220,
                   width: double.infinity,
                   color: Colors.grey[300],
@@ -240,15 +426,18 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                     color: Colors.grey,
                   ),
                 ),
-              ),
             ],
           ),
         ),
-        // Answers
         AnswerCard(
-          options: _part1Options,
+          options: PracticeOptionParser.toAnswerOptions(q.options),
           selectedKey: _selectedKey,
-          correctKey: _submittedKey != null ? 'A' : null,
+          correctKey: _submittedKey != null
+              ? PracticeOptionParser.normalizeCorrectKey(
+                  q.correctAnswer,
+                  options: q.options,
+                )
+              : null,
           onSelect: _submittedKey == null
               ? (k) => setState(() => _selectedKey = k)
               : null,
@@ -258,16 +447,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  static const _part1Options = [
-    AnswerOption(key: 'A', text: 'A'),
-    AnswerOption(key: 'B', text: 'B'),
-    AnswerOption(key: 'C', text: 'C'),
-    AnswerOption(key: 'D', text: 'D'),
-  ];
-
-  // ── Part 2: audio only + A B C ───────────────────────────────────────────
-
-  Widget _buildPart2() {
+  Widget _buildPart2(ListeningQuestion q) {
     return Column(
       children: [
         Container(
@@ -288,7 +468,6 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             children: [
               _SelectAnswerHeader(),
               const SizedBox(height: 12),
-              // Audio indicator
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -318,9 +497,14 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           ),
         ),
         AnswerCard(
-          options: _part2Options,
+          options: PracticeOptionParser.toAnswerOptions(q.options),
           selectedKey: _selectedKey,
-          correctKey: _submittedKey != null ? 'B' : null,
+          correctKey: _submittedKey != null
+              ? PracticeOptionParser.normalizeCorrectKey(
+                  q.correctAnswer,
+                  options: q.options,
+                )
+              : null,
           onSelect: _submittedKey == null
               ? (k) => setState(() => _selectedKey = k)
               : null,
@@ -330,20 +514,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  static const _part2Options = [
-    AnswerOption(key: 'A', text: 'A'),
-    AnswerOption(key: 'B', text: 'B'),
-    AnswerOption(key: 'C', text: 'C'),
-  ];
-
-  // ── Part 3 & 4: image (opt) + 3 sub-questions ────────────────────────────
-
-  Widget _buildPart3or4({required bool withImage}) {
+  Widget _buildPart3or4(ListeningGroup group, {required bool withImage}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Image for part 3
-        if (withImage)
+        if (withImage && group.imageUrl != null)
           Container(
             margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             height: 180,
@@ -360,27 +535,31 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: const Center(
-                child: Icon(Icons.image_rounded, size: 60, color: Colors.grey),
+              child: Image.network(
+                group.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(
+                    Icons.image_rounded,
+                    size: 60,
+                    color: Colors.grey,
+                  ),
+                ),
               ),
             ),
           ),
-
-        // 3 sub-questions
-        ...List.generate(3, (i) {
-          final qNum = i + 1;
+        ...List.generate(group.questions.length, (i) {
+          final q = group.questions[i];
           return _SubQuestion(
-            number: qNum,
-            questionText: _subQuestionTexts[partNumber == 3 ? 'p3' : 'p4']![i],
-            options: [
-              AnswerOption(key: 'A', text: _subAnswerTexts[i][0]),
-              AnswerOption(key: 'B', text: _subAnswerTexts[i][1]),
-              AnswerOption(key: 'C', text: _subAnswerTexts[i][2]),
-              AnswerOption(key: 'D', text: _subAnswerTexts[i][3]),
-            ],
+            number: i + 1,
+            questionText: q.questionText ?? '',
+            options: PracticeOptionParser.toAnswerOptions(q.options),
             selectedKey: _subAnswers[i],
             submittedKey: _subSubmitted[i],
-            correctKey: 'A',
+            correctKey: PracticeOptionParser.normalizeCorrectKey(
+              q.correctAnswer,
+              options: q.options,
+            ),
             onSelect: _subSubmitted[i] == null
                 ? (k) => setState(() => _subAnswers[i] = k)
                 : null,
@@ -393,42 +572,62 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  static const _subQuestionTexts = {
-    'p3': [
-      'What are the speakers mainly discussing?',
-      'What does the woman suggest?',
-      'What will the man do next?',
-    ],
-    'p4': [
-      'What is the talk mainly about?',
-      'What problem is mentioned?',
-      'What are listeners asked to do?',
-    ],
-  };
+  Widget _buildExplanationPanel(ListeningProvider provider) {
+    String script = '';
+    String explanation = '';
+    String explanationVi = '';
 
-  static const _subAnswerTexts = [
-    [
-      'A project deadline',
-      'A company policy',
-      'A new product launch',
-      'A client meeting',
-    ],
-    [
-      'Asking for more time',
-      'Hiring extra staff',
-      'Changing the schedule',
-      'Contacting the client',
-    ],
-    [
-      'Send an email',
-      'Call a colleague',
-      'Review a report',
-      'Attend a workshop',
-    ],
-  ];
+    if (partNumber <= 2) {
+      final q = provider.questions[_currentIdx];
+      script = q.script ?? 'Không có phụ đề cho câu hỏi này.';
+      explanation = q.explanation ?? 'Không có lời giải cho câu hỏi này.';
+      explanationVi = q.explanationVi ?? 'Không có lời dịch cho câu hỏi này.';
+    } else {
+      final group = provider.groups[_currentIdx];
+      script =
+          group.script ??
+          group.passageText ??
+          'Không có phụ đề cho bài nghe này.';
+
+      if (group.questions.isNotEmpty) {
+        explanation = group.questions
+            .map((q) {
+              final idx = group.questions.indexOf(q) + 1;
+              final qText = q.questionText != null
+                  ? ' (${q.questionText})'
+                  : '';
+              return 'Câu $idx$qText:\n${q.explanation ?? "Chưa có lời giải."}';
+            })
+            .join('\n\n---\n\n');
+
+        explanationVi = group.questions
+            .map((q) {
+              final idx = group.questions.indexOf(q) + 1;
+              final qText = q.questionText != null
+                  ? ' (${q.questionText})'
+                  : '';
+              return 'Câu $idx$qText:\n${q.explanationVi ?? "Chưa có lời dịch."}';
+            })
+            .join('\n\n---\n\n');
+      } else {
+        explanation = 'Không có lời giải cho bài nghe này.';
+        explanationVi = 'Không có lời dịch cho bài nghe này.';
+      }
+    }
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: _ExplanationPanel(
+        script: script,
+        explanation: explanation,
+        explanationVi: explanationVi,
+        onClose: () => setState(() => _showExplanation = false),
+      ),
+    );
+  }
 }
-
-// ── Sub-question widget (for part 3/4) ──────────────────────────────────────
 
 class _SubQuestion extends StatelessWidget {
   const _SubQuestion({
@@ -540,8 +739,6 @@ class _SubQuestion extends StatelessWidget {
   }
 }
 
-// ── Shared small widgets ─────────────────────────────────────────────────────
-
 class _QuestionStrip extends StatelessWidget {
   const _QuestionStrip({
     required this.current,
@@ -576,7 +773,7 @@ class _QuestionStrip extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                value: current / total,
+                value: total > 0 ? current / total : 0,
                 backgroundColor: AppColors.primaryLighter,
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   AppColors.primary,
@@ -687,23 +884,16 @@ class _NextButton extends StatelessWidget {
   }
 }
 
-// ── Explanation panel ─────────────────────────────────────────────────────────
-
-extension on _ListeningPracticeScreenState {
-  Widget _buildExplanationPanel() {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: _ExplanationPanel(
-        onClose: () => setState(() => _showExplanation = false),
-      ),
-    );
-  }
-}
-
 class _ExplanationPanel extends StatefulWidget {
-  const _ExplanationPanel({required this.onClose});
+  const _ExplanationPanel({
+    required this.script,
+    required this.explanation,
+    required this.explanationVi,
+    required this.onClose,
+  });
+  final String script;
+  final String explanation;
+  final String explanationVi;
   final VoidCallback onClose;
 
   @override
@@ -754,7 +944,7 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
                     tabs: const [
                       Tab(text: 'Phụ đề'),
                       Tab(text: 'Lời dịch'),
-                      Tab(text: 'Từ khoá'),
+                      Tab(text: 'Lời giải'),
                     ],
                   ),
                 ),
@@ -763,7 +953,7 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
                   child: Container(
                     width: 28,
                     height: 28,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white30,
                       shape: BoxShape.circle,
                     ),
@@ -778,29 +968,13 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
             ),
           ),
           SizedBox(
-            height: 200,
+            height: 250,
             child: TabBarView(
               controller: _tab,
               children: [
-                _ExplanationText(
-                  'A. They\'re folding some papers\n'
-                  'B. They\'re putting a picture in a frame\n'
-                  'C. They\'re studying a drawing\n'
-                  'D. They\'re closing a window',
-                ),
-                _ExplanationText(
-                  'A. Họ đang gấp một số tờ giấy\n'
-                  'B. Họ đang đặt một bức tranh vào khung\n'
-                  'C. Họ đang nghiên cứu một bản vẽ\n'
-                  'D. Họ đang đóng cửa sổ',
-                ),
-                _ExplanationText(
-                  '🔑 fold: gấp\n'
-                  '🔑 picture: bức tranh\n'
-                  '🔑 frame: khung\n'
-                  '🔑 study: nghiên cứu\n'
-                  '🔑 window: cửa sổ',
-                ),
+                _ExplanationText(widget.script),
+                _ExplanationText(widget.explanationVi),
+                _ExplanationText(widget.explanation),
               ],
             ),
           ),

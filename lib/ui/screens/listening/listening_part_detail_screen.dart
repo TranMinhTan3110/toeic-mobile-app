@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/part_history_sheet.dart';
 import '../../../data/models/listening_data.dart';
+import '../../../data/repositories/listening_repository.dart';
 import 'listening_practice_screen.dart';
 
 /// Màn hình chuẩn bị trước khi làm bài – dùng chung cho cả 4 part.
@@ -19,6 +20,44 @@ class ListeningPartDetailScreen extends StatefulWidget {
 class _ListeningPartDetailScreenState
     extends State<ListeningPartDetailScreen> {
   int _questionCount = 10;
+  final ListeningRepository _repository = ListeningRepository();
+  int _maxQuestions = 0;
+  bool _isLoadingCount = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMaxQuestions();
+  }
+
+  Future<void> _loadMaxQuestions() async {
+    try {
+      int count = 0;
+      if (widget.part.partNumber == 1 || widget.part.partNumber == 2) {
+        final list = await _repository.getQuestionsByPart(widget.part.partNumber);
+        count = list.length;
+      } else {
+        final list = await _repository.getGroupsByPart(widget.part.partNumber);
+        count = list.length;
+      }
+      if (mounted) {
+        setState(() {
+          _maxQuestions = count;
+          _questionCount = count > 0 ? (count < 10 ? count : 10) : 0;
+          _isLoadingCount = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Lỗi tải số câu Part ${widget.part.partNumber}: $e');
+      if (mounted) {
+        setState(() {
+          _maxQuestions = 0;
+          _questionCount = 0;
+          _isLoadingCount = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +140,8 @@ class _ListeningPartDetailScreenState
             bottom: 0, left: 0, right: 0,
             child: _BottomControls(
               questionCount: _questionCount,
+              maxQuestions: _maxQuestions,
+              isLoading: _isLoadingCount,
               onCountChanged: (v) => setState(() => _questionCount = v),
               onStart: () => Navigator.push(
                 context,
@@ -216,11 +257,15 @@ class _Row extends StatelessWidget {
 class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.questionCount,
+    required this.maxQuestions,
+    required this.isLoading,
     required this.onCountChanged,
     required this.onStart,
   });
 
   final int questionCount;
+  final int maxQuestions;
+  final bool isLoading;
   final ValueChanged<int> onCountChanged;
   final VoidCallback onStart;
 
@@ -247,18 +292,30 @@ class _BottomControls extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.divider),
                 ),
-                child: DropdownButton<int>(
-                  value: questionCount,
-                  isDense: true,
-                  underline: const SizedBox(),
-                  items: [5, 10, 15, 20, 25]
-                      .map((v) => DropdownMenuItem(
-                          value: v, child: Text('$v')))
-                      .toList(),
-                  onChanged: (v) => onCountChanged(v!),
-                  style: const TextStyle(
-                      color: AppColors.textPrimary, fontSize: 14),
-                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        ),
+                      )
+                    : maxQuestions == 0
+                        ? const Text('Không có câu hỏi', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))
+                        : DropdownButton<int>(
+                            value: questionCount,
+                            isDense: true,
+                            underline: const SizedBox(),
+                            menuMaxHeight: 250, // Cố định chiều cao tối đa là 250px để danh sách không bị quá dài
+                            items: List.generate(maxQuestions, (index) => index + 1)
+                                .map((v) => DropdownMenuItem(
+                                    value: v, child: Text('$v')))
+                                .toList(),
+                            onChanged: (v) => onCountChanged(v!),
+                            style: const TextStyle(
+                                color: AppColors.textPrimary, fontSize: 14),
+                          ),
               ),
             ],
           ),
@@ -266,7 +323,7 @@ class _BottomControls extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: onStart,
+              onPressed: (isLoading || maxQuestions == 0) ? null : onStart,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.textOnPrimary,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
@@ -13,11 +14,11 @@ class HomeBottomNav extends StatelessWidget {
   });
 
   static const _items = [
-    _NavItemData(icon: Icons.home_rounded,     label: 'Trang Chủ'),
-    // _NavItemData(icon: Icons.history,           label: 'Lịch sử'),
-    _NavItemData(icon: Icons.grid_view_rounded, label: 'Đề thi'),
-    _NavItemData(icon: Icons.person_outline,    label: 'Hồ sơ'),
-    _NavItemData(icon: Icons.settings_outlined, label: 'Cài đặt'),
+    _NavItemData(icon: Boxicons.bx_home_alt,  label: 'Trang Chủ'),
+    _NavItemData(icon: Boxicons.bx_grid_alt,  label: 'Đề thi'),
+    _NavItemData(icon: Boxicons.bx_trophy,    label: 'BXH'),        // Tab mới ở giữa
+    _NavItemData(icon: Boxicons.bx_user,      label: 'Hồ sơ'),
+    _NavItemData(icon: Boxicons.bx_cog,       label: 'Cài đặt'),
   ];
 
   @override
