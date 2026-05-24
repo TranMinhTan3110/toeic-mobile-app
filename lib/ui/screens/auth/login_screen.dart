@@ -33,10 +33,7 @@ class _LoginViewState extends State<LoginView>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    _fadeAnim = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    );
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.12),
       end: Offset.zero,
@@ -67,7 +64,10 @@ class _LoginViewState extends State<LoginView>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [AppColors.primary.withOpacity(0.12), Colors.transparent],
+                  colors: [
+                    AppColors.primary.withOpacity(0.12),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -81,7 +81,10 @@ class _LoginViewState extends State<LoginView>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [AppColors.primaryDark.withOpacity(0.12), Colors.transparent],
+                  colors: [
+                    AppColors.primaryDark.withOpacity(0.12),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -108,14 +111,19 @@ class _LoginViewState extends State<LoginView>
                               height: 72,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [AppColors.primary, AppColors.primaryDark],
+                                  colors: [
+                                    AppColors.primary,
+                                    AppColors.primaryDark,
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primaryDark.withOpacity(0.3),
+                                    color: AppColors.primaryDark.withOpacity(
+                                      0.3,
+                                    ),
                                     blurRadius: 24,
                                     offset: const Offset(0, 8),
                                   ),
@@ -160,9 +168,12 @@ class _LoginViewState extends State<LoginView>
                           passwordController: _passwordController,
                           obscurePassword: _obscurePassword,
                           isLoading: _isLoading,
-                          onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                          onToggleObscure: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
                           onLogin: () {
-                            final valid = _formKey.currentState?.validate() ?? false;
+                            final valid =
+                                _formKey.currentState?.validate() ?? false;
                             setState(() {});
                             if (valid) {
                               _handleLogin();
@@ -212,8 +223,11 @@ class _LoginViewState extends State<LoginView>
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          icon: const Icon(Icons.g_mobiledata_rounded,
-                              color: Color(0xFFEA4335), size: 30),
+                          icon: const Icon(
+                            Icons.g_mobiledata_rounded,
+                            color: Color(0xFFEA4335),
+                            size: 30,
+                          ),
                           label: const Text(
                             'Tiếp tục với Google',
                             style: TextStyle(
@@ -244,20 +258,27 @@ class _LoginViewState extends State<LoginView>
                                 Navigator.push(
                                   context,
                                   PageRouteBuilder(
-                                    pageBuilder: (_, animation, __) => const RegisterView(),
-                                    transitionsBuilder: (_, animation, __, child) {
-                                      return SlideTransition(
-                                        position: Tween<Offset>(
-                                          begin: const Offset(1, 0),
-                                          end: Offset.zero,
-                                        ).animate(CurvedAnimation(
-                                          parent: animation,
-                                          curve: Curves.easeOutCubic,
-                                        )),
-                                        child: child,
-                                      );
-                                    },
-                                    transitionDuration: const Duration(milliseconds: 400),
+                                    pageBuilder: (_, animation, _) =>
+                                        const RegisterView(),
+                                    transitionsBuilder:
+                                        (_, animation, _, child) {
+                                          return SlideTransition(
+                                            position:
+                                                Tween<Offset>(
+                                                  begin: const Offset(1, 0),
+                                                  end: Offset.zero,
+                                                ).animate(
+                                                  CurvedAnimation(
+                                                    parent: animation,
+                                                    curve: Curves.easeOutCubic,
+                                                  ),
+                                                ),
+                                            child: child,
+                                          );
+                                        },
+                                    transitionDuration: const Duration(
+                                      milliseconds: 400,
+                                    ),
                                   ),
                                 );
                               },
@@ -301,7 +322,7 @@ class _LoginViewState extends State<LoginView>
     }
 
     setState(() => _isLoading = true);
-    
+
     try {
       await _authService.signInWithEmailPassword(email, password);
       if (mounted) {
@@ -313,12 +334,14 @@ class _LoginViewState extends State<LoginView>
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
-      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
         errorMessage = 'Email hoặc mật khẩu không chính xác.';
       } else if (e.code == 'invalid-email') {
         errorMessage = 'Định dạng email không hợp lệ.';
       }
-      
+
       if (mounted) {
         showPremiumErrorDialog(
           context,

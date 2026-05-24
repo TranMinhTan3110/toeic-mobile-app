@@ -3,12 +3,12 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/answer_card.dart';
-import '../../widgets/practice/explanation_widget.dart';
 import '../../widgets/common/audio_player_bar.dart';
 import '../../shared/practice_dialogs.dart';
 import '../../../data/models/listening_data.dart';
 import '../../../providers/listening_provider.dart';
 import '../../../data/models/listening_question.dart';
+import '../../../core/utils/practice_option_parser.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 /// Màn hình làm bài nghe – dùng chung cho cả 4 part.
@@ -64,7 +64,8 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         setState(() {
           _position = p;
           if (_duration.inMilliseconds > 0) {
-            _audioProgress = _position.inMilliseconds / _duration.inMilliseconds;
+            _audioProgress =
+                _position.inMilliseconds / _duration.inMilliseconds;
           }
         });
       }
@@ -85,9 +86,9 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ListeningProvider>().fetchQuestionsByPart(
-            widget.part.partNumber,
-            widget.questionCount,
-          );
+        widget.part.partNumber,
+        widget.questionCount,
+      );
     });
   }
 
@@ -109,18 +110,22 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
       _audioProgress = 0.0;
     });
 
-    _audioPlayer.setSource(UrlSource(url)).then((_) {
-      if (_autoPlay) {
-        _audioPlayer.resume();
-      }
-    }).catchError((e) {
-      debugPrint('Error setting audio source: $e');
-    });
+    _audioPlayer
+        .setSource(UrlSource(url))
+        .then((_) {
+          if (_autoPlay) {
+            _audioPlayer.resume();
+          }
+        })
+        .catchError((e) {
+          debugPrint('Error setting audio source: $e');
+        });
   }
 
   Future<void> _playAudio(String url) async {
     try {
-      if (_audioPlayer.source == null || ( _audioPlayer.source as UrlSource).url != url) {
+      if (_audioPlayer.source == null ||
+          (_audioPlayer.source as UrlSource).url != url) {
         await _audioPlayer.setSource(UrlSource(url));
       }
       await _audioPlayer.resume();
@@ -154,7 +159,9 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
 
   void _nextQuestion() {
     final provider = context.read<ListeningProvider>();
-    final total = partNumber <= 2 ? provider.questions.length : provider.groups.length;
+    final total = partNumber <= 2
+        ? provider.questions.length
+        : provider.groups.length;
 
     _audioPlayer.stop();
 
@@ -203,11 +210,15 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           );
         }
 
-        final total = partNumber <= 2 ? provider.questions.length : provider.groups.length;
+        final total = partNumber <= 2
+            ? provider.questions.length
+            : provider.groups.length;
         if (total == 0) {
           return Scaffold(
             appBar: CustomAppBar(title: 'Không có dữ liệu'),
-            body: const Center(child: Text('Không tìm thấy câu hỏi cho phần này.')),
+            body: const Center(
+              child: Text('Không tìm thấy câu hỏi cho phần này.'),
+            ),
           );
         }
 
@@ -220,7 +231,9 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
 
         // Tải metadata audio ngay khi có URL để lấy thời gian tổng (Duration)
         if (currentAudioUrl != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _initAudio(currentAudioUrl));
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _initAudio(currentAudioUrl),
+          );
         }
 
         return PopScope(
@@ -279,14 +292,22 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
       onBack: () => Navigator.maybePop(context),
       actions: [
         IconButton(
-          icon: const Icon(Icons.error_outline_rounded, color: AppColors.appBarFg, size: 22),
+          icon: const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.appBarFg,
+            size: 22,
+          ),
           onPressed: () => showReportDialog(context),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
         ),
         const SizedBox(width: 4),
         IconButton(
-          icon: const Icon(Icons.settings_rounded, color: AppColors.appBarFg, size: 22),
+          icon: const Icon(
+            Icons.settings_rounded,
+            color: AppColors.appBarFg,
+            size: 22,
+          ),
           onPressed: () => showPracticeSettingsDialog(
             context,
             playbackSpeed: _speed,
@@ -294,14 +315,19 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             showTranscript: _showTranscriptSetting,
             onSpeedChanged: (v) => setState(() => _speed = v),
             onAutoPlayChanged: (v) => setState(() => _autoPlay = v),
-            onTranscriptChanged: (v) => setState(() => _showTranscriptSetting = v),
+            onTranscriptChanged: (v) =>
+                setState(() => _showTranscriptSetting = v),
           ),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
         ),
         const SizedBox(width: 4),
         IconButton(
-          icon: const Icon(Icons.favorite_border_rounded, color: AppColors.appBarFg, size: 22),
+          icon: const Icon(
+            Icons.favorite_border_rounded,
+            color: AppColors.appBarFg,
+            size: 22,
+          ),
           onPressed: () {},
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
@@ -332,12 +358,22 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
-        _QuestionStrip(current: _currentIdx + 1, total: total, partNumber: partNumber),
+        _QuestionStrip(
+          current: _currentIdx + 1,
+          total: total,
+          partNumber: partNumber,
+        ),
         if (partNumber == 1) _buildPart1(provider.questions[_currentIdx]),
         if (partNumber == 2) _buildPart2(provider.questions[_currentIdx]),
-        if (partNumber == 3) _buildPart3or4(provider.groups[_currentIdx], withImage: true),
-        if (partNumber == 4) _buildPart3or4(provider.groups[_currentIdx], withImage: false),
-        if (_submittedKey != null || (partNumber >= 3 && _allSubSubmitted))
+        if (partNumber == 3)
+          _buildPart3or4(provider.groups[_currentIdx], withImage: true),
+        if (partNumber == 4)
+          _buildPart3or4(provider.groups[_currentIdx], withImage: false),
+        if (_submittedKey != null ||
+            (partNumber >= 3 &&
+                _allSubSubmittedFor(
+                  provider.groups[_currentIdx].questions.length,
+                )))
           _NextButton(onTap: _nextQuestion)
         else if (_selectedKey != null && partNumber <= 2)
           _SubmitButton(onTap: _submit),
@@ -345,9 +381,13 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  bool get _allSubSubmitted =>
-      _subSubmitted.length >= 3 &&
-      _subSubmitted.values.every((v) => v != null);
+  bool _allSubSubmittedFor(int questionCount) {
+    if (questionCount <= 0) return false;
+    for (var i = 0; i < questionCount; i++) {
+      if (_subSubmitted[i] == null) return false;
+    }
+    return true;
+  }
 
   Widget _buildPart1(ListeningQuestion q) {
     return Column(
@@ -358,7 +398,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
-              BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: Offset(0, 3)),
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Column(
@@ -367,7 +411,9 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
               _SelectAnswerHeader(),
               if (q.imageUrl != null)
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
                   child: Image.network(
                     q.imageUrl!,
                     height: 220,
@@ -376,7 +422,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                     errorBuilder: (context, error, stackTrace) => Container(
                       height: 220,
                       color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image, size: 60, color: Colors.grey),
+                      child: const Icon(
+                        Icons.broken_image,
+                        size: 60,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 )
@@ -385,16 +435,27 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                   height: 220,
                   width: double.infinity,
                   color: Colors.grey[300],
-                  child: const Icon(Icons.image_rounded, size: 60, color: Colors.grey),
+                  child: const Icon(
+                    Icons.image_rounded,
+                    size: 60,
+                    color: Colors.grey,
+                  ),
                 ),
             ],
           ),
         ),
         AnswerCard(
-          options: q.options.map((opt) => AnswerOption(key: opt.split('.')[0].trim(), text: opt)).toList(),
+          options: PracticeOptionParser.toAnswerOptions(q.options),
           selectedKey: _selectedKey,
-          correctKey: _submittedKey != null ? q.correctAnswer : null,
-          onSelect: _submittedKey == null ? (k) => setState(() => _selectedKey = k) : null,
+          correctKey: _submittedKey != null
+              ? PracticeOptionParser.normalizeCorrectKey(
+                  q.correctAnswer,
+                  options: q.options,
+                )
+              : null,
+          onSelect: _submittedKey == null
+              ? (k) => setState(() => _selectedKey = k)
+              : null,
           title: '',
         ),
       ],
@@ -411,7 +472,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
-              BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: Offset(0, 3)),
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Column(
@@ -427,11 +492,18 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.volume_up_rounded, color: AppColors.primary, size: 28),
+                    Icon(
+                      Icons.volume_up_rounded,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
                     SizedBox(width: 10),
                     Text(
                       'Hãy lắng nghe câu hỏi',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -440,10 +512,17 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           ),
         ),
         AnswerCard(
-          options: q.options.map((opt) => AnswerOption(key: opt.split('.')[0].trim(), text: opt)).toList(),
+          options: PracticeOptionParser.toAnswerOptions(q.options),
           selectedKey: _selectedKey,
-          correctKey: _submittedKey != null ? q.correctAnswer : null,
-          onSelect: _submittedKey == null ? (k) => setState(() => _selectedKey = k) : null,
+          correctKey: _submittedKey != null
+              ? PracticeOptionParser.normalizeCorrectKey(
+                  q.correctAnswer,
+                  options: q.options,
+                )
+              : null,
+          onSelect: _submittedKey == null
+              ? (k) => setState(() => _selectedKey = k)
+              : null,
           title: '',
         ),
       ],
@@ -462,7 +541,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(16),
               boxShadow: const [
-                BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2)),
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
               ],
             ),
             child: ClipRRect(
@@ -471,7 +554,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                 group.imageUrl!,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Icon(Icons.image_rounded, size: 60, color: Colors.grey),
+                  child: Icon(
+                    Icons.image_rounded,
+                    size: 60,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             ),
@@ -481,11 +568,16 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           return _SubQuestion(
             number: i + 1,
             questionText: q.questionText ?? '',
-            options: q.options.map((opt) => AnswerOption(key: opt.split('.')[0].trim(), text: opt)).toList(),
+            options: PracticeOptionParser.toAnswerOptions(q.options),
             selectedKey: _subAnswers[i],
             submittedKey: _subSubmitted[i],
-            correctKey: q.correctAnswer,
-            onSelect: _subSubmitted[i] == null ? (k) => setState(() => _subAnswers[i] = k) : null,
+            correctKey: PracticeOptionParser.normalizeCorrectKey(
+              q.correctAnswer,
+              options: q.options,
+            ),
+            onSelect: _subSubmitted[i] == null
+                ? (k) => setState(() => _subAnswers[i] = k)
+                : null,
             onSubmit: _subAnswers[i] != null && _subSubmitted[i] == null
                 ? () => setState(() => _subSubmitted[i] = _subAnswers[i])
                 : null,
@@ -499,7 +591,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     String script = '';
     String explanation = '';
     String explanationVi = '';
-    
+
     if (partNumber <= 2) {
       final q = provider.questions[_currentIdx];
       script = q.script ?? 'Không có phụ đề cho câu hỏi này.';
@@ -507,20 +599,31 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
       explanationVi = q.explanationVi ?? 'Không có lời dịch cho câu hỏi này.';
     } else {
       final group = provider.groups[_currentIdx];
-      script = group.script ?? group.passageText ?? 'Không có phụ đề cho bài nghe này.';
-      
+      script =
+          group.script ??
+          group.passageText ??
+          'Không có phụ đề cho bài nghe này.';
+
       if (group.questions.isNotEmpty) {
-        explanation = group.questions.map((q) {
-          final idx = group.questions.indexOf(q) + 1;
-          final qText = q.questionText != null ? ' (${q.questionText})' : '';
-          return 'Câu $idx$qText:\n${q.explanation ?? "Chưa có lời giải."}';
-        }).join('\n\n---\n\n');
-        
-        explanationVi = group.questions.map((q) {
-          final idx = group.questions.indexOf(q) + 1;
-          final qText = q.questionText != null ? ' (${q.questionText})' : '';
-          return 'Câu $idx$qText:\n${q.explanationVi ?? "Chưa có lời dịch."}';
-        }).join('\n\n---\n\n');
+        explanation = group.questions
+            .map((q) {
+              final idx = group.questions.indexOf(q) + 1;
+              final qText = q.questionText != null
+                  ? ' (${q.questionText})'
+                  : '';
+              return 'Câu $idx$qText:\n${q.explanation ?? "Chưa có lời giải."}';
+            })
+            .join('\n\n---\n\n');
+
+        explanationVi = group.questions
+            .map((q) {
+              final idx = group.questions.indexOf(q) + 1;
+              final qText = q.questionText != null
+                  ? ' (${q.questionText})'
+                  : '';
+              return 'Câu $idx$qText:\n${q.explanationVi ?? "Chưa có lời dịch."}';
+            })
+            .join('\n\n---\n\n');
       } else {
         explanation = 'Không có lời giải cho bài nghe này.';
         explanationVi = 'Không có lời dịch cho bài nghe này.';
@@ -575,7 +678,11 @@ class _SubQuestion extends StatelessWidget {
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
               boxShadow: const [
-                BoxShadow(color: AppColors.shadow, blurRadius: 6, offset: Offset(0, 2)),
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
               ],
             ),
             child: Row(
@@ -588,14 +695,26 @@ class _SubQuestion extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Center(
-                    child: Text('$number',
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                    child: Text(
+                      '$number',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(questionText,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
+                  child: Text(
+                    questionText,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -618,10 +737,15 @@ class _SubQuestion extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.textOnPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text('Xác nhận', style: TextStyle(fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Xác nhận',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ),
@@ -631,7 +755,11 @@ class _SubQuestion extends StatelessWidget {
 }
 
 class _QuestionStrip extends StatelessWidget {
-  const _QuestionStrip({required this.current, required this.total, required this.partNumber});
+  const _QuestionStrip({
+    required this.current,
+    required this.total,
+    required this.partNumber,
+  });
   final int current, total, partNumber;
 
   @override
@@ -648,7 +776,11 @@ class _QuestionStrip extends StatelessWidget {
             ),
             child: Text(
               'Part $partNumber',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -658,14 +790,22 @@ class _QuestionStrip extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: total > 0 ? current / total : 0,
                 backgroundColor: AppColors.primaryLighter,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
                 minHeight: 5,
               ),
             ),
           ),
           const SizedBox(width: 10),
-          Text('$current/$total',
-              style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+          Text(
+            '$current/$total',
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -687,7 +827,10 @@ class _SelectAnswerHeader extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontSize: 15),
           children: [
             TextSpan(text: 'Select the '),
-            TextSpan(text: 'answer', style: TextStyle(fontWeight: FontWeight.w800)),
+            TextSpan(
+              text: 'answer',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ],
         ),
       ),
@@ -710,10 +853,15 @@ class _SubmitButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.textOnPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-          child: const Text('Xác nhận', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          child: const Text(
+            'Xác nhận',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
         ),
       ),
     );
@@ -733,11 +881,16 @@ class _NextButton extends StatelessWidget {
         child: ElevatedButton.icon(
           onPressed: onTap,
           icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-          label: const Text('Câu tiếp theo', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          label: const Text(
+            'Câu tiếp theo',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryDark,
             foregroundColor: AppColors.textOnPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
@@ -762,7 +915,8 @@ class _ExplanationPanel extends StatefulWidget {
   State<_ExplanationPanel> createState() => _ExplanationPanelState();
 }
 
-class _ExplanationPanelState extends State<_ExplanationPanel> with SingleTickerProviderStateMixin {
+class _ExplanationPanelState extends State<_ExplanationPanel>
+    with SingleTickerProviderStateMixin {
   late TabController _tab;
 
   @override
@@ -796,10 +950,17 @@ class _ExplanationPanelState extends State<_ExplanationPanel> with SingleTickerP
                     controller: _tab,
                     labelColor: Colors.white,
                     unselectedLabelColor: Colors.white60,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
                     indicatorColor: Colors.white,
                     indicatorWeight: 3,
-                    tabs: const [Tab(text: 'Phụ đề'), Tab(text: 'Lời dịch'), Tab(text: 'Lời giải')],
+                    tabs: const [
+                      Tab(text: 'Phụ đề'),
+                      Tab(text: 'Lời dịch'),
+                      Tab(text: 'Lời giải'),
+                    ],
                   ),
                 ),
                 GestureDetector(
@@ -807,8 +968,15 @@ class _ExplanationPanelState extends State<_ExplanationPanel> with SingleTickerP
                   child: Container(
                     width: 28,
                     height: 28,
-                    decoration: const BoxDecoration(color: Colors.white30, shape: BoxShape.circle),
-                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                    decoration: const BoxDecoration(
+                      color: Colors.white30,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
               ],
@@ -839,7 +1007,10 @@ class _ExplanationText extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.7)),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.7),
+      ),
     );
   }
 }

@@ -19,14 +19,14 @@ class HistoryFullSheet extends StatefulWidget {
 
   // ── Helper để mở sheet từ bất kỳ đâu ───────
   static void show(
-      BuildContext context, {
-        required List<HistoryItem> practiceItems,
-        required List<HistoryItem> examItems,
-        int initialTab = 0,
-      }) {
+    BuildContext context, {
+    required List<HistoryItem> practiceItems,
+    required List<HistoryItem> examItems,
+    int initialTab = 0,
+  }) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,         // cho phép chiếm đến 90% màn hình
+      isScrollControlled: true, // cho phép chiếm đến 90% màn hình
       backgroundColor: Colors.transparent,
       builder: (_) => HistoryFullSheet(
         practiceItems: practiceItems,
@@ -163,8 +163,10 @@ class _HistoryFullSheetState extends State<HistoryFullSheet>
       labelColor: AppColors.primary,
       unselectedLabelColor: AppColors.textMuted,
       labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-      unselectedLabelStyle:
-      const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
       indicator: const UnderlineTabIndicator(
         borderSide: BorderSide(color: AppColors.primary, width: 2.5),
         insets: EdgeInsets.symmetric(horizontal: 24),
@@ -184,8 +186,8 @@ class _HistoryFullSheetState extends State<HistoryFullSheet>
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       itemCount: _currentItems.length,
-      separatorBuilder: (_, __) =>
-      const Divider(height: 1, color: AppColors.border),
+      separatorBuilder: (_, _) =>
+          const Divider(height: 1, color: AppColors.border),
       itemBuilder: (_, i) => HistoryRow(item: _currentItems[i]),
     );
   }

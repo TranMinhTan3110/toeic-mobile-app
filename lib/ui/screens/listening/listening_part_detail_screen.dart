@@ -48,8 +48,11 @@ class _ListeningPartDetailScreenState
         });
       }
     } catch (e) {
+      debugPrint('Lỗi tải số câu Part ${widget.part.partNumber}: $e');
       if (mounted) {
         setState(() {
+          _maxQuestions = 0;
+          _questionCount = 0;
           _isLoadingCount = false;
         });
       }
