@@ -36,8 +36,10 @@ class _RegisterViewState extends State<RegisterView>
       duration: const Duration(milliseconds: 900),
     );
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
   }
 
@@ -66,7 +68,10 @@ class _RegisterViewState extends State<RegisterView>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [AppColors.primary.withOpacity(0.12), Colors.transparent],
+                  colors: [
+                    AppColors.primary.withOpacity(0.12),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -80,7 +85,10 @@ class _RegisterViewState extends State<RegisterView>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [AppColors.primaryDark.withOpacity(0.12), Colors.transparent],
+                  colors: [
+                    AppColors.primaryDark.withOpacity(0.12),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -106,7 +114,10 @@ class _RegisterViewState extends State<RegisterView>
                             height: 52,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [AppColors.primary, AppColors.primaryDark],
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primaryDark,
+                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -163,16 +174,26 @@ class _RegisterViewState extends State<RegisterView>
                           obscureConfirm: _obscureConfirm,
                           isLoading: _isLoading,
                           agreeTerms: _agreeTerms,
-                          onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
-                          onToggleConfirm: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                          onToggleAgree: () => setState(() => _agreeTerms = !_agreeTerms),
+                          onTogglePassword: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                          onToggleConfirm: () => setState(
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
+                          onToggleAgree: () =>
+                              setState(() => _agreeTerms = !_agreeTerms),
                           onRegister: () {
-                            final valid = _formKey.currentState?.validate() ?? false;
+                            final valid =
+                                _formKey.currentState?.validate() ?? false;
                             setState(() {});
-                            final agreedError = Validators.mustAgree(_agreeTerms);
+                            final agreedError = Validators.mustAgree(
+                              _agreeTerms,
+                            );
                             if (!valid) return;
                             if (agreedError != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(agreedError)));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(agreedError)),
+                              );
                               return;
                             }
                             _handleRegister();
@@ -180,7 +201,10 @@ class _RegisterViewState extends State<RegisterView>
                           nameValidator: (v) => Validators.name(v),
                           emailValidator: (v) => Validators.email(v),
                           passwordValidator: (v) => Validators.password(v),
-                          confirmValidator: (v) => Validators.confirmPassword(v, _passwordController.text),
+                          confirmValidator: (v) => Validators.confirmPassword(
+                            v,
+                            _passwordController.text,
+                          ),
                         ),
                       ),
 
@@ -190,7 +214,10 @@ class _RegisterViewState extends State<RegisterView>
                       Row(
                         children: [
                           Expanded(
-                            child: Divider(color: AppColors.primaryLighter, thickness: 1),
+                            child: Divider(
+                              color: AppColors.primaryLighter,
+                              thickness: 1,
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -204,7 +231,10 @@ class _RegisterViewState extends State<RegisterView>
                             ),
                           ),
                           Expanded(
-                            child: Divider(color: AppColors.primaryLighter, thickness: 1),
+                            child: Divider(
+                              color: AppColors.primaryLighter,
+                              thickness: 1,
+                            ),
                           ),
                         ],
                       ),
@@ -324,7 +354,7 @@ class _RegisterViewState extends State<RegisterView>
         password,
         displayName: name, // Truyền tên để set TRƯỚC khi sync backend
       );
-      
+
       // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
       if (mounted) {
         Navigator.pop(context);
@@ -338,7 +368,7 @@ class _RegisterViewState extends State<RegisterView>
       } else if (e.code == 'invalid-email') {
         errorMessage = 'Định dạng email không hợp lệ.';
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -356,7 +386,7 @@ class _RegisterViewState extends State<RegisterView>
     try {
       final user = await _authService.signInWithGoogle();
       if (user == null) return;
-      
+
       if (mounted) {
         Navigator.pop(context);
       }
@@ -371,5 +401,4 @@ class _RegisterViewState extends State<RegisterView>
       }
     }
   }
-
 }

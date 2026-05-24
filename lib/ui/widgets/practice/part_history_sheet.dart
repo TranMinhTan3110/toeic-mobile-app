@@ -75,7 +75,9 @@ class PartHistorySheet extends StatelessWidget {
                       Text(
                         partTitle,
                         style: const TextStyle(
-                            fontSize: 13, color: AppColors.textSecondary),
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -89,8 +91,11 @@ class PartHistorySheet extends StatelessWidget {
                       color: AppColors.surfaceVariant,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.close_rounded,
-                        size: 16, color: AppColors.textSecondary),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -103,9 +108,11 @@ class PartHistorySheet extends StatelessWidget {
                 ? _emptyState()
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 8),
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         const Divider(height: 1, color: AppColors.divider),
                     itemBuilder: (_, i) => _HistoryRow(item: items[i]),
                   ),
@@ -120,11 +127,16 @@ class PartHistorySheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.history_rounded,
-              size: 48, color: AppColors.textHint.withOpacity(0.4)),
+          Icon(
+            Icons.history_rounded,
+            size: 48,
+            color: AppColors.textHint.withOpacity(0.4),
+          ),
           const SizedBox(height: 12),
-          const Text('Chưa có lịch sử',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          const Text(
+            'Chưa có lịch sử',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          ),
         ],
       ),
     );
@@ -155,11 +167,14 @@ class _HistoryRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
-              child: Text('Aa',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary)),
+              child: Text(
+                'Aa',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -167,16 +182,21 @@ class _HistoryRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary)),
+                Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   '${item.correct}/${item.total} câu đúng',
                   style: const TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary),
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -184,9 +204,10 @@ class _HistoryRow extends StatelessWidget {
           Text(
             '${item.percent.toInt()}%',
             style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: _color),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _color,
+            ),
           ),
         ],
       ),
