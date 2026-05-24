@@ -132,11 +132,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           text: text,
           color: color,
           onComplete: () {
-            setState(() {
-              _floatingTexts.removeWhere(
-                (widget) => widget.key == ValueKey(id),
-              );
-            });
+            if (mounted) {
+              setState(() {
+                _floatingTexts.removeWhere(
+                  (widget) => widget.key == ValueKey(id),
+                );
+              });
+            }
           },
         ),
       );
@@ -375,7 +377,11 @@ class _FloatingTextAnimationState extends State<_FloatingTextAnimation>
       end: 150.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    _controller.forward().then((_) => widget.onComplete());
+    _controller.forward().then((_) {
+      if (mounted) {
+        widget.onComplete();
+      }
+    });
   }
 
   @override
@@ -386,12 +392,16 @@ class _FloatingTextAnimationState extends State<_FloatingTextAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final topOffset = mediaQuery.size.height * 0.4;
+    final rightOffset = mediaQuery.size.width * 0.1;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Positioned(
-          top: MediaQuery.of(context).size.height * 0.4 - _position.value,
-          right: MediaQuery.of(context).size.width * 0.1,
+          top: topOffset - _position.value,
+          right: rightOffset,
           child: Opacity(
             opacity: _opacity.value,
             child: Text(

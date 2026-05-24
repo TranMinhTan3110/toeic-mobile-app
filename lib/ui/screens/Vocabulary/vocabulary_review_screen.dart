@@ -502,7 +502,11 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
     _position = Tween<double>(begin: 0.0, end: 140.0)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    _controller.forward().then((_) => widget.onComplete());
+    _controller.forward().then((_) {
+      if (mounted) {
+        widget.onComplete();
+      }
+    });
   }
 
   @override
@@ -513,12 +517,16 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final topOffset = mediaQuery.size.height * 0.38;
+    final rightOffset = mediaQuery.size.width * 0.08;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Positioned(
-          top: MediaQuery.of(context).size.height * 0.38 - _position.value,
-          right: MediaQuery.of(context).size.width * 0.08,
+          top: topOffset - _position.value,
+          right: rightOffset,
           child: Opacity(
             opacity: _opacity.value,
             child: Text(
