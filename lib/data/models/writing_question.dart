@@ -13,6 +13,8 @@ class WritingQuestion {
   final int maxScore;
   final List<String> scoringCriteria;
   final String? sampleAnswer;
+  final String? sampleAnswerTranslation;
+  final String? explanationVietnamese;
   final String? topic;
   final String difficulty;
   final String? examSetId;
@@ -33,6 +35,8 @@ class WritingQuestion {
     required this.maxScore,
     required this.scoringCriteria,
     this.sampleAnswer,
+    this.sampleAnswerTranslation,
+    this.explanationVietnamese,
     this.topic,
     required this.difficulty,
     this.examSetId,
@@ -55,6 +59,8 @@ class WritingQuestion {
       maxScore: json['maxScore'] ?? 0,
       scoringCriteria: List<String>.from(json['scoringCriteria'] ?? []),
       sampleAnswer: json['sampleAnswer'],
+      sampleAnswerTranslation: json['sampleAnswerTranslation'],
+      explanationVietnamese: json['explanationVietnamese'],
       topic: json['topic'],
       difficulty: json['difficulty'] ?? '',
       examSetId: json['examSetId'],
@@ -78,6 +84,8 @@ class WritingQuestion {
       'maxScore': maxScore,
       'scoringCriteria': scoringCriteria,
       'sampleAnswer': sampleAnswer,
+      'sampleAnswerTranslation': sampleAnswerTranslation,
+      'explanationVietnamese': explanationVietnamese,
       'topic': topic,
       'difficulty': difficulty,
       'examSetId': examSetId,

@@ -8,7 +8,9 @@ class WritingRepository {
   /// Get all writing questions
   Future<List<WritingQuestion>> getAll() async {
     try {
-      final response = await _dio.get('${AppConstants.baseUrl}/writing-questions');
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing-questions',
+      );
       final List<dynamic> data = response.data;
       return data.map((json) => WritingQuestion.fromJson(json)).toList();
     } catch (e) {
@@ -19,7 +21,9 @@ class WritingRepository {
   /// Get writing question by ID
   Future<WritingQuestion> getById(String id) async {
     try {
-      final response = await _dio.get('${AppConstants.baseUrl}/writing-questions/$id');
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing-questions/$id',
+      );
       return WritingQuestion.fromJson(response.data);
     } catch (e) {
       throw Exception('Lỗi khi tải câu hỏi Writing ID $id: $e');
@@ -75,6 +79,36 @@ class WritingRepository {
       return data.map((json) => WritingQuestion.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Lỗi khi tải câu hỏi Writing practice: $e');
+    }
+  }
+
+  /// Get practice questions by task type
+  Future<List<WritingQuestion>> getPracticeByTaskType(String taskType) async {
+    try {
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing-questions/by-type/$taskType/practice',
+      );
+      final List<dynamic> data = response.data;
+      return data.map((json) => WritingQuestion.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception(
+        'Lỗi khi tải câu hỏi Writing practice task type $taskType: $e',
+      );
+    }
+  }
+
+  /// Get exam questions by task type
+  Future<List<WritingQuestion>> getExamByTaskType(String taskType) async {
+    try {
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing-questions/by-type/$taskType/exam',
+      );
+      final List<dynamic> data = response.data;
+      return data.map((json) => WritingQuestion.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception(
+        'Lỗi khi tải câu hỏi Writing exam task type $taskType: $e',
+      );
     }
   }
 

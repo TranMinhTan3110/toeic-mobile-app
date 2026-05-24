@@ -36,13 +36,14 @@ class _ReadingAnswersScreenState extends State<ReadingAnswersScreen>
   List<int> _filteredIndices() {
     final all = List<int>.generate(widget.questions.length, (i) => i);
     if (_tabController.index == 0) return all;
-    if (_tabController.index == 1)
+    if (_tabController.index == 1) {
       return all
           .where(
             (i) =>
                 widget.selectedIndices[i] == widget.questions[i].correctIndex,
           )
           .toList();
+    }
     return all
         .where(
           (i) => widget.selectedIndices[i] != widget.questions[i].correctIndex,

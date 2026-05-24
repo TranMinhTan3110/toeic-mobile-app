@@ -19,6 +19,7 @@ class _EssayWritingTestScreenState extends State<EssayWritingTestScreen> {
   int _currentQ = 0;
   bool _isLoading = true;
   String? _error;
+  bool _showExplanation = false;
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -30,7 +31,9 @@ class _EssayWritingTestScreenState extends State<EssayWritingTestScreen> {
 
   Future<void> _loadQuestions() async {
     try {
-      final questions = await _repository.getByTaskType('opinion_essay');
+      final questions = await _repository.getPracticeByTaskType(
+        'opinion_essay',
+      );
       setState(() {
         _questions = questions;
         _currentQ = 0;
@@ -124,100 +127,123 @@ class _EssayWritingTestScreenState extends State<EssayWritingTestScreen> {
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
+          // Explanation button
+          GestureDetector(
+            onTap: () => setState(() => _showExplanation = !_showExplanation),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: const Text(
+                'Giải thích',
+                style: TextStyle(
+                  color: AppColors.appBarFg,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Text(
-              'Câu $questionNumber/${_questions.length}',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Text(
-              'Viết luận',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: EssayPromptCard(prompt: currentQuestion.promptText),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
+          ListView(
+            padding: const EdgeInsets.only(bottom: 24),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  'Câu $questionNumber/${_questions.length}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
+                ),
               ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.lightbulb_rounded,
-                    size: 20,
-                    color: AppColors.primary,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  'Viết luận',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
-                  SizedBox(width: 10),
-                  Expanded(child: BoldTextLabel(text: 'Write your essay')),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.divider),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
                 ),
-              ],
-            ),
-            child: TextField(
-              controller: _controller,
-              maxLines: 10,
-              decoration: InputDecoration(
-                hintText: 'Viết bài luận của bạn...',
-                hintStyle: const TextStyle(
-                  color: AppColors.textHint,
-                  fontSize: 14,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: EssayPromptCard(prompt: currentQuestion.promptText),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: AppColors.shadow,
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_rounded,
+                        size: 20,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(child: BoldTextLabel(text: 'Write your essay')),
+                    ],
+                  ),
                 ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
               ),
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.divider),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: AppColors.shadow,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _controller,
+                  maxLines: 10,
+                  decoration: InputDecoration(
+                    hintText: 'Viết bài luận của bạn...',
+                    hintStyle: const TextStyle(
+                      color: AppColors.textHint,
+                      fontSize: 14,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 24),
+            ],
           ),
-          const SizedBox(height: 24),
+          if (_showExplanation) _buildExplanationPanel(currentQuestion),
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -267,6 +293,140 @@ class _EssayWritingTestScreenState extends State<EssayWritingTestScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildExplanationPanel(WritingQuestion question) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: _WritingExplanationPanel(
+        question: question,
+        taskType: question.taskType,
+        onClose: () => setState(() => _showExplanation = false),
+      ),
+    );
+  }
+}
+
+// ── Explanation panel ─────────────────────────────────────────────────────────
+
+class _WritingExplanationPanel extends StatefulWidget {
+  const _WritingExplanationPanel({
+    required this.question,
+    required this.taskType,
+    required this.onClose,
+  });
+
+  final WritingQuestion question;
+  final String taskType;
+  final VoidCallback onClose;
+
+  @override
+  State<_WritingExplanationPanel> createState() =>
+      _WritingExplanationPanelState();
+}
+
+class _WritingExplanationPanelState extends State<_WritingExplanationPanel>
+    with SingleTickerProviderStateMixin {
+  late TabController _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    // Always show 2 tabs for essay writing
+    _tab = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TabBar(
+                    controller: _tab,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white60,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                    indicatorColor: Colors.white,
+                    indicatorWeight: 3,
+                    tabs: _buildTabs(),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: widget.onClose,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white30,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 200,
+            child: TabBarView(controller: _tab, children: _buildTabContents()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Tab> _buildTabs() {
+    return const [Tab(text: 'Bài mẫu'), Tab(text: 'Dịch bài mẫu')];
+  }
+
+  List<Widget> _buildTabContents() {
+    return [
+      _ExplanationText(widget.question.sampleAnswer ?? 'Không có bài mẫu'),
+      _ExplanationText(
+        widget.question.sampleAnswerTranslation ?? 'Không có bản dịch',
+      ),
+    ];
+  }
+}
+
+class _ExplanationText extends StatelessWidget {
+  const _ExplanationText(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.7),
       ),
     );
   }

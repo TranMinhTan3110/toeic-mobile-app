@@ -19,6 +19,7 @@ class MockWritingQuestions {
       maxScore: 10,
       scoringCriteria: ['grammar', 'vocabulary'],
       sampleAnswer: 'There is a cup of coffee on the table.',
+      sampleAnswerTranslation: 'Có một tách cà phê trên bàn.',
       topic: null,
       difficulty: 'easy',
       examSetId: null,
@@ -40,6 +41,8 @@ class MockWritingQuestions {
       maxScore: 10,
       scoringCriteria: ['grammar', 'vocabulary'],
       sampleAnswer: 'Two people are having a meeting in the office.',
+      sampleAnswerTranslation:
+          'Hai người đang có một cuộc họp trong văn phòng.',
       topic: null,
       difficulty: 'easy',
       examSetId: null,
@@ -58,7 +61,7 @@ class MockWritingQuestions {
           'Hi,\n\nI hope this email finds you well. I wanted to discuss the project timeline with you.\n\nBest regards,\nJohn',
       emailQuestions: [
         'When can you meet to discuss the project?',
-        'What are your thoughts on the proposed timeline?'
+        'What are your thoughts on the proposed timeline?',
       ],
       timeLimit: 10,
       minWords: 30,
@@ -66,6 +69,7 @@ class MockWritingQuestions {
       maxScore: 25,
       scoringCriteria: ['grammar', 'vocabulary', 'cohesion', 'relevance'],
       sampleAnswer: null,
+      sampleAnswerTranslation: null,
       topic: null,
       difficulty: 'medium',
       examSetId: null,
@@ -82,7 +86,7 @@ class MockWritingQuestions {
           'Dear Ms. Anderson,\n\nWe would like to schedule a meeting to review the quarterly results.\n\nRegards,\nMr. Smith',
       emailQuestions: [
         'Confirm your availability for the meeting.',
-        'Suggest an alternative date if you are not available.'
+        'Suggest an alternative date if you are not available.',
       ],
       timeLimit: 10,
       minWords: 30,
@@ -90,6 +94,7 @@ class MockWritingQuestions {
       maxScore: 25,
       scoringCriteria: ['grammar', 'vocabulary', 'cohesion', 'relevance'],
       sampleAnswer: null,
+      sampleAnswerTranslation: null,
       topic: null,
       difficulty: 'medium',
       examSetId: null,
@@ -113,6 +118,7 @@ class MockWritingQuestions {
       maxScore: 30,
       scoringCriteria: ['grammar', 'vocabulary', 'cohesion', 'relevance'],
       sampleAnswer: null,
+      sampleAnswerTranslation: null,
       topic: 'Teamwork vs Individual Work',
       difficulty: 'hard',
       examSetId: null,
@@ -134,6 +140,7 @@ class MockWritingQuestions {
       maxScore: 30,
       scoringCriteria: ['grammar', 'vocabulary', 'cohesion', 'relevance'],
       sampleAnswer: null,
+      sampleAnswerTranslation: null,
       topic: 'Success in Life',
       difficulty: 'hard',
       examSetId: null,
