@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:quickalert/quickalert.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 
 // ── Report dialog (dấu chấm than) ────────────────────────────────────────────
@@ -298,3 +300,276 @@ class _SwitchRow extends StatelessWidget {
     );
   }
 }
+
+Future<bool> showExitPracticeDialog(BuildContext context, {String? text}) async {
+  return showPremiumConfirmDialog(
+    context,
+    title: 'Thoát bài học?',
+    text: text ?? 'Tiến trình hiện tại sẽ không được lưu. Bạn có chắc chắn muốn thoát không?',
+    confirmText: 'Thoát',
+    cancelText: 'Ở lại',
+  );
+}
+
+// ── CUSTOM PREMIUM DIALOGS ───────────────────────────────────────────────────
+
+void showPremiumSuccessDialog(BuildContext context, {required String title, required String text, VoidCallback? onConfirm}) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PremiumDialog(
+      title: title,
+      text: text,
+      confirmBtnText: 'Tuyệt vời',
+      cancelBtnText: 'Đóng',
+      onConfirm: () {
+        Navigator.pop(context);
+        if (onConfirm != null) onConfirm();
+      },
+      onCancel: () => Navigator.pop(context),
+      icon: Boxicons.bx_check_circle,
+      iconGradientColors: const [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+    ),
+  );
+}
+
+void showPremiumErrorDialog(BuildContext context, {required String title, required String text}) {
+  showDialog(
+    context: context,
+    builder: (_) => PremiumDialog(
+      title: title,
+      text: text,
+      confirmBtnText: 'Đã hiểu',
+      cancelBtnText: 'Đóng',
+      onConfirm: () => Navigator.pop(context),
+      onCancel: () => Navigator.pop(context),
+      icon: Boxicons.bx_x_circle,
+      iconGradientColors: const [Color(0xFFD32F2F), Color(0xFFC62828)],
+    ),
+  );
+}
+
+void showPremiumWarningDialog(BuildContext context, {required String title, required String text}) {
+  showDialog(
+    context: context,
+    builder: (_) => PremiumDialog(
+      title: title,
+      text: text,
+      confirmBtnText: 'Đã hiểu',
+      cancelBtnText: 'Đóng',
+      onConfirm: () => Navigator.pop(context),
+      onCancel: () => Navigator.pop(context),
+      icon: Boxicons.bx_error,
+      iconGradientColors: const [Color(0xFFF57C00), Color(0xFFE65100)],
+    ),
+  );
+}
+
+Future<bool> showPremiumConfirmDialog(
+  BuildContext context, {
+  required String title,
+  required String text,
+  required String confirmText,
+  required String cancelText,
+  List<Color>? gradientColors,
+  IconData? icon,
+}) async {
+  bool result = false;
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PremiumDialog(
+      title: title,
+      text: text,
+      confirmBtnText: confirmText,
+      cancelBtnText: cancelText,
+      onConfirm: () {
+        result = true;
+        Navigator.pop(context);
+      },
+      onCancel: () {
+        result = false;
+        Navigator.pop(context);
+      },
+      icon: icon ?? Boxicons.bx_help_circle,
+      iconGradientColors: gradientColors ?? const [AppColors.primary, AppColors.primaryDark],
+    ),
+  );
+  return result;
+}
+
+class PremiumDialog extends StatelessWidget {
+  final String title;
+  final String text;
+  final String confirmBtnText;
+  final String cancelBtnText;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+  final IconData icon;
+  final List<Color> iconGradientColors;
+
+  const PremiumDialog({
+    super.key,
+    required this.title,
+    required this.text,
+    required this.confirmBtnText,
+    required this.cancelBtnText,
+    required this.onConfirm,
+    required this.onCancel,
+    this.icon = Boxicons.bx_help_circle,
+    this.iconGradientColors = const [AppColors.primary, AppColors.primaryDark],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutBack,
+        builder: (context, scale, child) {
+          return Transform.scale(
+            scale: scale,
+            child: child,
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: iconGradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: iconGradientColors.first.withOpacity(0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: onCancel,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          foregroundColor: AppColors.textSecondary,
+                        ),
+                        child: Text(
+                          cancelBtnText,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: LinearGradient(
+                            colors: iconGradientColors,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: iconGradientColors.first.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: onConfirm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text(
+                            confirmBtnText,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

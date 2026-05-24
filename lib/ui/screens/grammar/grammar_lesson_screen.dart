@@ -7,6 +7,7 @@ import '../../../providers/grammar_provider.dart';
 import '../../../providers/user_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../../data/models/grammar_model.dart';
+import '../../shared/practice_dialogs.dart';
 
 class GrammarLessonScreen extends StatefulWidget {
   final GrammarTopic topic;
@@ -191,11 +192,24 @@ class _GrammarLessonScreenState extends State<GrammarLessonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: CustomAppBar(
-        title: 'Bài Học Lý Thuyết',
-      ),
+    return PopScope(
+      canPop: _isEarned,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Bạn chưa hoàn thành bài học lý thuyết này để nhận EP. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Bài Học Lý Thuyết',
+          onBack: () => Navigator.maybePop(context),
+        ),
       body: Consumer<GrammarProvider>(
         builder: (context, grammarProvider, child) {
           if (grammarProvider.isLoadingLesson) {
@@ -429,6 +443,7 @@ class _GrammarLessonScreenState extends State<GrammarLessonScreen> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

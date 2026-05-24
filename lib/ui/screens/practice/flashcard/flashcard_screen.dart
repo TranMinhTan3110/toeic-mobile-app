@@ -9,6 +9,7 @@ import '../../../../providers/user_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/flashcard/flip_flashcard.dart';
 import '../../../widgets/common/custom_app_bar.dart';
+import '../../../shared/practice_dialogs.dart';
 
 class FlashcardScreen extends StatefulWidget {
   final List<VocabularyModel> vocabularies;
@@ -26,6 +27,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   int earnedEP = 0;
   int _currentIndex = 0;
   late int _totalInitialCount;
+  bool _isFinished = false;
 
   // Danh sách các Widget animation bay lên
   List<Widget> _floatingTexts = [];
@@ -161,6 +163,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   }
 
   void _onEnd() {
+    setState(() {
+      _isFinished = true;
+    });
     // Hoàn thành bộ Flashcard (không tự ý cộng 50 EP ảo nữa)
     showDialog(
       context: context,
@@ -205,12 +210,27 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(title: "Luyện Flashcard"),
-      body: Stack(
-        children: [
-          Column(
+    return PopScope(
+      canPop: _isFinished,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình luyện Flashcard của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: "Luyện Flashcard",
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Stack(
+          children: [
+            Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -300,7 +320,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           ..._floatingTexts,
         ],
       ), // Đóng Stack
-    ); // Đóng Scaffold
+      ), // Đóng Scaffold
+    ); // Đóng PopScope
   }
 
   Widget _buildActionButton({

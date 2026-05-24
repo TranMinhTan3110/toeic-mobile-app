@@ -8,6 +8,7 @@ import '../../../providers/user_provider.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/flashcard/flip_flashcard.dart';
+import '../../shared/practice_dialogs.dart';
 
 class VocabularyReviewScreen extends StatefulWidget {
   const VocabularyReviewScreen({super.key});
@@ -149,17 +150,31 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
-        title: 'Ôn tập từ vựng',
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          _buildBody(),
-          ..._floatingTexts,
-        ],
+    return PopScope(
+      canPop: _currentIndex >= _dueWords.length || _dueWords.isEmpty,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình ôn tập từ vựng của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Ôn tập từ vựng',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Stack(
+          children: [
+            _buildBody(),
+            ..._floatingTexts,
+          ],
+        ),
       ),
     );
   }

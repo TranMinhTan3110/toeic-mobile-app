@@ -11,6 +11,7 @@ import '../../../data/models/vocabulary_model.dart';
 import '../../../core/services/tts_service.dart';
 import '../../../providers/user_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../../shared/practice_dialogs.dart';
 
 class VocabularySpeakingScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -360,16 +361,29 @@ class _VocabularySpeakingScreenState extends State<VocabularySpeakingScreen> wit
   Widget build(BuildContext context) {
     final progress = (_currentIndex + 1) / widget.words.length;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: CustomAppBar(
-        title: 'Luyện nói từ vựng',
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Progress Bar
-          LinearProgressIndicator(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình luyện nói từ vựng của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Luyện nói từ vựng',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Column(
+          children: [
+            // Progress Bar
+            LinearProgressIndicator(
             value: progress,
             backgroundColor: AppColors.divider,
             color: AppColors.primary,
@@ -419,8 +433,9 @@ class _VocabularySpeakingScreenState extends State<VocabularySpeakingScreen> wit
           _buildBottomActionButtons(),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildWordCard() {
     return Container(

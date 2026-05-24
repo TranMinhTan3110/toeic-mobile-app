@@ -6,6 +6,7 @@ import '../../../providers/grammar_provider.dart';
 import '../../../providers/user_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../../data/models/grammar_model.dart';
+import '../../shared/practice_dialogs.dart';
 import '../../../data/models/listening_question.dart';
 
 class GrammarExerciseScreen extends StatefulWidget {
@@ -244,11 +245,24 @@ class _GrammarExerciseScreenState extends State<GrammarExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: CustomAppBar(
-        title: 'Luyện Tập Ngữ Pháp',
-      ),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình làm bài tập ngữ pháp của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Luyện Tập Ngữ Pháp',
+          onBack: () => Navigator.maybePop(context),
+        ),
       body: Consumer<GrammarProvider>(
         builder: (context, grammarProvider, child) {
           if (grammarProvider.isLoadingExercises) {
@@ -420,8 +434,9 @@ class _GrammarExerciseScreenState extends State<GrammarExerciseScreen> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildProgressHeader(int totalCount) {
     final progress = (_currentIndex + 1) / totalCount;
