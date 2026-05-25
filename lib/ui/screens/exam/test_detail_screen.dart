@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/test_info.dart';
 import '../../widgets/buttons/start_exam_button.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import 'exam_taking_screen.dart';
 
 class TestDetailScreen extends StatelessWidget {
   final TestInfo testData;
@@ -97,8 +98,15 @@ class TestDetailScreen extends StatelessWidget {
             // Nút bắt đầu
             StartExamButton(
               onPressed: () {
-                print("Bắt đầu làm bài: ${testData.title}");
-                // TODO: Thêm logic điều hướng sang màn hình làm bài
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ExamTakingScreen(
+                      examId: testData.id,
+                      examTitle: testData.title,
+                    ),
+                  ),
+                );
               },
             ),
 

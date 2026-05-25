@@ -13,23 +13,27 @@ class TestListScreen extends StatelessWidget {
   List<TestInfo> _generateMockTests(String prefix) {
     return List.generate(
       8,
-      (index) => TestInfo(
-        title: 'Test ${10 - index} $prefix',
-      ), // Đếm ngược từ 10 xuống
+      (index) {
+        int testNumber = index + 1;
+        return TestInfo(
+          id: 'ets_2024_test_$testNumber',
+          title: 'Test $testNumber $prefix',
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final listReading = _generateMockTests('ETS 2023');
-    final listWriting = _generateMockTests('Writing 2023');
+    final listReading = _generateMockTests('ETS 2024');
+    final listWriting = _generateMockTests('Writing 2024');
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(
         title: 'Thi thử',
         centerTitle: true,
-        showBackButton: false,
+        showBackButton: true,
       ),
       body: SingleChildScrollView(
         child: Padding(
