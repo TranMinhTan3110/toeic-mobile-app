@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:toeicmobileapp/ui/shared/practice_dialogs.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/utils/validators.dart';
@@ -312,8 +313,10 @@ class _LoginViewState extends State<LoginView>
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ Email và Mật khẩu')),
+      showPremiumWarningDialog(
+        context,
+        title: 'Thông báo',
+        text: 'Vui lòng nhập đầy đủ Email và Mật khẩu',
       );
       return;
     }
@@ -322,7 +325,13 @@ class _LoginViewState extends State<LoginView>
 
     try {
       await _authService.signInWithEmailPassword(email, password);
-      // Đăng nhập thành công, StreamBuilder ở main.dart sẽ tự động đưa về HomeScreen
+      if (mounted) {
+        showPremiumSuccessDialog(
+          context,
+          title: 'Đăng nhập thành công',
+          text: 'Chào mừng bạn quay lại với TOEIC Master! 🎉',
+        );
+      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'user-not-found' ||
@@ -334,11 +343,10 @@ class _LoginViewState extends State<LoginView>
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red.shade400,
-          ),
+        showPremiumErrorDialog(
+          context,
+          title: 'Đăng nhập thất bại',
+          text: errorMessage,
         );
       }
     } finally {
@@ -353,14 +361,19 @@ class _LoginViewState extends State<LoginView>
         // User hủy bỏ đăng nhập
         return;
       }
-      // Đăng nhập thành công, StreamBuilder tự chuyển trang
+      if (mounted) {
+        showPremiumSuccessDialog(
+          context,
+          title: 'Đăng nhập thành công',
+          text: 'Chào mừng bạn đến với TOEIC Master! 🎉',
+        );
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi: $e'),
-            backgroundColor: Colors.red.shade400,
-          ),
+        showPremiumErrorDialog(
+          context,
+          title: 'Đăng nhập thất bại',
+          text: 'Đăng nhập Google thất bại!',
         );
       }
     }

@@ -236,36 +236,50 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
           );
         }
 
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _buildAppBar(),
-          body: Column(
-            children: [
-              AudioPlayerBar(
-                isPlaying: _isPlaying,
-                progress: _audioProgress,
-                elapsed: _formatDuration(_position),
-                total: _formatDuration(_duration),
-                onPlayPause: () => _togglePlayPause(currentAudioUrl),
-                onRewind: _rewind,
-                onForward: _forward,
-                onSeek: (value) {
-                  final newPos = Duration(
-                    milliseconds: (value * _duration.inMilliseconds).toInt(),
-                  );
-                  _audioPlayer.seek(newPos);
-                },
-              ),
-              const Divider(height: 1, color: AppColors.divider),
-              Expanded(
-                child: Stack(
-                  children: [
-                    _buildContent(provider, total),
-                    if (_showExplanation) _buildExplanationPanel(provider),
-                  ],
+        return PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) async {
+            if (didPop) return;
+            if (_isPlaying) {
+              _audioPlayer.pause();
+            }
+            final exit = await showExitPracticeDialog(
+              context,
+              text: 'Tiến trình làm bài nghe của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+            );
+            if (exit && mounted) {
+              Navigator.pop(context);
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: _buildAppBar(),
+            body: Column(
+              children: [
+                AudioPlayerBar(
+                  isPlaying: _isPlaying,
+                  progress: _audioProgress,
+                  elapsed: _formatDuration(_position),
+                  total: _formatDuration(_duration),
+                  onPlayPause: () => _togglePlayPause(currentAudioUrl),
+                  onRewind: _rewind,
+                  onForward: _forward,
+                  onSeek: (value) {
+                    final newPos = Duration(milliseconds: (value * _duration.inMilliseconds).toInt());
+                    _audioPlayer.seek(newPos);
+                  },
                 ),
-              ),
-            ],
+                const Divider(height: 1, color: AppColors.divider),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      _buildContent(provider, total),
+                      if (_showExplanation) _buildExplanationPanel(provider),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -275,6 +289,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   CustomAppBar _buildAppBar() {
     return CustomAppBar(
       title: 'Câu ${_currentIdx + 1}',
+      onBack: () => Navigator.maybePop(context),
       actions: [
         IconButton(
           icon: const Icon(

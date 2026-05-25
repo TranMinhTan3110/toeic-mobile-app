@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:toeicmobileapp/ui/shared/practice_dialogs.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/utils/validators.dart';
@@ -191,8 +192,10 @@ class _RegisterViewState extends State<RegisterView>
                             );
                             if (!valid) return;
                             if (agreedError != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(agreedError)),
+                              showPremiumWarningDialog(
+                                context,
+                                title: 'Thông báo',
+                                text: agreedError,
                               );
                               return;
                             }
@@ -333,15 +336,19 @@ class _RegisterViewState extends State<RegisterView>
     final name = _nameController.text.trim();
 
     if (name.isEmpty || email.isEmpty || password.isEmpty || confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+      showPremiumWarningDialog(
+        context,
+        title: 'Thông báo',
+        text: 'Vui lòng điền đầy đủ thông tin',
       );
       return;
     }
 
     if (password != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mật khẩu xác nhận không khớp')),
+      showPremiumWarningDialog(
+        context,
+        title: 'Thông báo',
+        text: 'Mật khẩu xác nhận không khớp',
       );
       return;
     }
@@ -352,12 +359,21 @@ class _RegisterViewState extends State<RegisterView>
       final userCred = await _authService.registerWithEmailPassword(
         email,
         password,
-        displayName: name, // Truyền tên để set TRƯỚC khi sync backend
+        displayName: name,
       );
 
       // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
       if (mounted) {
-        Navigator.pop(context);
+        showPremiumSuccessDialog(
+          context,
+          title: 'Đăng ký thành công',
+          text: 'Chúc mừng bạn đã gia nhập TOEIC Master! 🎉',
+          onConfirm: () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          },
+        );
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
@@ -370,11 +386,10 @@ class _RegisterViewState extends State<RegisterView>
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red.shade400,
-          ),
+        showPremiumErrorDialog(
+          context,
+          title: 'Đăng ký thất bại',
+          text: errorMessage,
         );
       }
     } finally {
@@ -388,15 +403,23 @@ class _RegisterViewState extends State<RegisterView>
       if (user == null) return;
 
       if (mounted) {
-        Navigator.pop(context);
+        showPremiumSuccessDialog(
+          context,
+          title: 'Đăng nhập thành công',
+          text: 'Chào mừng bạn đến với TOEIC Master! 🎉',
+          onConfirm: () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          },
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đăng nhập Google thất bại!'),
-            backgroundColor: Colors.red.shade400,
-          ),
+        showPremiumErrorDialog(
+          context,
+          title: 'Đăng nhập thất bại',
+          text: 'Đăng nhập Google thất bại!',
         );
       }
     }
