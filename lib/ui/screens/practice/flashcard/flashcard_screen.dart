@@ -74,7 +74,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 _currentIndex++;
               });
             });
-            _showFloatingEP("+${engagement.epAwarded} EP 🔥", Colors.orange);
+            _showFloatingEP("+${engagement.epAwarded} EP", Colors.orange, icon: Icons.local_fire_department_rounded);
           } else if (engagement.dailyCapReached) {
             Future.microtask(() {
               setState(() {
@@ -96,7 +96,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               _currentIndex++;
             });
           });
-          _showFloatingEP("+5 EP 🌟", Colors.orange);
+          _showFloatingEP("+5 EP", Colors.orange, icon: Icons.star_rounded);
         }
       }).catchError((e) {
         debugPrint("Lỗi cập nhật tiến trình từ vựng: $e");
@@ -106,7 +106,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             _currentIndex++;
           });
         });
-        _showFloatingEP("+5 EP", Colors.orange);
+        _showFloatingEP("+5 EP", Colors.orange, icon: Icons.star_rounded);
       });
 
     } else if (direction == CardSwiperDirection.left) {
@@ -124,7 +124,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     return true;
   }
 
-  void _showFloatingEP(String text, Color color) {
+  void _showFloatingEP(String text, Color color, {IconData? icon}) {
     // Tạo một ID ngẫu nhiên cho animation
     final id = DateTime.now().millisecondsSinceEpoch;
     setState(() {
@@ -132,6 +132,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         _FloatingTextAnimation(
           key: ValueKey(id),
           text: text,
+          icon: icon,
           color: color,
           onComplete: () {
             if (mounted) {
@@ -363,12 +364,14 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 // Widget xử lý animation bay chữ lên
 class _FloatingTextAnimation extends StatefulWidget {
   final String text;
+  final IconData? icon;
   final Color color;
   final VoidCallback onComplete;
 
   const _FloatingTextAnimation({
     super.key,
     required this.text,
+    this.icon,
     required this.color,
     required this.onComplete,
   });
@@ -425,25 +428,50 @@ class _FloatingTextAnimationState extends State<_FloatingTextAnimation>
           right: rightOffset,
           child: Opacity(
             opacity: _opacity.value,
-            child: Text(
-              widget.text,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: widget.color,
-                shadows: const [
-                  Shadow(
-                    blurRadius: 10,
-                    color: Colors.white,
-                    offset: Offset(0, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.text,
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: widget.color,
+                    shadows: const [
+                      Shadow(
+                        blurRadius: 10,
+                        color: Colors.white,
+                        offset: Offset(0, 0),
+                      ),
+                      Shadow(
+                        blurRadius: 5,
+                        color: Colors.black26,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
                   ),
-                  Shadow(
-                    blurRadius: 5,
-                    color: Colors.black26,
-                    offset: Offset(2, 2),
+                ),
+                if (widget.icon != null) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    widget.icon,
+                    color: widget.color,
+                    size: 36,
+                    shadows: const [
+                      Shadow(
+                        blurRadius: 10,
+                        color: Colors.white,
+                        offset: Offset(0, 0),
+                      ),
+                      Shadow(
+                        blurRadius: 5,
+                        color: Colors.black26,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
                   ),
                 ],
-              ),
+              ],
             ),
           ),
         );
