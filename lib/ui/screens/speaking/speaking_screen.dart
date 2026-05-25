@@ -5,6 +5,7 @@ import '../../../data/models/speaking_part_info.dart';
 import '../../../providers/speaking_provider.dart';
 import '../../widgets/practice/skill_card.dart';
 import '../../widgets/practice/practice_stats_card.dart';
+import '../../widgets/speaking/speaking_history_section.dart';
 import 'speaking_prep_screen.dart';
 
 // ── Màn hình chính ──────────────────────────────────────────────────────────
@@ -113,6 +114,11 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                   );
                 },
               ),
+
+              const SizedBox(height: 24),
+
+              // ── Lịch sử luyện tập ─────────────────────
+              const SpeakingHistorySection(),
 
               const SizedBox(height: 24),
             ],
