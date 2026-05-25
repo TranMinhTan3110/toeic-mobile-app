@@ -53,10 +53,19 @@ class VocabularyProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  // ── Track last query ───────────────────────────────────────────────────────
+  String? _lastTopic;
+  String? _lastLevel;
+
   // ── Methods ─────────────────────────────────────────────────────────────────
 
   /// Tải metadata (topics + levels)
-  Future<void> fetchMetadata() async {
+  Future<void> fetchMetadata({bool forceRefresh = false}) async {
+    if (_topics.isNotEmpty && _levels.isNotEmpty && !forceRefresh) {
+      debugPrint('ℹ️ [VocabularyProvider] Metadata already loaded. Using cache.');
+      return;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -73,7 +82,14 @@ class VocabularyProvider with ChangeNotifier {
   }
 
   /// Tải danh sách từ theo topic + level
-  Future<void> fetchVocabularies(String topic, String level) async {
+  Future<void> fetchVocabularies(String topic, String level, {bool forceRefresh = false}) async {
+    if (_words.isNotEmpty && _lastTopic == topic && _lastLevel == level && !forceRefresh) {
+      debugPrint('ℹ️ [VocabularyProvider] Words for topic "$topic", level "$level" already loaded. Using cache.');
+      return;
+    }
+
+    _lastTopic = topic;
+    _lastLevel = level;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -89,7 +105,12 @@ class VocabularyProvider with ChangeNotifier {
   }
 
   /// Tải thông số Hub (số từ đã lưu, cần ôn, đã học, thành thạo)
-  Future<void> fetchHubStats() async {
+  Future<void> fetchHubStats({bool forceRefresh = false}) async {
+    if (_hubStats != null && !forceRefresh) {
+      debugPrint('ℹ️ [VocabularyProvider] Hub stats already loaded. Using cache.');
+      return;
+    }
+
     _isLoadingHub = true;
     _hubError = null;
     notifyListeners();
@@ -105,7 +126,12 @@ class VocabularyProvider with ChangeNotifier {
   }
 
   /// Tải danh sách từ đã lưu vào sổ tay
-  Future<void> fetchStarredVocabularies() async {
+  Future<void> fetchStarredVocabularies({bool forceRefresh = false}) async {
+    if (_starredWords.isNotEmpty && !forceRefresh) {
+      debugPrint('ℹ️ [VocabularyProvider] Starred words already loaded. Using cache.');
+      return;
+    }
+
     _isLoadingStarred = true;
     _starredError = null;
     notifyListeners();
