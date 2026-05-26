@@ -39,8 +39,14 @@ class SpeakingProvider with ChangeNotifier {
   Future<void> fetchQuestionsByPart(
     int partNumber, {
     bool practiceMode = true,
+    bool forceRefresh = false,
   }) async {
     final cacheKey = _cacheKey(partNumber, practiceMode);
+    if (!forceRefresh &&
+        _questionsByPart.containsKey(cacheKey) &&
+        _questionsByPart[cacheKey]!.isNotEmpty) {
+      return;
+    }
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

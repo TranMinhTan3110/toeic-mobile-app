@@ -36,9 +36,21 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
       appBar: _buildAppBar(context),
       body: Consumer<SpeakingProvider>(
         builder: (context, provider, child) {
-          return ListView(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            children: [
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              for (var part in SpeakingPartInfo.parts) {
+                await provider.fetchQuestionsByPart(
+                  part.partNumber,
+                  practiceMode: true,
+                  forceRefresh: true,
+                );
+              }
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              children: [
               // ── Thẻ thống kê tổng quan ────────────────
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
@@ -122,11 +134,12 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
 
               const SizedBox(height: 24),
             ],
-          );
-        },
-      ),
-    );
-  }
+          ),
+        );
+      },
+    ),
+  );
+}
 
   // ── AppBar ────────────────────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar(BuildContext context) {
