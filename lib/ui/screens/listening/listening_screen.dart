@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../../data/models/listening_data.dart';
+import '../../../providers/listening_provider.dart';
 import 'listening_part_detail_screen.dart';
 
 /// Screen danh sách 4 Part của phần Nghe Hiểu.
-class ListeningScreen extends StatelessWidget {
+class ListeningScreen extends StatefulWidget {
   const ListeningScreen({super.key});
 
+  @override
+  State<ListeningScreen> createState() => _ListeningScreenState();
+}
+
+class _ListeningScreenState extends State<ListeningScreen> {
   // Stats tổng hợp (demo)
   static const int _totalDone = 0;
   static const int _totalCorrect = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Kích hoạt preload toàn bộ 4 Part trong background ngay khi vừa mở màn hình Nghe
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ListeningProvider>().preloadAllParts();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
