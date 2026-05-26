@@ -8,7 +8,9 @@ import '../../shared/practice_dialogs.dart';
 import '../../../data/models/listening_data.dart';
 import '../../../providers/listening_provider.dart';
 import '../../../data/models/listening_question.dart';
+import '../../../data/models/listening_history_model.dart';
 import '../../../core/utils/practice_option_parser.dart';
+import 'listening_history_detail_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 /// Màn hình làm bài nghe – dùng chung cho cả 4 part.
@@ -47,6 +49,9 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   // Part 3/4: sub-question answers
   final _subAnswers = <int, String?>{};
   final _subSubmitted = <int, String?>{};
+  
+  // Lưu tất cả câu trả lời của người dùng: QuestionId -> SelectedOption
+  final _userAnswers = <String, String>{};
 
   int get partNumber => widget.part.partNumber;
 
@@ -165,8 +170,8 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
 
     _audioPlayer.stop();
 
-    setState(() {
-      if (_currentIdx < total - 1) {
+    if (_currentIdx < total - 1) {
+      setState(() {
         _currentIdx++;
         _selectedKey = null;
         _submittedKey = null;
@@ -178,10 +183,104 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         _lastAudioUrl = null; 
         _subAnswers.clear();
         _subSubmitted.clear();
+      });
+    } else {
+      _finishPractice();
+    }
+  }
+
+  void _finishPractice() async {
+    final provider = context.read<ListeningProvider>();
+    
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    try {
+      int total = 0;
+      int correct = 0;
+      final incorrectIds = <String>[];
+
+      if (partNumber <= 2) {
+        total = provider.questions.length;
+        for (var q in provider.questions) {
+          final userAns = _userAnswers[q.id];
+          final correctAns = PracticeOptionParser.normalizeCorrectKey(q.correctAnswer, options: q.options);
+          if (userAns == correctAns) {
+            correct++;
+          } else {
+            incorrectIds.add(q.id);
+          }
+        }
       } else {
-        Navigator.pop(context);
+        for (var g in provider.groups) {
+          total += g.questions.length;
+          for (var q in g.questions) {
+            final userAns = _userAnswers[q.id];
+            final correctAns = PracticeOptionParser.normalizeCorrectKey(q.correctAnswer, options: q.options);
+            if (userAns == correctAns) {
+              correct++;
+            } else {
+              incorrectIds.add(q.id);
+            }
+          }
+        }
       }
-    });
+
+      final percent = total > 0 ? (correct / total) * 100.0 : 0.0;
+
+      // Save to backend via provider
+      final historyId = await provider.savePracticeHistory(
+        part: partNumber,
+        correctCount: correct,
+        totalCount: total,
+        percent: percent,
+        incorrectQuestionIds: incorrectIds,
+        selectedAnswers: _userAnswers,
+      );
+
+      // Create a local history model to pass to detail screen
+      final newHistory = ListeningHistoryModel(
+        id: historyId,
+        userId: '', // populated by server
+        part: partNumber,
+        correctCount: correct,
+        totalCount: total,
+        percent: percent,
+        date: DateTime.now(),
+        incorrectQuestionIds: incorrectIds,
+        selectedAnswers: _userAnswers,
+      );
+
+      // Dismiss loading
+      if (mounted) Navigator.pop(context);
+
+      // Navigate to Detail Screen
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ListeningHistoryDetailScreen(historyItem: newHistory),
+          ),
+        );
+      }
+    } catch (e) {
+      // Dismiss loading
+      if (mounted) Navigator.pop(context);
+      
+      // Show error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi lưu kết quả: $e')),
+        );
+        Navigator.pop(context); // back
+      }
+    }
   }
 
   String _formatDuration(Duration d) {
@@ -191,7 +290,16 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     return '$minutes:$seconds';
   }
 
-  void _submit() => setState(() => _submittedKey = _selectedKey);
+  void _submit() {
+    setState(() {
+      _submittedKey = _selectedKey;
+      final provider = context.read<ListeningProvider>();
+      final q = provider.questions[_currentIdx];
+      if (_selectedKey != null) {
+        _userAnswers[q.id] = _selectedKey!;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -579,7 +687,14 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                 ? (k) => setState(() => _subAnswers[i] = k)
                 : null,
             onSubmit: _subAnswers[i] != null && _subSubmitted[i] == null
-                ? () => setState(() => _subSubmitted[i] = _subAnswers[i])
+                ? () {
+                    setState(() {
+                      _subSubmitted[i] = _subAnswers[i];
+                      if (_subAnswers[i] != null) {
+                        _userAnswers[q.id] = _subAnswers[i]!;
+                      }
+                    });
+                  }
                 : null,
           );
         }),
