@@ -160,15 +160,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
     return Container(
       margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.fromLTRB(8, 24, 8, 0),
+      padding: const EdgeInsets.fromLTRB(8, 36, 8, 0),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.primaryLighter.withOpacity(0.4), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -184,13 +185,20 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildPodiumSlot(dynamic entry, int rank) {
-    // Màu & kích thước theo rank
-    final medal = ['🥇', '🥈', '🥉'][rank - 1];
-    final podiumH = [100.0, 70.0, 50.0][rank - 1];
-    final podumColors = [
-      [const Color(0xFFFFD700), const Color(0xFFFFF0AA)], // gold
-      [const Color(0xFFB0BEC5), const Color(0xFFECEFF1)], // silver
-      [const Color(0xFFBF8A60), const Color(0xFFEDD7BE)], // bronze
+    // Chiều cao bục và dải màu bục bọc kim loại
+    final podiumH = [110.0, 75.0, 55.0][rank - 1];
+    
+    // Khung màu viền và đổ bóng cho avatar theo thứ hạng
+    final frameColor = [
+      const Color(0xFFFFA000), // Gold
+      const Color(0xFF78909C), // Silver
+      const Color(0xFF8D6E63), // Bronze
+    ][rank - 1];
+
+    final podiumGradientColors = [
+      [const Color(0xFFFFD54F), const Color(0xFFFFB300), const Color(0xFFFF8F00)], // Gold pedestal
+      [const Color(0xFFECEFF1), const Color(0xFFB0BEC5), const Color(0xFF78909C)], // Silver pedestal
+      [const Color(0xFFEDD7BE), const Color(0xFFBF8A60), const Color(0xFF8D6E63)], // Bronze pedestal
     ][rank - 1];
 
     return SizedBox(
@@ -198,19 +206,105 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Medal emoji
-          Text(medal, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 6),
-
-          // Avatar với viền
-          _buildRobustAvatar(
-            avatarUrl: entry.avatarUrl,
-            displayName: entry.displayName,
-            radius: rank == 1 ? 36.0 : 28.0,
+          // Khu vực Avatar có Crown và Medal Badge đè lên nhau
+          Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: [
+              // Avatar tròn có viền phát sáng nhẹ
+              Container(
+                padding: const EdgeInsets.all(3.5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      frameColor.withOpacity(0.9),
+                      frameColor.withOpacity(0.2),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: frameColor.withOpacity(0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: _buildRobustAvatar(
+                  avatarUrl: entry.avatarUrl,
+                  displayName: entry.displayName,
+                  radius: rank == 1 ? 34.0 : 26.0,
+                  rank: rank,
+                ),
+              ),
+              // Vương miện hoàng gia nổi bật ở vị trí số 1
+              if (rank == 1)
+                Positioned(
+                  top: -24,
+                  child: Icon(
+                    Boxicons.bxs_crown,
+                    color: const Color(0xFFFFD54F),
+                    size: 26,
+                    shadows: [
+                      Shadow(
+                        color: Colors.orange.withOpacity(0.6),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              // Huy hiệu số 1-2-3 tròn nhỏ đè dưới avatar cực đẹp
+              Positioned(
+                bottom: -10,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          frameColor,
+                          frameColor.withOpacity(0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$rank',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 18), // Khoảng đệm cho huy hiệu lấn xuống
 
-          // Tên
+          // Tên người dùng
           Text(
             entry.displayName.isNotEmpty ? entry.displayName : 'Ẩn danh',
             style: const TextStyle(
@@ -222,54 +316,84 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
 
-          // EP badge
+          // EP Badge sinh động có kèm Icon năng lượng
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            decoration: BoxDecoration(
-              gradient: rank == 1
-                  ? const LinearGradient(
-                      colors: [AppColors.primary, AppColors.primaryLight],
-                    )
-                  : null,
-              color: rank != 1 ? podumColors[0].withOpacity(0.15) : null,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+              gradient: rank == 1 ? const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]) : null,
+              color: rank != 1 ? frameColor.withOpacity(0.12) : null,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: podumColors[0].withOpacity(0.5)),
+              border: Border.all(color: frameColor.withOpacity(0.4)),
             ),
-            child: Text(
-              '${entry.weeklyEp} EP',
-              style: TextStyle(
-                color: rank == 1 ? Colors.white : AppColors.textPrimary,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (rank == 1) ...[
+                  const Icon(Boxicons.bxs_zap, color: Colors.white, size: 10),
+                  const SizedBox(width: 3),
+                ],
+                Text(
+                  '${entry.weeklyEp} EP',
+                  style: TextStyle(
+                      color: rank == 1 ? Colors.white : AppColors.textPrimary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-          // Bục podium
+          // Bục Podium Metallic bo góc mềm mại cao cấp
           Container(
             height: podiumH,
             width: double.infinity,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: podumColors,
+                colors: podiumGradientColors,
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(10),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.55),
+                width: 1.5,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: frameColor.withOpacity(0.18),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Center(
-              child: Text(
-                '#$rank',
-                style: TextStyle(
-                  color: podumColors[0],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                ),
+                child: Text(
+                  '#$rank',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
                 ),
               ),
             ),
@@ -466,20 +590,60 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     required String? avatarUrl,
     required String displayName,
     double radius = 20,
+    int? rank,
   }) {
     final raw = displayName.trimLeft();
     final initial = raw.isNotEmpty ? raw[0].toUpperCase() : 'U';
     final diameter = radius * 2;
 
-    Widget fallback = CircleAvatar(
-      radius: radius,
-      backgroundColor: AppColors.primarySurface,
-      child: Text(
-        initial,
-        style: TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.bold,
-          fontSize: radius * 0.65,
+    final initialColor = (rank != null && rank <= 3)
+        ? [
+            const Color(0xFFE65100), // Gold text contrast
+            const Color(0xFF37474F), // Silver text contrast
+            const Color(0xFF4E342E), // Bronze text contrast
+          ][rank - 1]
+        : AppColors.primary;
+
+    final initialGradient = (rank != null && rank <= 3)
+        ? [
+            const LinearGradient(
+              colors: [Color(0xFFFFF9C4), Color(0xFFFFE082)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ), // Gold theme
+            const LinearGradient(
+              colors: [Color(0xFFECEFF1), Color(0xFFCFD8DC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ), // Silver theme
+            const LinearGradient(
+              colors: [Color(0xFFEFEBE9), Color(0xFFD7CCC8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ), // Bronze theme
+          ][rank - 1]
+        : const LinearGradient(
+            colors: [Color(0xFFFFECE0), Color(0xFFFFE0D0)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ); // Elegant peach brand gradient
+
+    Widget fallback = Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: initialGradient,
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: TextStyle(
+            color: initialColor,
+            fontWeight: FontWeight.bold,
+            fontSize: radius * 0.75,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );

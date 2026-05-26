@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import '../../../data/models/speaking_part_info.dart';
+import '../../../providers/speaking_provider.dart';
+import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/practice_stats_card.dart';
 import 'speaking_doing_screen.dart';
 
@@ -25,103 +28,117 @@ class SpeakingPrepScreen extends StatefulWidget {
 }
 
 class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
-  static const List<int> _questionOptions = [5, 10, 15, 20];
-
   late int _selectedCount;
-  bool _examMode = false;
+  List<int> _questionOptions = [];
 
   @override
   void initState() {
     super.initState();
     _selectedCount = widget.part.defaultQuestionCount;
+
+    // Tải dữ liệu để biết tổng số câu
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context
+          .read<SpeakingProvider>()
+          .fetchQuestionsByPart(widget.part.partNumber, practiceMode: true)
+          .then((_) {
+        if (mounted) {
+          final total = context
+              .read<SpeakingProvider>()
+              .getQuestionsForPart(widget.part.partNumber, practiceMode: true)
+              .length;
+          setState(() {
+            _generateOptions(total);
+          });
+        }
+      });
+    });
+  }
+
+  void _generateOptions(int total) {
+    if (total <= 0) {
+      _questionOptions = [widget.part.defaultQuestionCount];
+      _selectedCount = widget.part.defaultQuestionCount;
+      return;
+    }
+    
+    List<int> options = [];
+    if (total == 1) {
+      options.add(1);
+    } else {
+      // Bước nhảy 2: 2, 4, 6... đến tổng số câu luyện tập
+      for (int i = 2; i <= total; i += 2) {
+        options.add(i);
+      }
+      if (!options.contains(total)) {
+        options.add(total);
+      }
+    }
+
+    _questionOptions = options;
+    // Mặc định chọn số câu cao nhất
+    _selectedCount = total;
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<SpeakingProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(context),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Thẻ thống kê ─────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: PracticeStatsCard(
-                      icon: widget.part.icon,
-                      totalDone: widget.totalDone,
-                      correct: widget.correct,
-                      progress: widget.progress,
+      appBar: CustomAppBar(
+        title: widget.part.titleVi,
+      ),
+      body: provider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                // Wave background
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 220,
+                  child: CustomPaint(painter: _WavePainter()),
+                ),
+
+                ListView(
+                  padding: const EdgeInsets.only(bottom: 170),
+                  children: [
+                    const SizedBox(height: 16),
+                    // ── Thẻ thống kê ─────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: PracticeStatsCard(
+                        icon: widget.part.icon,
+                        totalDone: widget.totalDone,
+                        correct: widget.correct,
+                        progress: widget.progress,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 20),
-                  const Divider(height: 1, color: AppColors.divider),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  // ── Card mô tả câu hỏi ───────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildDescriptionCard(),
-                  ),
+                    // ── Card mô tả câu hỏi ───────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildDescriptionCard(),
+                    ),
+                  ],
+                ),
 
-                  const SizedBox(height: 20),
-
-                  // ── Nâng cấp CTA ─────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildUpgradeRow(),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Cài đặt: số câu + chế độ ─────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildSettings(),
-                  ),
-
-                  const SizedBox(height: 16),
-                ],
-              ),
+                // ── Bottom controls ───────────────────────────────────
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildBottomControls(context),
+                ),
+              ],
             ),
-          ),
-
-          // ── Nút bắt đầu cố định dưới ──────────────
-          _buildStartButton(context),
-        ],
-      ),
     );
   }
 
-  // ── AppBar ──────────────────────────────────────────────────────────────
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
-      elevation: 0,
-      centerTitle: true,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: Text(
-        widget.part.titleVi,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-
-  // ── Card mô tả Câu hỏi ──────────────────────────────────────────────────
   Widget _buildDescriptionCard() {
     return Container(
       width: double.infinity,
@@ -140,7 +157,6 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tiêu đề "Câu hỏi" có gạch chân
           Text(
             'Câu hỏi',
             style: TextStyle(
@@ -152,7 +168,6 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // Tiếng Anh
           Text(
             widget.part.descriptionEn,
             style: const TextStyle(
@@ -162,7 +177,6 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Tiếng Việt
           Text(
             widget.part.descriptionVi,
             style: const TextStyle(
@@ -176,162 +190,122 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
     );
   }
 
-  // ── Dòng Nâng cấp ───────────────────────────────────────────────────────
-  Widget _buildUpgradeRow() {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: const TextStyle(
-          fontSize: 13,
-          color: AppColors.textSecondary,
-          height: 1.6,
-        ),
-        children: [
-          TextSpan(
-            text: 'Nâng cấp',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-              decoration: TextDecoration.underline,
-              decorationColor: AppColors.primary,
-            ),
-          ),
-          const TextSpan(
-            text:
-                ' để tải toàn bộ bài tập về máy, '
-                'tải dữ liệu nhanh hơn, ổn định hơn',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Cài đặt ─────────────────────────────────────────────────────────────
-  Widget _buildSettings() {
-    return Column(
-      children: [
-        // Số câu hỏi
-        _SettingRow(label: 'Số câu hỏi:', trailing: _buildQuestionDropdown()),
-        const SizedBox(height: 16),
-        // Chế độ kiểm tra
-        _SettingRow(
-          label: 'Chế độ kiểm tra:',
-          trailing: Switch(
-            value: _examMode,
-            onChanged: (v) => setState(() => _examMode = v),
-            activeThumbColor: AppColors.primary,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildQuestionDropdown() {
+    if (_questionOptions.isEmpty) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.divider),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           value: _selectedCount,
+          isDense: true,
+          underline: const SizedBox(),
+          menuMaxHeight: 250,
           icon: const Icon(
             Icons.keyboard_arrow_down_rounded,
             color: AppColors.textSecondary,
             size: 20,
           ),
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
           onChanged: (v) => setState(() => _selectedCount = v!),
           items: _questionOptions
               .map((n) => DropdownMenuItem(value: n, child: Text('$n')))
               .toList(),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+          ),
         ),
       ),
     );
   }
 
-  // ── Nút Bắt đầu ─────────────────────────────────────────────────────────
-  Widget _buildStartButton(BuildContext context) {
+  Widget _buildBottomControls(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFFF8F0), AppColors.background],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SpeakingDoingScreen(
-                  part: widget.part,
-                  questionCount: _selectedCount,
-                  examMode: _examMode,
-                ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Text('Số câu hỏi:',
+                  style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14)),
+              const SizedBox(width: 10),
+              _buildQuestionDropdown(),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SpeakingDoingScreen(
+                      part: widget.part,
+                      questionCount: _selectedCount,
+                      examMode: false,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                elevation: 4,
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
+              child: const Text('Bắt đầu nào',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5)),
             ),
           ),
-          child: const Text(
-            'Bắt đầu nào',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
 }
 
-// ── Widget hàng cài đặt dùng lại ────────────────────────────────────────────
-class _SettingRow extends StatelessWidget {
-  final String label;
-  final Widget trailing;
+// ── Wave background ───────────────────────────────────────────────────────────
 
-  const _SettingRow({required this.label, required this.trailing});
+class _WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawWave(
+        canvas, size, AppColors.primaryLighter.withOpacity(0.5), 0.35, 0.2, 0.6, 0.35);
+    _drawWave(
+        canvas, size, AppColors.primaryLighter.withOpacity(0.3), 0.55, 0.45, 0.65, 0.5);
+  }
+
+  void _drawWave(Canvas canvas, Size size, Color color, double y0, double cy,
+      double cx2, double y1) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, size.height * y0)
+      ..quadraticBezierTo(size.width * 0.25, size.height * cy,
+          size.width * 0.5, size.height * y0)
+      ..quadraticBezierTo(
+          size.width * 0.75, size.height * cx2, size.width, size.height * y1)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start, // thay spaceBetween
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(width: 12), // chỉnh khoảng cách tùy ý
-        trailing,
-      ],
-    );
-  }
+  bool shouldRepaint(_) => false;
 }

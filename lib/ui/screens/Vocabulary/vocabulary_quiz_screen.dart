@@ -9,6 +9,7 @@ import '../../../core/services/tts_service.dart';
 import 'quiz_helper.dart';
 import '../../widgets/common/practice_result_view.dart';
 import '../../../providers/user_provider.dart';
+import '../../shared/practice_dialogs.dart';
 
 class VocabularyQuizScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -116,16 +117,29 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
     final currentQuestion = _questions[_currentIndex];
     final progress = (_currentIndex + 1) / _questions.length;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: CustomAppBar(
-        title: widget.quizType == QuizType.wordToDefinition ? 'Chọn từ' : 'Định nghĩa',
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Progress Bar
-          _buildProgressBar(progress),
+    return PopScope(
+      canPop: _isFinished,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình làm bài quiz từ vựng của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: widget.quizType == QuizType.wordToDefinition ? 'Chọn từ' : 'Định nghĩa',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Column(
+          children: [
+            // Progress Bar
+            _buildProgressBar(progress),
           
           Expanded(
             child: SingleChildScrollView(
@@ -154,8 +168,9 @@ class _VocabularyQuizScreenState extends State<VocabularyQuizScreen> {
           _buildBottomAction(),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildProgressBar(double progress) {
     return Column(

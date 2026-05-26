@@ -10,6 +10,7 @@ import '../../../core/services/tts_service.dart';
 import '../../widgets/vocabulary/matching_card.dart';
 import '../../widgets/common/practice_result_view.dart';
 import '../../../providers/user_provider.dart';
+import '../../shared/practice_dialogs.dart';
 
 class VocabularyMatchingScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -151,10 +152,26 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   Widget build(BuildContext context) {
     if (_isFinished) return _buildResultScreen();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(title: 'Ghép cặp', centerTitle: true),
-      body: Column(
+    return PopScope(
+      canPop: _isFinished,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình Ghép cặp từ vựng của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Ghép cặp',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Column(
         children: [
           _buildHeader(),
           
@@ -171,6 +188,7 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
           
           if (_showContinueButton) _buildContinueButton(),
         ],
+      ),
       ),
     );
   }

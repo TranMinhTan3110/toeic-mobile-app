@@ -7,11 +7,17 @@ class SpeakingRepository {
   final Dio _dio = Dio();
 
   Future<List<SpeakingQuestion>> getQuestionsByTaskNumber(
-    int taskNumber,
-  ) async {
+    int taskNumber, {
+    bool? isPractice,
+    bool? isExam,
+  }) async {
     try {
       final response = await _dio.get(
         '${AppConstants.baseUrl}/speaking/task/$taskNumber',
+        queryParameters: {
+          if (isPractice != null) 'isPractice': isPractice,
+          if (isExam != null) 'isExam': isExam,
+        },
       );
       final List<dynamic> data = response.data;
       return data.map((json) => SpeakingQuestion.fromJson(json)).toList();

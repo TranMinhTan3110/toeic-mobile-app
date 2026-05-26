@@ -6,7 +6,7 @@ class ListeningQuestion {
   final String? audioUrl;
   final List<String> options;
   final String correctAnswer;
-  final String? explanation;
+  final dynamic explanation;
   final String? explanationVi;
   final String? script;
   final String? groupId;

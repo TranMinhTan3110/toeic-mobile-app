@@ -8,6 +8,7 @@ import '../../../providers/user_provider.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/flashcard/flip_flashcard.dart';
+import '../../shared/practice_dialogs.dart';
 
 class VocabularyReviewScreen extends StatefulWidget {
   const VocabularyReviewScreen({super.key});
@@ -68,7 +69,6 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
       _hardCount++;
     }
 
-    // Gọi API cập nhật progress
     _repository
         .updateProgress(word.id, quality)
         .then((result) {
@@ -83,7 +83,7 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
               setState(() {
                 _earnedEP += engagement.epAwarded;
               });
-              _showFloatingEP('+${engagement.epAwarded} EP 🔥', Colors.orange);
+              _showFloatingEP('+${engagement.epAwarded} EP', Colors.orange, icon: Icons.local_fire_department_rounded);
             } else if (engagement.dailyCapReached) {
               _showSnackbar('Đạt giới hạn 500 EP/ngày 🎯', AppColors.warning);
             }
@@ -121,13 +121,14 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
         });
   }
 
-  void _showFloatingEP(String text, Color color) {
+  void _showFloatingEP(String text, Color color, {IconData? icon}) {
     final id = DateTime.now().millisecondsSinceEpoch;
     setState(() {
       _floatingTexts.add(
         _FloatingEpAnimation(
           key: ValueKey(id),
           text: text,
+          icon: icon,
           color: color,
           onComplete: () {
             if (mounted) {
@@ -158,10 +159,32 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(title: 'Ôn tập từ vựng', centerTitle: true),
-      body: Stack(children: [_buildBody(), ..._floatingTexts]),
+    return PopScope(
+      canPop: _currentIndex >= _dueWords.length || _dueWords.isEmpty,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình ôn tập từ vựng của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Ôn tập từ vựng',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Stack(
+          children: [
+            _buildBody(),
+            ..._floatingTexts,
+          ],
+        ),
+      ),
     );
   }
 
@@ -561,12 +584,14 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
 // ── Animation EP bay lên ─────────────────────────────────────────────────────
 class _FloatingEpAnimation extends StatefulWidget {
   final String text;
+  final IconData? icon;
   final Color color;
   final VoidCallback onComplete;
 
   const _FloatingEpAnimation({
     super.key,
     required this.text,
+    this.icon,
     required this.color,
     required this.onComplete,
   });
@@ -596,7 +621,11 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
       end: 140.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    _controller.forward().then((_) => widget.onComplete());
+    _controller.forward().then((_) {
+      if (mounted) {
+        widget.onComplete();
+      }
+    });
   }
 
   @override
@@ -607,33 +636,46 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final topOffset = mediaQuery.size.height * 0.38;
+    final rightOffset = mediaQuery.size.width * 0.08;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Positioned(
-          top: MediaQuery.of(context).size.height * 0.38 - _position.value,
-          right: MediaQuery.of(context).size.width * 0.08,
+          top: topOffset - _position.value,
+          right: rightOffset,
           child: Opacity(
             opacity: _opacity.value,
-            child: Text(
-              widget.text,
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-                color: widget.color,
-                shadows: const [
-                  Shadow(
-                    blurRadius: 10,
-                    color: Colors.white,
-                    offset: Offset(0, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.text,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: widget.color,
+                    shadows: const [
+                      Shadow(blurRadius: 10, color: Colors.white, offset: Offset(0, 0)),
+                      Shadow(blurRadius: 5, color: Colors.black26, offset: Offset(2, 2)),
+                    ],
                   ),
-                  Shadow(
-                    blurRadius: 5,
-                    color: Colors.black26,
-                    offset: Offset(2, 2),
+                ),
+                if (widget.icon != null) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    widget.icon,
+                    color: widget.color,
+                    size: 34,
+                    shadows: const [
+                      Shadow(blurRadius: 10, color: Colors.white, offset: Offset(0, 0)),
+                      Shadow(blurRadius: 5, color: Colors.black26, offset: Offset(2, 2)),
+                    ],
                   ),
                 ],
-              ),
+              ],
             ),
           ),
         );

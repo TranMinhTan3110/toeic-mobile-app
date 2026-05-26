@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
+import 'package:toeicmobileapp/ui/shared/practice_dialogs.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/ui/widgets/common/custom_app_bar.dart';
 import 'package:toeicmobileapp/providers/user_provider.dart';
@@ -39,9 +41,16 @@ class SettingsScreen extends StatelessWidget {
               userName: resolvedUserName,
               avatarUrl: resolvedAvatarUrl,
               onLogout: () async {
-                // Thực hiện đăng xuất
-                await AuthService().signOut();
-                if (context.mounted) {
+                final confirm = await showPremiumConfirmDialog(
+                  context,
+                  title: 'Đăng xuất?',
+                  text: 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?',
+                  confirmText: 'Đăng xuất',
+                  cancelText: 'Hủy',
+                  icon: Boxicons.bx_log_out,
+                );
+                if (confirm && context.mounted) {
+                  await AuthService().signOut();
                   context.read<UserProvider>().clear();
                 }
               },

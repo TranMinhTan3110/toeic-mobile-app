@@ -6,8 +6,22 @@ import '../data/repositories/speaking_repository.dart';
 class SpeakingProvider with ChangeNotifier {
   final SpeakingRepository _repository = SpeakingRepository();
 
-  List<SpeakingQuestion> _questions = [];
-  List<SpeakingQuestion> get questions => _questions;
+  // part + practice|exam → danh sách câu hỏi
+  final Map<String, List<SpeakingQuestion>> _questionsByPart = {};
+
+  static String _cacheKey(int partNumber, bool practiceMode) =>
+      '$partNumber-${practiceMode ? 'practice' : 'exam'}';
+
+  /// Trả về tất cả câu hỏi đã tải
+  List<SpeakingQuestion> get questions =>
+      _questionsByPart.values.expand((e) => e).toList();
+
+  /// Lấy danh sách câu hỏi của một Part (mặc định: luyện tập)
+  List<SpeakingQuestion> getQuestionsForPart(
+    int partNumber, {
+    bool practiceMode = true,
+  }) =>
+      _questionsByPart[_cacheKey(partNumber, practiceMode)] ?? [];
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -21,44 +35,49 @@ class SpeakingProvider with ChangeNotifier {
   SpeakingEvaluation? _lastEvaluation;
   SpeakingEvaluation? get lastEvaluation => _lastEvaluation;
 
-  /// Tải câu hỏi dựa trên Part (Index) khớp trực tiếp với Task Number của Backend:
-  /// Part 1 -> Task 1, Part 2 -> Task 2, Part 3 -> Task 3 (3 câu con), Part 5 -> Task 5
-  Future<void> fetchQuestionsByPart(int partIndex) async {
+  /// Tải câu hỏi theo Part. [practiceMode] true → chỉ lấy is_practice trên Firestore.
+  Future<void> fetchQuestionsByPart(
+    int partNumber, {
+    bool practiceMode = true,
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = _cacheKey(partNumber, practiceMode);
+    if (!forceRefresh &&
+        _questionsByPart.containsKey(cacheKey) &&
+        _questionsByPart[cacheKey]!.isNotEmpty) {
+      return;
+    }
     _isLoading = true;
     _errorMessage = null;
-    _questions = [];
     notifyListeners();
 
     try {
-      List<int> taskNumbers = [partIndex];
+      final results = await _repository.getQuestionsByTaskNumber(
+        partNumber,
+        isPractice: practiceMode ? true : null,
+        isExam: practiceMode ? null : true,
+      );
 
-      List<SpeakingQuestion> allFetched = [];
-      for (var taskNum in taskNumbers) {
-        try {
-          final results = await _repository.getQuestionsByTaskNumber(taskNum);
-          allFetched.addAll(results);
-        } catch (e) {
-          debugPrint('Error fetching task $taskNum: $e');
-        }
-      }
-
-      if (allFetched.isEmpty) {
-        _questions = SpeakingQuestionData.byPart[partIndex] ?? [];
+      if (results.isEmpty) {
+        debugPrint(
+          'API returned empty for part $partNumber (practice=$practiceMode), using mock.',
+        );
+        _questionsByPart[cacheKey] = SpeakingQuestionData.byPart[partNumber] ?? [];
       } else {
-        _questions = allFetched;
+        _questionsByPart[cacheKey] =
+            _enrichWithMockExplanations(results, partNumber);
       }
-      
     } catch (e) {
+      debugPrint('Error fetching part $partNumber: $e');
       _errorMessage = 'Lỗi kết nối API. Đang dùng dữ liệu mẫu.';
-      _questions = SpeakingQuestionData.byPart[partIndex] ?? [];
+      _questionsByPart[cacheKey] = SpeakingQuestionData.byPart[partNumber] ?? [];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Gửi bài nói lên AI để chấm điểm.
-  /// Đối với Task 3 & 4, truyền subQuestionIndex (0, 1, 2) để Backend chấm đúng câu hỏi.
+  /// Gửi bài nói lên AI để chấm điểm
   Future<SpeakingEvaluation?> evaluateAnswer(
     String questionId, 
     String audioPath, {
@@ -87,5 +106,24 @@ class SpeakingProvider with ChangeNotifier {
   void clearEvaluation() {
     _lastEvaluation = null;
     notifyListeners();
+  }
+
+  /// Bổ sung explanation từ mock khi API có câu hỏi nhưng thiếu bài mẫu / dịch.
+  List<SpeakingQuestion> _enrichWithMockExplanations(
+    List<SpeakingQuestion> fromApi,
+    int partNumber,
+  ) {
+    final mocks = SpeakingQuestionData.byPart[partNumber] ?? [];
+    return fromApi.map((q) {
+      var enriched = q.withNormalizedExplanation();
+      if (enriched.hasExplanationContent || mocks.isEmpty) return enriched;
+
+      for (final mock in mocks) {
+        if (SpeakingQuestion.matchesMock(enriched, mock)) {
+          return enriched.mergeExplanationFrom(mock);
+        }
+      }
+      return enriched;
+    }).toList();
   }
 }

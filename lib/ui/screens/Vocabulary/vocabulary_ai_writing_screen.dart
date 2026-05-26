@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
 import '../../../data/services/ai_service.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../../shared/practice_dialogs.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../providers/user_provider.dart';
 
@@ -53,20 +54,20 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
     });
 
     try {
-      final res = await _aiService.getScenario(
-        _currentWord.word,
-        _currentWord.definitionVi,
-      );
-      setState(() {
-        _scenario = res['result'];
-        _isLoadingScenario = false;
-      });
+      final res = await _aiService.getScenario(_currentWord.word, _currentWord.definitionVi);
+      if (mounted) {
+        setState(() {
+          _scenario = res['result'];
+          _isLoadingScenario = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _scenario =
-            "Hãy đặt một câu với từ '${_currentWord.word}' trong bối cảnh công việc.";
-        _isLoadingScenario = false;
-      });
+      if (mounted) {
+        setState(() {
+          _scenario = "Hãy đặt một câu với từ '${_currentWord.word}' trong bối cảnh công việc.";
+          _isLoadingScenario = false;
+        });
+      }
     }
   }
 
@@ -112,16 +113,18 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
         _currentWord.word,
         _scenario ?? "",
       );
-
-      setState(() {
-        _isAnalyzing = false;
-        _aiResponse = response['result'];
-      });
+      
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+          _aiResponse = response['result'];
+        });
+      }
 
       // Cộng EP sau khi AI check thành công (chỉ 1 lần mỗi từ)
       if (!_epShownForCurrentWord) {
         _epShownForCurrentWord = true;
-        setState(() => _epLoading = true);
+        if (mounted) setState(() => _epLoading = true);
         final ep = await context.read<UserProvider>().recordActivity(
           activityType: 'VocabSentence',
           referenceId: '${_currentWord.id}_sentence',
@@ -134,19 +137,36 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
         }
       }
     } catch (e) {
-      setState(() {
-        _isAnalyzing = false;
-        _aiResponse =
-            " Lỗi: Không thể kết nối với AI Mentor. Vui lòng thử lại sau.\n($e)";
-      });
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+          _aiResponse = " Lỗi: Không thể kết nối với AI Mentor. Vui lòng thử lại sau.\n($e)";
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: CustomAppBar(title: 'Luyện viết với AI', centerTitle: true),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình luyện viết với AI của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Luyện viết với AI',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -347,8 +367,9 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildEpBadge() {
     if (_epLoading) {

@@ -25,11 +25,18 @@ class VocabularyRepository {
       final options = await _getAuthOptions();
       final response = await _dio.get(
         '${AppConstants.baseUrl}/vocabularies',
-        queryParameters: {'topic': topic, 'level': level},
+        queryParameters: {
+          'topic': topic, 
+          'level': level,
+          'limit': 1000, // Lấy nhiều từ vựng cùng lúc để hiển thị đủ
+        },
         options: options,
       );
 
-      final List<dynamic> data = response.data;
+      final dynamic responseData = response.data;
+      final List<dynamic> data = responseData is Map
+          ? (responseData['items'] as List<dynamic>? ?? [])
+          : (responseData as List<dynamic>);
       return data.map((json) => VocabularyModel.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Lỗi kết nối hoặc tải từ vựng: $e');
