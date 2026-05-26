@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/part_history_sheet.dart';
 import '../../../data/models/listening_data.dart';
-import '../../../data/repositories/listening_repository.dart';
+import '../../../providers/listening_provider.dart';
 import 'listening_practice_screen.dart';
 
 /// Màn hình chuẩn bị trước khi làm bài – dùng chung cho cả 4 part.
@@ -20,26 +21,28 @@ class ListeningPartDetailScreen extends StatefulWidget {
 class _ListeningPartDetailScreenState
     extends State<ListeningPartDetailScreen> {
   int _questionCount = 10;
-  final ListeningRepository _repository = ListeningRepository();
   int _maxQuestions = 0;
   bool _isLoadingCount = true;
 
   @override
   void initState() {
     super.initState();
-    _loadMaxQuestions();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMaxQuestions());
   }
 
+  /// Bước 1: Lấy số câu bằng API count (nhanh, 1 Firestore read).
+  /// Bước 2: Đồng thời kick off preload data ở background (không await).
+  ///         → Khi user bấm "Bắt đầu", data đã có sẵn trong cache.
   Future<void> _loadMaxQuestions() async {
     try {
-      int count = 0;
-      if (widget.part.partNumber == 1 || widget.part.partNumber == 2) {
-        final list = await _repository.getQuestionsByPart(widget.part.partNumber);
-        count = list.length;
-      } else {
-        final list = await _repository.getGroupsByPart(widget.part.partNumber);
-        count = list.length;
-      }
+      final provider = context.read<ListeningProvider>();
+
+      // Bước 1: Lấy count → hiển thị UI ngay (siêu nhanh)
+      final count = await provider.getCountByPart(widget.part.partNumber);
+
+      // Bước 2: Kick off preload không chặn UI
+      provider.preloadInBackground(widget.part.partNumber);
+
       if (mounted) {
         setState(() {
           _maxQuestions = count;

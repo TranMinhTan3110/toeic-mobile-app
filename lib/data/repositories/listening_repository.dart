@@ -24,4 +24,16 @@ class ListeningRepository {
       throw Exception('Lỗi khi tải nhóm câu hỏi Listening part $part: $e');
     }
   }
+
+  /// Gọi endpoint count — chỉ tốn 1 Firestore read, cực nhanh.
+  /// Dùng cho DetailScreen để hiển thị số câu mà không load toàn bộ data.
+  Future<int> getCountByPart(int part) async {
+    try {
+      final response = await _dio.get('${AppConstants.baseUrl}/listening/count/$part');
+      final data = response.data as Map<String, dynamic>;
+      return (data['count'] as num?)?.toInt() ?? 0;
+    } catch (e) {
+      throw Exception('Lỗi khi tải số câu part $part: $e');
+    }
+  }
 }

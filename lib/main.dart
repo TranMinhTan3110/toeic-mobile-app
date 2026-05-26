@@ -12,6 +12,7 @@ import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:toeicmobileapp/ui/screens/settings/settings_screen.dart';
+import 'package:toeicmobileapp/providers/exam_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SpeakingProvider()),
         ChangeNotifierProvider(create: (_) => ListeningProvider()),
         ChangeNotifierProvider(create: (_) => GrammarProvider()),
+        ChangeNotifierProvider(create: (_) => ExamProvider()),
       ],
       child: const MyApp(),
     ),
