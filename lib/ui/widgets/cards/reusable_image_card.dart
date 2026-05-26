@@ -41,13 +41,13 @@ class ReusableImageCard extends StatelessWidget {
           if (progress == null) return child;
           return _loading();
         },
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, _, _) {
           // fallback sang asset nếu có
           if (assetPath != null && assetPath!.isNotEmpty) {
             return Image.asset(
               assetPath!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _placeholder(),
+              errorBuilder: (_, _, _) => _placeholder(),
             );
           }
           return _placeholder();
@@ -59,7 +59,7 @@ class ReusableImageCard extends StatelessWidget {
       return Image.asset(
         assetPath!,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(),
+        errorBuilder: (_, _, _) => _placeholder(),
       );
     }
 

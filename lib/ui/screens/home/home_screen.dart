@@ -17,6 +17,7 @@ import '../practice/writing/writing_screen.dart';
 import '../listening/listening_screen.dart';
 import '../exam/test_list_screen.dart';
 import '../Vocabulary/vocabulary_hub_screen.dart';
+import '../grammar/grammar_hub_screen.dart';
 import '../profile/profile_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
 import '../settings/settings_screen.dart';
@@ -356,8 +357,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         } else if (e.label == 'Cài Đặt') {
                           setState(() => _navIndex = 4);
-                        } else {
-                          // TODO: Xử lý cho Ngữ Pháp
+                        } else if (e.label == 'Ngữ Pháp') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const GrammarHubScreen(),
+                            ),
+                          );
                         }
                       },
                     ),

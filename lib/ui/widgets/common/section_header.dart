@@ -88,7 +88,7 @@ class SectionHeader extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              if (extraInfo != null) extraInfo!,
+              ?extraInfo,
             ],
           ),
           if (hasProgress) ...[
