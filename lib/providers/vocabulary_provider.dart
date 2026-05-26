@@ -53,9 +53,10 @@ class VocabularyProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  // ── Track last query ───────────────────────────────────────────────────────
+  // ── Track last query & Cache ──────────────────────────────────────────────
   String? _lastTopic;
   String? _lastLevel;
+  final Map<String, List<VocabularyModel>> _cacheWords = {};
 
   // ── Methods ─────────────────────────────────────────────────────────────────
 
@@ -83,8 +84,16 @@ class VocabularyProvider with ChangeNotifier {
 
   /// Tải danh sách từ theo topic + level
   Future<void> fetchVocabularies(String topic, String level, {bool forceRefresh = false}) async {
-    if (_words.isNotEmpty && _lastTopic == topic && _lastLevel == level && !forceRefresh) {
-      debugPrint('ℹ️ [VocabularyProvider] Words for topic "$topic", level "$level" already loaded. Using cache.');
+    final cacheKey = '$topic-$level';
+
+    // Nếu không bắt buộc tải lại và đã có cache cho topic-level này thì dùng luôn
+    if (!forceRefresh && _cacheWords.containsKey(cacheKey) && _cacheWords[cacheKey]!.isNotEmpty) {
+      debugPrint('ℹ️ [VocabularyProvider] Words for topic "$topic", level "$level" loaded from cache.');
+      _words = _cacheWords[cacheKey]!;
+      _lastTopic = topic;
+      _lastLevel = level;
+      _errorMessage = null;
+      notifyListeners();
       return;
     }
 
@@ -95,7 +104,9 @@ class VocabularyProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _words = await _repository.getVocabularies(topic, level);
+      final fetchedWords = await _repository.getVocabularies(topic, level);
+      _words = fetchedWords;
+      _cacheWords[cacheKey] = fetchedWords; // Lưu vào cache
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
