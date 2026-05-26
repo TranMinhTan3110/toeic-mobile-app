@@ -5,6 +5,7 @@ import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
 import 'package:toeicmobileapp/providers/user_provider.dart';
 import 'package:toeicmobileapp/providers/speaking_provider.dart';
 import 'package:toeicmobileapp/providers/listening_provider.dart';
+import 'package:toeicmobileapp/providers/grammar_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -28,6 +29,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => SpeakingProvider()),
         ChangeNotifierProvider(create: (_) => ListeningProvider()),
+        ChangeNotifierProvider(create: (_) => GrammarProvider()),
       ],
       child: const MyApp(),
     ),

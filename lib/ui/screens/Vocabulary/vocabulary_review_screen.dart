@@ -8,6 +8,7 @@ import '../../../providers/user_provider.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/flashcard/flip_flashcard.dart';
+import '../../shared/practice_dialogs.dart';
 
 class VocabularyReviewScreen extends StatefulWidget {
   const VocabularyReviewScreen({super.key});
@@ -149,17 +150,31 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
-        title: 'Ôn tập từ vựng',
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          _buildBody(),
-          ..._floatingTexts,
-        ],
+    return PopScope(
+      canPop: _currentIndex >= _dueWords.length || _dueWords.isEmpty,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình ôn tập từ vựng của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Ôn tập từ vựng',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Stack(
+          children: [
+            _buildBody(),
+            ..._floatingTexts,
+          ],
+        ),
       ),
     );
   }
@@ -502,7 +517,11 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
     _position = Tween<double>(begin: 0.0, end: 140.0)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    _controller.forward().then((_) => widget.onComplete());
+    _controller.forward().then((_) {
+      if (mounted) {
+        widget.onComplete();
+      }
+    });
   }
 
   @override
@@ -513,12 +532,16 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final topOffset = mediaQuery.size.height * 0.38;
+    final rightOffset = mediaQuery.size.width * 0.08;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Positioned(
-          top: MediaQuery.of(context).size.height * 0.38 - _position.value,
-          right: MediaQuery.of(context).size.width * 0.08,
+          top: topOffset - _position.value,
+          right: rightOffset,
           child: Opacity(
             opacity: _opacity.value,
             child: Text(

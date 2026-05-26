@@ -7,13 +7,18 @@ class ReadingAnswersScreen extends StatefulWidget {
   final List<QuizQuestion> questions;
   final List<int?> selectedIndices;
 
-  const ReadingAnswersScreen({super.key, required this.questions, required this.selectedIndices});
+  const ReadingAnswersScreen({
+    super.key,
+    required this.questions,
+    required this.selectedIndices,
+  });
 
   @override
   State<ReadingAnswersScreen> createState() => _ReadingAnswersScreenState();
 }
 
-class _ReadingAnswersScreenState extends State<ReadingAnswersScreen> with SingleTickerProviderStateMixin {
+class _ReadingAnswersScreenState extends State<ReadingAnswersScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
   @override
@@ -31,8 +36,19 @@ class _ReadingAnswersScreenState extends State<ReadingAnswersScreen> with Single
   List<int> _filteredIndices() {
     final all = List<int>.generate(widget.questions.length, (i) => i);
     if (_tabController.index == 0) return all;
-    if (_tabController.index == 1) return all.where((i) => widget.selectedIndices[i] == widget.questions[i].correctIndex).toList();
-    return all.where((i) => widget.selectedIndices[i] != widget.questions[i].correctIndex).toList();
+    if (_tabController.index == 1) {
+      return all
+          .where(
+            (i) =>
+                widget.selectedIndices[i] == widget.questions[i].correctIndex,
+          )
+          .toList();
+    }
+    return all
+        .where(
+          (i) => widget.selectedIndices[i] != widget.questions[i].correctIndex,
+        )
+        .toList();
   }
 
   @override
@@ -43,8 +59,15 @@ class _ReadingAnswersScreenState extends State<ReadingAnswersScreen> with Single
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          indicator: BoxDecoration(borderRadius: BorderRadius.circular(8), color: AppColors.primary),
-          tabs: const [Tab(text: 'Tất cả'), Tab(text: 'Chọn đúng'), Tab(text: 'Chọn sai')],
+          indicator: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: AppColors.primary,
+          ),
+          tabs: const [
+            Tab(text: 'Tất cả'),
+            Tab(text: 'Chọn đúng'),
+            Tab(text: 'Chọn sai'),
+          ],
         ),
       ),
       backgroundColor: AppColors.background,
@@ -54,7 +77,7 @@ class _ReadingAnswersScreenState extends State<ReadingAnswersScreen> with Single
           final list = _filteredIndices();
           return ListView.separated(
             itemCount: list.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, idx) {
               final qIndex = list[idx];
               final q = widget.questions[qIndex];
@@ -62,18 +85,29 @@ class _ReadingAnswersScreenState extends State<ReadingAnswersScreen> with Single
               final correct = q.correctIndex;
               final isCorrect = sel == correct;
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
-                    Icon(isCorrect ? Icons.check_circle : Icons.error, color: isCorrect ? AppColors.primary : AppColors.error),
+                    Icon(
+                      isCorrect ? Icons.check_circle : Icons.error,
+                      color: isCorrect ? AppColors.primary : AppColors.error,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text('Câu ${qIndex + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                      child: Text(
+                        'Câu ${qIndex + 1}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                     // options
                     ...List.generate(q.options.length, (oi) {
                       final selected = sel == oi;
-                      final bg = (oi == correct) || selected ? AppColors.primary : Colors.white;
+                      final bg = (oi == correct) || selected
+                          ? AppColors.primary
+                          : Colors.white;
                       final borderColor = AppColors.border;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6.0),
@@ -86,7 +120,14 @@ class _ReadingAnswersScreenState extends State<ReadingAnswersScreen> with Single
                             border: Border.all(color: borderColor),
                           ),
                           child: Center(
-                            child: Text('${oi + 1}', style: TextStyle(color: selected ? Colors.white : AppColors.textDark)),
+                            child: Text(
+                              '${oi + 1}',
+                              style: TextStyle(
+                                color: selected
+                                    ? Colors.white
+                                    : AppColors.textDark,
+                              ),
+                            ),
                           ),
                         ),
                       );
