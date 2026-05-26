@@ -321,6 +321,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           // EP Badge sinh động có kèm Icon năng lượng
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+            decoration: BoxDecoration(
               gradient: rank == 1 ? const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]) : null,
               color: rank != 1 ? frameColor.withOpacity(0.12) : null,
               borderRadius: BorderRadius.circular(20),
@@ -341,7 +342,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       fontWeight: FontWeight.w800),
                 ),
               ],
-            ),
             ),
           ),
           const SizedBox(height: 10),
@@ -391,9 +391,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       ),
                     ],
                   ),
-                ),
-              ),
-            ),
                 ),
               ),
             ),

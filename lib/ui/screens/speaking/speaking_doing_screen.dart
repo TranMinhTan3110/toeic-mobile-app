@@ -9,10 +9,7 @@ import '../../../data/models/speaking_part_info.dart';
 import '../../../data/models/speaking_question.dart';
 import '../../../data/models/speaking_evaluation_model.dart';
 import '../../../providers/speaking_provider.dart';
-<<<<<<< HEAD
-=======
 import '../../../core/services/tts_service.dart';
->>>>>>> 6b1c99b7fd0a3dc269b6c10d3dfcc9a9d93654f6
 import '../../widgets/speaking/speaking_explanation_panel.dart';
 
 enum _Phase { prepare, recording, evaluating, done }
@@ -44,12 +41,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   int _currentSubQuestionIndex = 0;
   bool _isInitialized = false;
 
-<<<<<<< HEAD
-  SpeakingQuestion? get _currentTask =>
-      (_tasks.isNotEmpty && _currentTaskIndex < _tasks.length)
-      ? _tasks[_currentTaskIndex]
-      : null;
-=======
   double _ttsRate = 0.5; 
   double _fontSizeFactor = 1.0;
 
@@ -57,7 +48,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       (_tasks.isNotEmpty && _currentTaskIndex < _tasks.length)
           ? _tasks[_currentTaskIndex]
           : null;
->>>>>>> 6b1c99b7fd0a3dc269b6c10d3dfcc9a9d93654f6
 
   _Phase _phase = _Phase.prepare;
   int _secondsLeft = 0;
@@ -90,23 +80,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     _progressAnim = Tween<double>(begin: 0, end: 0).animate(_progressCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-<<<<<<< HEAD
-      context
-          .read<SpeakingProvider>()
-          .fetchQuestionsByPart(widget.part.partNumber)
-          .then((_) {
-            if (mounted) {
-              setState(() {
-                final all = context.read<SpeakingProvider>().questions;
-                _tasks = all.take(widget.questionCount).toList();
-                _isInitialized = true;
-
-                if (_tasks.isNotEmpty) {
-                  _updateProgress();
-                  _startPrepare();
-                }
-              });
-=======
       final practiceMode = !widget.examMode;
       context
           .read<SpeakingProvider>()
@@ -126,10 +99,11 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
             if (_tasks.isNotEmpty) {
               _updateProgress();
-              _phase = _Phase.prepare;
->>>>>>> 6b1c99b7fd0a3dc269b6c10d3dfcc9a9d93654f6
+              _startPrepare();
             }
           });
+        }
+      });
     });
   }
 
@@ -138,11 +112,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     if (_currentTask != null && _currentTask!.questions.isNotEmpty) {
       progress +=
           ((_currentSubQuestionIndex + 1) / _currentTask!.questions.length) /
-<<<<<<< HEAD
-          _tasks.length;
-=======
               _tasks.length;
->>>>>>> 6b1c99b7fd0a3dc269b6c10d3dfcc9a9d93654f6
     } else {
       progress += (1.0 / _tasks.length);
     }
@@ -152,6 +122,19 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       end: progress,
     ).animate(CurvedAnimation(parent: _progressCtrl, curve: Curves.easeOut));
     _progressCtrl.forward(from: 0);
+  }
+
+  void _startPrepare() {
+    if (_currentTask == null) return;
+    setState(() {
+      _phase = _Phase.prepare;
+      _secondsLeft = _currentTask!.prepSeconds;
+    });
+    if (_secondsLeft <= 0) {
+      _startRecording();
+    } else {
+      _startCountdown(() => _startRecording());
+    }
   }
 
   @override
@@ -214,21 +197,12 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     setState(() => _phase = _Phase.evaluating);
 
     final evaluation = await context.read<SpeakingProvider>().evaluateAnswer(
-<<<<<<< HEAD
-      _currentTask!.id,
-      _lastRecordingPath!,
-      subQuestionIndex: _currentTask!.questions.isNotEmpty
-          ? _currentSubQuestionIndex
-          : null,
-    );
-=======
           _currentTask!.id,
           _lastRecordingPath!,
           subQuestionIndex: _currentTask!.questions.isNotEmpty
               ? _currentSubQuestionIndex
               : null,
         );
->>>>>>> 6b1c99b7fd0a3dc269b6c10d3dfcc9a9d93654f6
 
     if (evaluation != null) {
       _showEvaluationResult(evaluation);
@@ -238,18 +212,15 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   void _moveToNext() {
-<<<<<<< HEAD
-=======
     TtsService().stop();
->>>>>>> 6b1c99b7fd0a3dc269b6c10d3dfcc9a9d93654f6
     if (_currentTask != null &&
         _currentTask!.questions.isNotEmpty &&
         _currentSubQuestionIndex < _currentTask!.questions.length - 1) {
       setState(() {
         _currentSubQuestionIndex++;
-        _phase = _Phase.prepare;
       });
       _updateProgress();
+      _startPrepare();
     } else {
       if (_currentTaskIndex < _tasks.length - 1) {
         _pageController.nextPage(
@@ -339,51 +310,18 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       actions: [
         IconButton(
           onPressed: () {},
-<<<<<<< HEAD
-          icon: const Icon(
-            Icons.report_problem_outlined,
-            color: Colors.white,
-            size: 20,
-          ),
-          tooltip: 'Báo lỗi',
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.favorite_border,
-            color: Colors.white,
-            size: 20,
-          ),
-          tooltip: 'Yêu thích',
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.settings_outlined,
-            color: Colors.white,
-            size: 20,
-          ),
-          tooltip: 'Cài đặt',
-        ),
-        TextButton(
-          onPressed: () => setState(() => _showPanel = !_showPanel),
-          child: const Text(
-            'Giải thích',
-            style: TextStyle(
-              color: Colors.white,
-              decoration: TextDecoration.underline,
-            ),
-          ),
-=======
           icon: const Icon(Icons.report_problem_outlined, color: Colors.white, size: 20),
+          tooltip: 'Báo lỗi',
         ),
         IconButton(
           onPressed: () => _showSettingsDialog(),
           icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 20),
+          tooltip: 'Cài đặt',
         ),
         IconButton(
           onPressed: () {},
           icon: const Icon(Icons.favorite_border, color: Colors.white, size: 20),
+          tooltip: 'Yêu thích',
         ),
         TextButton(
           onPressed: () => setState(() => _showPanel = !_showPanel),
@@ -393,7 +331,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                   color: Colors.white, 
                   fontSize: 14,
                   fontWeight: FontWeight.w500)),
->>>>>>> 6b1c99b7fd0a3dc269b6c10d3dfcc9a9d93654f6
         ),
       ],
     );
@@ -444,10 +381,10 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
         setState(() {
           _currentTaskIndex = index;
           _currentSubQuestionIndex = 0;
-          _phase = _Phase.prepare;
           _showPanel = false;
         });
         _updateProgress();
+        _startPrepare();
       },
       itemCount: _tasks.length,
       itemBuilder: (context, index) {
@@ -611,6 +548,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   Widget _buildCountdownChip() {
+    final isPrepare = _phase == _Phase.prepare;
+    final color = isPrepare ? AppColors.primary : const Color(0xFFD44B0D);
     return Center(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
