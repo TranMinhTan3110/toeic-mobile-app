@@ -367,7 +367,7 @@ class _RegisterViewState extends State<RegisterView>
         showPremiumSuccessDialog(
           context,
           title: 'Đăng ký thành công',
-          text: 'Chúc mừng bạn đã gia nhập TOEIC Master! 🎉',
+          text: 'Chúc mừng bạn đã gia nhập TOEIC Master! ',
           onConfirm: () {
             if (mounted) {
               Navigator.pop(context);
@@ -406,7 +406,7 @@ class _RegisterViewState extends State<RegisterView>
         showPremiumSuccessDialog(
           context,
           title: 'Đăng nhập thành công',
-          text: 'Chào mừng bạn đến với TOEIC Master! 🎉',
+          text: 'Chào mừng bạn đến với TOEIC Master! ',
           onConfirm: () {
             if (mounted) {
               Navigator.pop(context);

@@ -53,10 +53,20 @@ class VocabularyProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  // ── Track last query & Cache ──────────────────────────────────────────────
+  String? _lastTopic;
+  String? _lastLevel;
+  final Map<String, List<VocabularyModel>> _cacheWords = {};
+
   // ── Methods ─────────────────────────────────────────────────────────────────
 
   /// Tải metadata (topics + levels)
-  Future<void> fetchMetadata() async {
+  Future<void> fetchMetadata({bool forceRefresh = false}) async {
+    if (_topics.isNotEmpty && _levels.isNotEmpty && !forceRefresh) {
+      debugPrint('ℹ️ [VocabularyProvider] Metadata already loaded. Using cache.');
+      return;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -73,13 +83,30 @@ class VocabularyProvider with ChangeNotifier {
   }
 
   /// Tải danh sách từ theo topic + level
-  Future<void> fetchVocabularies(String topic, String level) async {
+  Future<void> fetchVocabularies(String topic, String level, {bool forceRefresh = false}) async {
+    final cacheKey = '$topic-$level';
+
+    // Nếu không bắt buộc tải lại và đã có cache cho topic-level này thì dùng luôn
+    if (!forceRefresh && _cacheWords.containsKey(cacheKey) && _cacheWords[cacheKey]!.isNotEmpty) {
+      debugPrint('ℹ️ [VocabularyProvider] Words for topic "$topic", level "$level" loaded from cache.');
+      _words = _cacheWords[cacheKey]!;
+      _lastTopic = topic;
+      _lastLevel = level;
+      _errorMessage = null;
+      notifyListeners();
+      return;
+    }
+
+    _lastTopic = topic;
+    _lastLevel = level;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _words = await _repository.getVocabularies(topic, level);
+      final fetchedWords = await _repository.getVocabularies(topic, level);
+      _words = fetchedWords;
+      _cacheWords[cacheKey] = fetchedWords; // Lưu vào cache
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -89,7 +116,12 @@ class VocabularyProvider with ChangeNotifier {
   }
 
   /// Tải thông số Hub (số từ đã lưu, cần ôn, đã học, thành thạo)
-  Future<void> fetchHubStats() async {
+  Future<void> fetchHubStats({bool forceRefresh = false}) async {
+    if (_hubStats != null && !forceRefresh) {
+      debugPrint('ℹ️ [VocabularyProvider] Hub stats already loaded. Using cache.');
+      return;
+    }
+
     _isLoadingHub = true;
     _hubError = null;
     notifyListeners();
@@ -105,7 +137,12 @@ class VocabularyProvider with ChangeNotifier {
   }
 
   /// Tải danh sách từ đã lưu vào sổ tay
-  Future<void> fetchStarredVocabularies() async {
+  Future<void> fetchStarredVocabularies({bool forceRefresh = false}) async {
+    if (_starredWords.isNotEmpty && !forceRefresh) {
+      debugPrint('ℹ️ [VocabularyProvider] Starred words already loaded. Using cache.');
+      return;
+    }
+
     _isLoadingStarred = true;
     _starredError = null;
     notifyListeners();

@@ -175,7 +175,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         _position = Duration.zero;
         _duration = Duration.zero;
         _isPlaying = false;
-        _lastAudioUrl = null; // Reset to force reload for next question
+        _lastAudioUrl = null; 
         _subAnswers.clear();
         _subSubmitted.clear();
       } else {
