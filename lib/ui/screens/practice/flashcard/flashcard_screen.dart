@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
@@ -30,7 +29,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   bool _isFinished = false;
 
   // Danh sách các Widget animation bay lên
-  List<Widget> _floatingTexts = [];
+  final List<Widget> _floatingTexts = [];
 
   @override
   void initState() {
@@ -54,63 +53,72 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
     if (direction == CardSwiperDirection.right) {
       // Đã thuộc (Swipe right) - chất lượng SRS = 4
-      _repository.updateProgress(vocabId, 4).then((result) {
-        final days = result.progress.interval.round();
-        final message = days <= 0
-            ? "Ôn lại ngay!"
-            : "Hẹn gặp lại sau $days ngày";
-        
-        _showSnackbar("Đã thuộc! $message", AppColors.success);
+      _repository
+          .updateProgress(vocabId, 4)
+          .then((result) {
+            final days = result.progress.interval.round();
+            final message = days <= 0
+                ? "Ôn lại ngay!"
+                : "Hẹn gặp lại sau $days ngày";
 
-        final engagement = result.engagement;
-        if (engagement != null) {
-          // Cộng EP và cập nhật Streak lên Provider toàn cục
-          context.read<UserProvider>().updateLocalEpAndStreak(engagement);
+            _showSnackbar("Đã thuộc! $message", AppColors.success);
 
-          if (engagement.epAwarded > 0) {
+            final engagement = result.engagement;
+            if (engagement != null) {
+              // Cộng EP và cập nhật Streak lên Provider toàn cục
+              context.read<UserProvider>().updateLocalEpAndStreak(engagement);
+
+              if (engagement.epAwarded > 0) {
+                Future.microtask(() {
+                  setState(() {
+                    earnedEP += engagement.epAwarded;
+                    _currentIndex++;
+                  });
+                });
+                _showFloatingEP(
+                  "+${engagement.epAwarded} EP",
+                  Colors.orange,
+                  icon: Icons.local_fire_department_rounded,
+                );
+              } else if (engagement.dailyCapReached) {
+                Future.microtask(() {
+                  setState(() {
+                    _currentIndex++;
+                  });
+                });
+                _showSnackbar(
+                  "Đã thuộc! (Đạt giới hạn 500 EP/ngày)",
+                  AppColors.warning,
+                );
+              } else {
+                Future.microtask(() {
+                  setState(() {
+                    _currentIndex++;
+                  });
+                });
+              }
+            } else {
+              Future.microtask(() {
+                setState(() {
+                  earnedEP += 5; // Dự phòng
+                  _currentIndex++;
+                });
+              });
+              _showFloatingEP("+5 EP", Colors.orange, icon: Icons.star_rounded);
+            }
+          })
+          .catchError((e) {
+            debugPrint("Lỗi cập nhật tiến trình từ vựng: $e");
             Future.microtask(() {
               setState(() {
-                earnedEP += engagement.epAwarded;
+                earnedEP += 5; // Dự phòng khi ngoại lệ
                 _currentIndex++;
               });
             });
-            _showFloatingEP("+${engagement.epAwarded} EP", Colors.orange, icon: Icons.local_fire_department_rounded);
-          } else if (engagement.dailyCapReached) {
-            Future.microtask(() {
-              setState(() {
-                _currentIndex++;
-              });
-            });
-            _showSnackbar("Đã thuộc! (Đạt giới hạn 500 EP/ngày)", AppColors.warning);
-          } else {
-            Future.microtask(() {
-              setState(() {
-                _currentIndex++;
-              });
-            });
-          }
-        } else {
-          Future.microtask(() {
-            setState(() {
-              earnedEP += 5; // Dự phòng
-              _currentIndex++;
-            });
+            _showFloatingEP("+5 EP", Colors.orange, icon: Icons.star_rounded);
           });
-          _showFloatingEP("+5 EP", Colors.orange, icon: Icons.star_rounded);
-        }
-      }).catchError((e) {
-        debugPrint("Lỗi cập nhật tiến trình từ vựng: $e");
-        Future.microtask(() {
-          setState(() {
-            earnedEP += 5; // Dự phòng khi ngoại lệ
-            _currentIndex++;
-          });
-        });
-        _showFloatingEP("+5 EP", Colors.orange, icon: Icons.star_rounded);
-      });
-
     } else if (direction == CardSwiperDirection.left) {
-      // 未 thuộc (Swipe left) - chất lượng SRS = 0
+      // Chưa thuộc (Swipe left) - chất lượng SRS = 0
       Future.microtask(() {
         setState(() {
           remainingCards.add(remainingCards[previousIndex]);
@@ -119,7 +127,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       _repository.updateProgress(vocabId, 0).catchError((e) {
         debugPrint("Lỗi cập nhật chưa thuộc: $e");
       });
-      _showSnackbar("Chưa thuộc! Từ này sẽ xuất hiện lại ở cuối xấp để bạn ôn tập.", AppColors.error);
+      _showSnackbar(
+        "Chưa thuộc! Từ này sẽ xuất hiện lại ở cuối xấp để bạn ôn tập.",
+        AppColors.error,
+      );
     }
     return true;
   }

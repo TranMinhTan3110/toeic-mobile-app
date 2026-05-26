@@ -3,11 +3,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/writing_question.dart';
 import '../../../../data/repositories/writing_repository.dart';
 import '../../../widgets/common/custom_app_bar.dart';
-import '../../../widgets/shared/bold_text_label.dart';
 import '../../../widgets/cards/email_card.dart';
+import '../../../shared/practice_dialogs.dart';
 
 class RespondRequestTestScreen extends StatefulWidget {
-  const RespondRequestTestScreen({super.key});
+  final int questionLimit;
+
+  const RespondRequestTestScreen({super.key, required this.questionLimit});
 
   @override
   State<RespondRequestTestScreen> createState() =>
@@ -21,6 +23,7 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
   bool _isLoading = true;
   String? _error;
   bool _showExplanation = false;
+  double _fontSize = 14.0;
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -32,11 +35,11 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
 
   Future<void> _loadQuestions() async {
     try {
-      final questions = await _repository.getPracticeByTaskType(
+      final allQuestions = await _repository.getPracticeByTaskType(
         'respond_email',
       );
       setState(() {
-        _questions = questions;
+        _questions = allQuestions.take(widget.questionLimit).toList();
         _currentQ = 0;
         _isLoading = false;
       });
@@ -97,7 +100,7 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
               color: AppColors.appBarFg,
               size: 22,
             ),
-            onPressed: () {},
+            onPressed: () => showWritingReportDialog(context),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -108,7 +111,11 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
               color: AppColors.appBarFg,
               size: 22,
             ),
-            onPressed: () {},
+            onPressed: () => showWritingSettingsDialog(
+              context,
+              fontSize: _fontSize,
+              onFontSizeChanged: (v) => setState(() => _fontSize = v),
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -149,26 +156,55 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
           ListView(
             padding: const EdgeInsets.only(bottom: 24),
             children: [
+              // Progress Strip
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Text(
-                  'Câu $questionNumber/${_questions.length}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Text(
-                  'Trả lời yêu cầu',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Part 2',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: _questions.isNotEmpty
+                              ? (_currentQ + 1) / _questions.length
+                              : 0,
+                          backgroundColor: AppColors.primaryLighter,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
+                          minHeight: 5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '${_currentQ + 1}/${_questions.length}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Padding(
@@ -177,36 +213,7 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
                   from: 'sender@example.com',
                   subject: 'Email',
                   content: currentQuestion.emailContent ?? 'No email content',
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_rounded,
-                        size: 20,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: BoldTextLabel(text: 'Write your response'),
-                      ),
-                    ],
-                  ),
+                  fontSize: _fontSize,
                 ),
               ),
               Container(
@@ -229,16 +236,16 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
                   maxLines: 10,
                   decoration: InputDecoration(
                     hintText: 'Viết câu trả lời của bạn...',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: AppColors.textHint,
-                      fontSize: 14,
+                      fontSize: _fontSize,
                     ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
                   ),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 14,
+                    fontSize: _fontSize,
                   ),
                 ),
               ),
@@ -420,7 +427,9 @@ class _WritingExplanationPanelState extends State<_WritingExplanationPanel>
   List<Widget> _buildTabContents() {
     if (widget.taskType == 'respond_email') {
       return [
-        _ExplanationText(widget.question.explanationVietnamese ?? 'Không có giải thích'),
+        _ExplanationText(
+          widget.question.explanationVietnamese ?? 'Không có giải thích',
+        ),
         _ExplanationText(widget.question.sampleAnswer ?? 'Không có bài mẫu'),
         _ExplanationText(
           widget.question.sampleAnswerTranslation ?? 'Không có bản dịch',

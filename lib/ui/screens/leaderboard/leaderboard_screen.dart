@@ -30,7 +30,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         builder: (context, userProvider, _) {
           final leaderboard = userProvider.leaderboard;
           final currentUser = userProvider.profile;
-          final isLoading   = userProvider.isLoadingLeaderboard;
+          final isLoading = userProvider.isLoadingLeaderboard;
 
           final top3 = leaderboard.take(3).toList();
           final rest = leaderboard.skip(3).toList();
@@ -42,46 +42,65 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
               Expanded(
                 child: isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      )
                     : leaderboard.isEmpty
-                        ? _buildEmpty()
-                        : RefreshIndicator(
-                            onRefresh: () => userProvider.fetchLeaderboard(),
-                            color: AppColors.primary,
-                            child: ListView(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                              children: [
-                                // Podium
-                                if (top3.isNotEmpty) _buildPodium(top3),
-                                const SizedBox(height: 16),
+                    ? _buildEmpty()
+                    : RefreshIndicator(
+                        onRefresh: () => userProvider.fetchLeaderboard(),
+                        color: AppColors.primary,
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          children: [
+                            // Podium
+                            if (top3.isNotEmpty) _buildPodium(top3),
+                            const SizedBox(height: 16),
 
-                                // Divider
-                                if (rest.isNotEmpty) ...[
-                                  Row(
-                                    children: [
-                                      const Expanded(child: Divider(color: AppColors.divider)),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        child: Text('Bảng xếp hạng đầy đủ',
-                                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                                      ),
-                                      const Expanded(child: Divider(color: AppColors.divider)),
-                                    ],
+                            // Divider
+                            if (rest.isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Divider(color: AppColors.divider),
                                   ),
-                                  const SizedBox(height: 10),
-                                  ...rest.map((e) => _buildListItem(
-                                        entry: e,
-                                        isMe: currentUser?.uid == e.uid,
-                                      )),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                    child: Text(
+                                      'Bảng xếp hạng đầy đủ',
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  const Expanded(
+                                    child: Divider(color: AppColors.divider),
+                                  ),
                                 ],
+                              ),
+                              const SizedBox(height: 10),
+                              ...rest.map(
+                                (e) => _buildListItem(
+                                  entry: e,
+                                  isMe: currentUser?.uid == e.uid,
+                                ),
+                              ),
+                            ],
 
-                                // Nếu user không có trong list
-                                if (currentUser != null &&
-                                    !leaderboard.any((l) => l.uid == currentUser.uid))
-                                  _buildMyPositionCard(currentUser),
-                              ],
-                            ),
-                          ),
+                            // Nếu user không có trong list
+                            if (currentUser != null &&
+                                !leaderboard.any(
+                                  (l) => l.uid == currentUser.uid,
+                                ))
+                              _buildMyPositionCard(currentUser),
+                          ],
+                        ),
+                      ),
               ),
             ],
           );
@@ -108,10 +127,18 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Bảng Xếp Hạng Tuần',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text('Reset mỗi thứ 2 · EP tuần này',
-                          style: TextStyle(fontSize: 12, color: Colors.white70)),
+                      Text(
+                        'Bảng Xếp Hạng Tuần',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Reset mỗi thứ 2 · EP tuần này',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
                     ],
                   ),
                 ],
@@ -281,7 +308,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           Text(
             entry.displayName.isNotEmpty ? entry.displayName : 'Ẩn danh',
             style: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -384,7 +414,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           color: isMe ? AppColors.primary.withOpacity(0.4) : AppColors.divider,
         ),
         boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2)),
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Row(
@@ -392,12 +426,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           // Rank
           SizedBox(
             width: 32,
-            child: Text('#${entry.rank}',
-                style: TextStyle(
-                    color: isMe ? AppColors.primary : AppColors.textSecondary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14),
-                textAlign: TextAlign.center),
+            child: Text(
+              '#${entry.rank}',
+              style: TextStyle(
+                color: isMe ? AppColors.primary : AppColors.textSecondary,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
           const SizedBox(width: 10),
           // Avatar
@@ -415,14 +452,20 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 Text(
                   entry.displayName.isNotEmpty ? entry.displayName : 'Ẩn danh',
                   style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: isMe ? FontWeight.bold : FontWeight.w500,
-                      fontSize: 13),
+                    color: AppColors.textPrimary,
+                    fontWeight: isMe ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text('Lv.$lv · ${LevelHelper.badgeName(lv)}',
-                    style: const TextStyle(color: AppColors.textHint, fontSize: 10)),
+                Text(
+                  'Lv.$lv · ${LevelHelper.badgeName(lv)}',
+                  style: const TextStyle(
+                    color: AppColors.textHint,
+                    fontSize: 10,
+                  ),
+                ),
               ],
             ),
           ),
@@ -431,9 +474,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             children: [
               const Icon(Boxicons.bxs_flame, color: Colors.orange, size: 14),
               const SizedBox(width: 2),
-              Text('${entry.streakDays}',
-                  style: const TextStyle(
-                      color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(
+                '${entry.streakDays}',
+                style: const TextStyle(
+                  color: Colors.orange,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           const SizedBox(width: 10),
@@ -444,11 +492,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               color: isMe ? AppColors.primary : AppColors.primarySurface,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text('${entry.weeklyEp} EP',
-                style: TextStyle(
-                    color: isMe ? Colors.white : AppColors.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold)),
+            child: Text(
+              '${entry.weeklyEp} EP',
+              style: TextStyle(
+                color: isMe ? Colors.white : AppColors.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -469,17 +520,26 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           const Icon(Boxicons.bx_user, color: AppColors.primary, size: 20),
           const SizedBox(width: 10),
           const Expanded(
-            child: Text('Bạn chưa có điểm tuần này — hãy học ngay!',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+            child: Text(
+              'Bạn chưa có điểm tuần này — hãy học ngay!',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-                color: AppColors.primarySurface, borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primary.withOpacity(0.3))),
-            child: Text('${profile.weeklyEp} EP',
-                style: const TextStyle(
-                    color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold)),
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+            ),
+            child: Text(
+              '${profile.weeklyEp} EP',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -497,14 +557,26 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               color: AppColors.primarySurface,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Boxicons.bx_trophy, color: AppColors.primary, size: 56),
+            child: const Icon(
+              Boxicons.bx_trophy,
+              color: AppColors.primary,
+              size: 56,
+            ),
           ),
           const SizedBox(height: 20),
-          const Text('Chưa có ai trên bảng xếp hạng',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          const Text(
+            'Chưa có ai trên bảng xếp hạng',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 8),
-          const Text('Học ngay để dẫn đầu tuần này! 🔥',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          const Text(
+            'Học ngay để dẫn đầu tuần này! 🔥',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
         ],
       ),
     );
@@ -517,7 +589,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     double radius = 20,
     int? rank,
   }) {
-    final raw     = displayName.trimLeft();
+    final raw = displayName.trimLeft();
     final initial = raw.isNotEmpty ? raw[0].toUpperCase() : 'U';
     final diameter = radius * 2;
 
@@ -582,7 +654,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         width: diameter,
         height: diameter,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => fallback,
+        errorBuilder: (_, _, _) => fallback,
         loadingBuilder: (_, child, progress) =>
             progress == null ? child : fallback,
       ),

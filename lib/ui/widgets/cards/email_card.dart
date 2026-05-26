@@ -5,12 +5,14 @@ class EmailCard extends StatelessWidget {
   final String from;
   final String subject;
   final String content;
+  final double fontSize;
 
   const EmailCard({
     super.key,
     required this.from,
     required this.subject,
     required this.content,
+    this.fontSize = 14,
   });
 
   @override
@@ -33,13 +35,12 @@ class EmailCard extends StatelessWidget {
         children: [
           Text(
             'From: $from',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
           ),
           const SizedBox(height: 4),
-          Text('Subject: $subject'),
+          Text('Subject: $subject', style: TextStyle(fontSize: fontSize)),
           const Divider(height: 20),
-
-          Text(content, style: const TextStyle(height: 1.5)),
+          Text(content, style: TextStyle(height: 1.5, fontSize: fontSize)),
         ],
       ),
     );

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../core/constants/app_constants.dart';
 import '../models/speaking_question.dart';
@@ -35,8 +34,11 @@ class SpeakingRepository {
     try {
       FormData formData = FormData.fromMap({
         "questionId": questionId,
-        if (subQuestionIndex != null) "subQuestionIndex": subQuestionIndex,
-        "audio": await MultipartFile.fromFile(audioPath, filename: "recording.m4a"),
+        "subQuestionIndex": ?subQuestionIndex,
+        "audio": await MultipartFile.fromFile(
+          audioPath,
+          filename: "recording.m4a",
+        ),
       });
 
       final response = await _dio.post(

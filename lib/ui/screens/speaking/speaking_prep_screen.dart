@@ -190,6 +190,7 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
     );
   }
 
+
   Widget _buildQuestionDropdown() {
     if (_questionOptions.isEmpty) return const SizedBox.shrink();
     return Container(
@@ -205,6 +206,11 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
           isDense: true,
           underline: const SizedBox(),
           menuMaxHeight: 250,
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
           onChanged: (v) => setState(() => _selectedCount = v!),
           items: _questionOptions
               .map((n) => DropdownMenuItem(value: n, child: Text('$n')))

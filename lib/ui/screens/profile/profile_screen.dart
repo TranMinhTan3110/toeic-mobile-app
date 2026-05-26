@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/user_provider.dart';
 import '../../../data/models/user_profile_model.dart';
 import '../../widgets/common/custom_app_bar.dart';
@@ -52,22 +51,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: isLoading && _isInit
                   ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
                     )
                   : profile == null
-                      ? _buildEmptyOrErrorState(userProvider.profileError)
-                      : SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildProfileHeader(profile),
-                              _buildStatsGrid(profile),
-                              _buildLevelProgressBar(profile),
-                              const SizedBox(height: 30),
-                            ],
-                          ),
-                        ),
+                  ? _buildEmptyOrErrorState(userProvider.profileError)
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildProfileHeader(profile),
+                          _buildStatsGrid(profile),
+                          _buildLevelProgressBar(profile),
+                          const SizedBox(height: 30),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),
@@ -82,7 +83,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Boxicons.bx_user_x, size: 64, color: AppColors.textSecondary.withOpacity(0.5)),
+            Icon(
+              Boxicons.bx_user_x,
+              size: 64,
+              color: AppColors.textSecondary.withOpacity(0.5),
+            ),
             const SizedBox(height: 16),
             Text(
               error ?? 'Không thể tải thông tin tài khoản.',
@@ -131,7 +136,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: _buildAvatar(profile.avatarUrl, profile.displayName, radius: 35),
+            child: _buildAvatar(
+              profile.avatarUrl,
+              profile.displayName,
+              radius: 35,
+            ),
           ),
           const SizedBox(width: 16),
           // Tên hiển thị và Danh hiệu
@@ -140,7 +149,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  profile.displayName.isNotEmpty ? profile.displayName : 'Học viên TOEIC',
+                  profile.displayName.isNotEmpty
+                      ? profile.displayName
+                      : 'Học viên TOEIC',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -151,7 +162,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
@@ -168,10 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 2),
                 Text(
                   profile.email,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -187,7 +198,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Boxicons.bx_edit_alt, color: Colors.white, size: 18),
+              child: const Icon(
+                Boxicons.bx_edit_alt,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
         ],
@@ -199,8 +214,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Avatar có fallback chữ cái
   /// Trên Flutter Web dùng chữ cái luôn (Google photo bị CORS bỏ qua)
-  Widget _buildAvatar(String? avatarUrl, String displayName, {double radius = 24}) {
-    final initial  = displayName.isNotEmpty
+  Widget _buildAvatar(
+    String? avatarUrl,
+    String displayName, {
+    double radius = 24,
+  }) {
+    final initial = displayName.isNotEmpty
         ? displayName.trimLeft()[0].toUpperCase()
         : 'U';
     final diameter = radius * 2;
@@ -208,11 +227,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Widget fallback = CircleAvatar(
       radius: radius,
       backgroundColor: AppColors.primaryLight,
-      child: Text(initial,
-          style: TextStyle(
-              fontSize: radius * 0.75,
-              fontWeight: FontWeight.bold,
-              color: Colors.white)),
+      child: Text(
+        initial,
+        style: TextStyle(
+          fontSize: radius * 0.75,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
     );
 
     // Web: CORS block → dùng fallback luôn
@@ -224,7 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         width: diameter,
         height: diameter,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => fallback,
+        errorBuilder: (_, _, _) => fallback,
         loadingBuilder: (_, child, progress) =>
             progress == null ? child : fallback,
       ),
@@ -289,10 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
             child: Icon(icon, color: iconColor, size: 20),
           ),
           const SizedBox(height: 10),
@@ -307,10 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -319,13 +335,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── LEVEL PROGRESS BAR ───────────────────────────────────────
   Widget _buildLevelProgressBar(UserProfileModel profile) {
-    final int currentEp   = profile.experiencePoints;
-    final int level        = LevelHelper.levelFromEp(currentEp);
-    final int relativeEp   = LevelHelper.epProgressInLevel(currentEp);
-    final int required     = LevelHelper.epRequiredForLevel(level);
-    final int toNext       = LevelHelper.epToNextLevel(currentEp);
-    final double progress  = LevelHelper.progressRatio(currentEp);
-    final bool isMaxLevel  = level >= LevelHelper.maxLevel;
+    final int currentEp = profile.experiencePoints;
+    final int level = LevelHelper.levelFromEp(currentEp);
+    final int relativeEp = LevelHelper.epProgressInLevel(currentEp);
+    final int required = LevelHelper.epRequiredForLevel(level);
+    final int toNext = LevelHelper.epToNextLevel(currentEp);
+    final double progress = LevelHelper.progressRatio(currentEp);
+    final bool isMaxLevel = level >= LevelHelper.maxLevel;
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -343,17 +359,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Boxicons.bx_award, color: Colors.yellow.shade800, size: 18),
+                  Icon(
+                    Boxicons.bx_award,
+                    color: Colors.yellow.shade800,
+                    size: 18,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Cấp độ $level${isMaxLevel ? " 👑 MAX" : ""}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
               Text(
                 '$relativeEp / $required EP',
-                style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -364,7 +391,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: progress,
               minHeight: 10,
               backgroundColor: Colors.grey.shade100,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -372,7 +401,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             isMaxLevel
                 ? '🎉 Bạn đã đạt cấp độ tối đa! TOEIC Master!'
                 : 'Học thêm $toNext EP nữa để thăng cấp ${level + 1}!',
-            style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 10,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -380,7 +413,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ── WEEKLY LEADERBOARD SECTION ─────────────────────────────────
-  Widget _buildLeaderboardSection(List<dynamic> leaderboard, UserProfileModel currentUser) {
+  Widget _buildLeaderboardSection(
+    List<dynamic> leaderboard,
+    UserProfileModel currentUser,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -432,8 +468,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final isMe = entry.uid == currentUser.uid;
 
                 return Container(
-                  color: isMe ? AppColors.primaryPale.withOpacity(0.4) : Colors.transparent,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  color: isMe
+                      ? AppColors.primaryPale.withOpacity(0.4)
+                      : Colors.transparent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       // Thứ hạng
@@ -442,11 +483,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       // Avatar
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: isMe ? AppColors.primary : Colors.grey.shade300,
-                        backgroundImage: entry.avatarUrl != null && entry.avatarUrl.isNotEmpty
+                        backgroundColor: isMe
+                            ? AppColors.primary
+                            : Colors.grey.shade300,
+                        backgroundImage:
+                            entry.avatarUrl != null &&
+                                entry.avatarUrl.isNotEmpty
                             ? NetworkImage(entry.avatarUrl)
                             : null,
-                        child: entry.avatarUrl == null || entry.avatarUrl.isEmpty
+                        child:
+                            entry.avatarUrl == null || entry.avatarUrl.isEmpty
                             ? Text(
                                 entry.displayName.isNotEmpty
                                     ? entry.displayName[0].toUpperCase()
@@ -463,11 +509,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       // Tên hiển thị
                       Expanded(
                         child: Text(
-                          entry.displayName.isNotEmpty ? entry.displayName : 'Học viên ẩn danh',
+                          entry.displayName.isNotEmpty
+                              ? entry.displayName
+                              : 'Học viên ẩn danh',
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: isMe ? FontWeight.bold : FontWeight.normal,
-                            color: isMe ? AppColors.primaryDark : AppColors.textPrimary,
+                            fontWeight: isMe
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isMe
+                                ? AppColors.primaryDark
+                                : AppColors.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -476,20 +528,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       // Streak
                       Row(
                         children: [
-                          const Icon(Boxicons.bxs_flame, color: Colors.orange, size: 14),
+                          const Icon(
+                            Boxicons.bxs_flame,
+                            color: Colors.orange,
+                            size: 14,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             '${entry.streakDays}',
-                            style: const TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.orange,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(width: 12),
                       // Điểm EP Tuần
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: isMe ? AppColors.primary : Colors.grey.shade100,
+                          color: isMe
+                              ? AppColors.primary
+                              : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -530,7 +595,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           shape: BoxShape.circle,
         ),
         child: const Center(
-          child: Text('2', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54)),
+          child: Text(
+            '2',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+            ),
+          ),
         ),
       );
     }
@@ -543,7 +615,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           shape: BoxShape.circle,
         ),
         child: const Center(
-          child: Text('3', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.brown)),
+          child: Text(
+            '3',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown,
+            ),
+          ),
         ),
       );
     }
@@ -552,7 +631,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Center(
         child: Text(
           '$rank',
-          style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -561,7 +644,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ── BOTTOM SHEET CHỈNH SỬA MỤC TIÊU ───────────────────────────────
   void _showEditGoalsSheet(UserProfileModel profile) {
     int selectedScore = profile.targetScore == 0 ? 550 : profile.targetScore;
-    String selectedLevel = profile.currentLevel.isEmpty ? 'Beginner' : profile.currentLevel;
+    String selectedLevel = profile.currentLevel.isEmpty
+        ? 'Beginner'
+        : profile.currentLevel;
 
     showModalBottomSheet(
       context: context,
@@ -588,7 +673,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 20),
                   // Chọn Điểm mục tiêu
-                  const Text('Chọn điểm TOEIC mục tiêu:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text(
+                    'Chọn điểm TOEIC mục tiêu:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -600,7 +688,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         selectedColor: AppColors.primary,
                         backgroundColor: Colors.grey.shade100,
                         labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -616,25 +706,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 20),
                   // Chọn Trình độ
-                  const Text('Trình độ tiếng Anh hiện tại:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text(
+                    'Trình độ tiếng Anh hiện tại:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: ['Beginner', 'Intermediate', 'Advanced'].map((lvl) {
+                    children: ['Beginner', 'Intermediate', 'Advanced'].map((
+                      lvl,
+                    ) {
                       final isSelected = selectedLevel == lvl;
                       return ChoiceChip(
                         label: Text(
                           lvl == 'Beginner'
                               ? 'Cơ bản'
                               : lvl == 'Intermediate'
-                                  ? 'Trung cấp'
-                                  : 'Nâng cao',
+                              ? 'Trung cấp'
+                              : 'Nâng cao',
                         ),
                         selected: isSelected,
                         selectedColor: AppColors.primary,
                         backgroundColor: Colors.grey.shade100,
                         labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -656,7 +753,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: () async {
                         Navigator.pop(context);
@@ -670,19 +769,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Text('Đang lưu thay đổi...'),
                               ],
                             ),
-                            duration: Duration(days: 1), // infinite until manually closed
+                            duration: Duration(
+                              days: 1,
+                            ), // infinite until manually closed
                           ),
                         );
                         try {
                           await this.context.read<UserProvider>().updateProfile(
-                                targetScore: selectedScore,
-                                currentLevel: selectedLevel,
-                                preferredSkills: profile.preferredSkills,
-                              );
+                            targetScore: selectedScore,
+                            currentLevel: selectedLevel,
+                            preferredSkills: profile.preferredSkills,
+                          );
                           ScaffoldMessenger.of(this.context).clearSnackBars();
                           ScaffoldMessenger.of(this.context).showSnackBar(
                             const SnackBar(
-                              content: Text('Cập nhật mục tiêu học tập thành công! 🎉'),
+                              content: Text(
+                                'Cập nhật mục tiêu học tập thành công! 🎉',
+                              ),
                               backgroundColor: AppColors.success,
                             ),
                           );
@@ -696,7 +799,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           );
                         }
                       },
-                      child: const Text('Lưu thay đổi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Lưu thay đổi',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
