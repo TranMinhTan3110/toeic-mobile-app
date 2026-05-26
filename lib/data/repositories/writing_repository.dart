@@ -123,4 +123,17 @@ class WritingRepository {
       throw Exception('Lỗi khi lấy danh sách task types: $e');
     }
   }
+
+  /// Get writing questions by exam set ID
+  Future<List<WritingQuestion>> getQuestionsByExamSetId(String examSetId) async {
+    try {
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing-questions/exam/$examSetId',
+      );
+      final List<dynamic> data = response.data;
+      return data.map((json) => WritingQuestion.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Lỗi khi tải câu hỏi Writing của đề thi $examSetId: $e');
+    }
+  }
 }

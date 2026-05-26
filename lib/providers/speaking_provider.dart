@@ -77,6 +77,27 @@ class SpeakingProvider with ChangeNotifier {
     }
   }
 
+  List<SpeakingQuestion> _examQuestions = [];
+  List<SpeakingQuestion> get examQuestions => _examQuestions;
+
+  Future<void> fetchExamQuestions(String examId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _examQuestions = [];
+    notifyListeners();
+
+    try {
+      final results = await _repository.getQuestionsByExamSetId(examId);
+      _examQuestions = results;
+    } catch (e) {
+      debugPrint('Error fetching exam $examId: $e');
+      _errorMessage = 'Lỗi kết nối API. Không thể tải đề thi.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Gửi bài nói lên AI để chấm điểm
   Future<SpeakingEvaluation?> evaluateAnswer(
     String questionId, 

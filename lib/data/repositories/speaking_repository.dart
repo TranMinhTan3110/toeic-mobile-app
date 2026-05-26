@@ -26,6 +26,18 @@ class SpeakingRepository {
     }
   }
 
+  Future<List<SpeakingQuestion>> getQuestionsByExamSetId(String examSetId) async {
+    try {
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/speaking/exam/$examSetId',
+      );
+      final List<dynamic> data = response.data;
+      return data.map((json) => SpeakingQuestion.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Lỗi khi tải đề thi Speaking $examSetId: $e');
+    }
+  }
+
   Future<SpeakingEvaluation> evaluateSpeaking({
     required String questionId,
     required String audioPath,
