@@ -25,7 +25,12 @@ class UserProvider with ChangeNotifier {
   String? _leaderboardError;
   String? get leaderboardError => _leaderboardError;
 
-  Future<void> fetchProfile() async {
+  Future<void> fetchProfile({bool forceRefresh = false}) async {
+    if (_profile != null && !forceRefresh) {
+      debugPrint('ℹ️ [UserProvider] Profile already loaded. Using cached profile.');
+      return;
+    }
+
     _isLoadingProfile = true;
     _profileError = null;
     notifyListeners();
@@ -68,13 +73,20 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchLeaderboard() async {
+  Future<void> fetchLeaderboard({bool forceRefresh = false}) async {
+    if (_leaderboard.isNotEmpty && !forceRefresh) {
+      debugPrint('ℹ️ [UserProvider] Leaderboard already loaded. Using cached leaderboard.');
+      return;
+    }
+
     _isLoadingLeaderboard = true;
     _leaderboardError = null;
     notifyListeners();
 
     try {
+      debugPrint('🔄 [UserProvider] Fetching leaderboard from API...');
       _leaderboard = await _userRepository.getWeeklyLeaderboard();
+      debugPrint('✅ [UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.');
     } catch (e) {
       _leaderboardError = e.toString();
       debugPrint('Error fetching leaderboard: $e');

@@ -82,7 +82,7 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
           setState(() {
             _earnedEP += engagement.epAwarded;
           });
-          _showFloatingEP('+${engagement.epAwarded} EP 🔥', Colors.orange);
+          _showFloatingEP('+${engagement.epAwarded} EP', Colors.orange, icon: Icons.local_fire_department_rounded);
         } else if (engagement.dailyCapReached) {
           _showSnackbar('Đạt giới hạn 500 EP/ngày 🎯', AppColors.warning);
         }
@@ -116,13 +116,14 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
     });
   }
 
-  void _showFloatingEP(String text, Color color) {
+  void _showFloatingEP(String text, Color color, {IconData? icon}) {
     final id = DateTime.now().millisecondsSinceEpoch;
     setState(() {
       _floatingTexts.add(
         _FloatingEpAnimation(
           key: ValueKey(id),
           text: text,
+          icon: icon,
           color: color,
           onComplete: () {
             if (mounted) {
@@ -484,12 +485,14 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
 // ── Animation EP bay lên ─────────────────────────────────────────────────────
 class _FloatingEpAnimation extends StatefulWidget {
   final String text;
+  final IconData? icon;
   final Color color;
   final VoidCallback onComplete;
 
   const _FloatingEpAnimation({
     super.key,
     required this.text,
+    this.icon,
     required this.color,
     required this.onComplete,
   });
@@ -544,17 +547,34 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
           right: rightOffset,
           child: Opacity(
             opacity: _opacity.value,
-            child: Text(
-              widget.text,
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-                color: widget.color,
-                shadows: const [
-                  Shadow(blurRadius: 10, color: Colors.white, offset: Offset(0, 0)),
-                  Shadow(blurRadius: 5, color: Colors.black26, offset: Offset(2, 2)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.text,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: widget.color,
+                    shadows: const [
+                      Shadow(blurRadius: 10, color: Colors.white, offset: Offset(0, 0)),
+                      Shadow(blurRadius: 5, color: Colors.black26, offset: Offset(2, 2)),
+                    ],
+                  ),
+                ),
+                if (widget.icon != null) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    widget.icon,
+                    color: widget.color,
+                    size: 34,
+                    shadows: const [
+                      Shadow(blurRadius: 10, color: Colors.white, offset: Offset(0, 0)),
+                      Shadow(blurRadius: 5, color: Colors.black26, offset: Offset(2, 2)),
+                    ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         );

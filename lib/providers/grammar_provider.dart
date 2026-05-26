@@ -15,6 +15,10 @@ class GrammarProvider with ChangeNotifier {
   List<ListeningQuestion> _exercises = [];
   List<ListeningQuestion> get exercises => _exercises;
 
+  // ── In-Memory Cache ────────────────────────────────────────────────────────
+  final Map<String, GrammarLesson> _lessonsCache = {};
+  final Map<String, List<ListeningQuestion>> _exercisesCache = {};
+
   // ── States ──────────────────────────────────────────────────────────────────
   bool _isLoadingTopics = false;
   bool get isLoadingTopics => _isLoadingTopics;
@@ -37,7 +41,12 @@ class GrammarProvider with ChangeNotifier {
   // ── Actions ─────────────────────────────────────────────────────────────────
 
   /// Tải danh sách các chủ đề ngữ pháp
-  Future<void> fetchTopics() async {
+  Future<void> fetchTopics({bool forceRefresh = false}) async {
+    if (_topics.isNotEmpty && !forceRefresh) {
+      debugPrint('ℹ️ [GrammarProvider] Grammar topics already loaded. Using cache.');
+      return;
+    }
+
     _isLoadingTopics = true;
     _topicsError = null;
     notifyListeners();
@@ -54,14 +63,24 @@ class GrammarProvider with ChangeNotifier {
   }
 
   /// Tải nội dung bài học lý thuyết
-  Future<void> fetchLesson(String topicId) async {
+  Future<void> fetchLesson(String topicId, {bool forceRefresh = false}) async {
+    if (_lessonsCache.containsKey(topicId) && !forceRefresh) {
+      _currentLesson = _lessonsCache[topicId];
+      _lessonError = null;
+      debugPrint('ℹ️ [GrammarProvider] Lesson for topic "$topicId" already loaded. Using cache.');
+      notifyListeners();
+      return;
+    }
+
     _isLoadingLesson = true;
     _lessonError = null;
     _currentLesson = null; // Clear previous lesson
     notifyListeners();
 
     try {
-      _currentLesson = await _repository.getGrammarLesson(topicId);
+      final lesson = await _repository.getGrammarLesson(topicId);
+      _currentLesson = lesson;
+      _lessonsCache[topicId] = lesson;
     } catch (e) {
       _lessonError = e.toString();
       debugPrint('Error fetching grammar lesson: $e');
@@ -72,7 +91,15 @@ class GrammarProvider with ChangeNotifier {
   }
 
   /// Tải danh sách câu hỏi luyện tập (10 câu)
-  Future<void> fetchExercises(String topicId) async {
+  Future<void> fetchExercises(String topicId, {bool forceRefresh = false}) async {
+    if (_exercisesCache.containsKey(topicId) && !forceRefresh) {
+      _exercises = _exercisesCache[topicId]!;
+      _exercisesError = null;
+      debugPrint('ℹ️ [GrammarProvider] Exercises for topic "$topicId" already loaded. Using cache.');
+      notifyListeners();
+      return;
+    }
+
     _isLoadingExercises = true;
     _exercisesError = null;
     _exercises = []; // Clear previous exercises
@@ -80,6 +107,7 @@ class GrammarProvider with ChangeNotifier {
 
     try {
       _exercises = await _repository.getGrammarExercises(topicId);
+      _exercisesCache[topicId] = _exercises;
     } catch (e) {
       _exercisesError = e.toString();
       debugPrint('Error fetching grammar exercises: $e');
@@ -87,5 +115,12 @@ class GrammarProvider with ChangeNotifier {
       _isLoadingExercises = false;
       notifyListeners();
     }
+  }
+
+  /// Xóa cache khi cần thiết (ví dụ khi user đăng xuất)
+  void clearCache() {
+    _topics.clear();
+    _lessonsCache.clear();
+    _exercisesCache.clear();
   }
 }
