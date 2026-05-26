@@ -9,7 +9,6 @@ import '../../../data/models/speaking_part_info.dart';
 import '../../../data/models/speaking_question.dart';
 import '../../../data/models/speaking_evaluation_model.dart';
 import '../../../providers/speaking_provider.dart';
-import '../../shared/practice_dialogs.dart';
 import '../../widgets/speaking/speaking_explanation_panel.dart';
 
 enum _Phase { prepare, recording, evaluating, done }

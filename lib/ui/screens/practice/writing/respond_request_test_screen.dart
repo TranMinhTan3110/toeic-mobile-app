@@ -3,7 +3,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/writing_question.dart';
 import '../../../../data/repositories/writing_repository.dart';
 import '../../../widgets/common/custom_app_bar.dart';
-import '../../../widgets/shared/bold_text_label.dart';
 import '../../../widgets/cards/email_card.dart';
 import '../../../shared/practice_dialogs.dart';
 
