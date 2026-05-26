@@ -52,13 +52,11 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 8),
 
             SettingTile(
-              icon: Icons.edit, 
+              icon: Icons.edit,
               title: 'Chỉnh sửa hồ sơ',
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ProfileEditScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ProfileEditScreen()),
                 );
               },
             ),
@@ -152,7 +150,7 @@ class _DarkModeSwitchState extends State<_DarkModeSwitch> {
   Widget build(BuildContext context) {
     return Switch(
       value: value,
-      activeColor: AppColors.primary,
+      activeThumbColor: AppColors.primary,
       onChanged: (v) => setState(() => value = v),
     );
   }

@@ -32,18 +32,18 @@ class SpeakingDoingScreen extends StatefulWidget {
 
 class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     with TickerProviderStateMixin {
-  
   final AudioRecorder _audioRecorder = AudioRecorder();
   String? _lastRecordingPath;
 
   List<SpeakingQuestion> _tasks = [];
   int _currentTaskIndex = 0;
-  int _currentSubQuestionIndex = 0; 
+  int _currentSubQuestionIndex = 0;
   bool _isInitialized = false;
 
-  SpeakingQuestion? get _currentTask => 
-      (_tasks.isNotEmpty && _currentTaskIndex < _tasks.length) 
-      ? _tasks[_currentTaskIndex] : null;
+  SpeakingQuestion? get _currentTask =>
+      (_tasks.isNotEmpty && _currentTaskIndex < _tasks.length)
+      ? _tasks[_currentTaskIndex]
+      : null;
 
   _Phase _phase = _Phase.prepare;
   int _secondsLeft = 0;
@@ -64,9 +64,10 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.18).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+    _pulseAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.18,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     _progressCtrl = AnimationController(
       vsync: this,
@@ -75,27 +76,32 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     _progressAnim = Tween<double>(begin: 0, end: 0).animate(_progressCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SpeakingProvider>().fetchQuestionsByPart(widget.part.partNumber).then((_) {
-        if (mounted) {
-          setState(() {
-            final all = context.read<SpeakingProvider>().questions;
-            _tasks = all.take(widget.questionCount).toList();
-            _isInitialized = true;
-            
-            if (_tasks.isNotEmpty) {
-              _updateProgress();
-              _startPrepare();
+      context
+          .read<SpeakingProvider>()
+          .fetchQuestionsByPart(widget.part.partNumber)
+          .then((_) {
+            if (mounted) {
+              setState(() {
+                final all = context.read<SpeakingProvider>().questions;
+                _tasks = all.take(widget.questionCount).toList();
+                _isInitialized = true;
+
+                if (_tasks.isNotEmpty) {
+                  _updateProgress();
+                  _startPrepare();
+                }
+              });
             }
           });
-        }
-      });
     });
   }
 
   void _updateProgress() {
     double progress = (_currentTaskIndex) / _tasks.length;
     if (_currentTask != null && _currentTask!.questions.isNotEmpty) {
-      progress += ((_currentSubQuestionIndex + 1) / _currentTask!.questions.length) / _tasks.length;
+      progress +=
+          ((_currentSubQuestionIndex + 1) / _currentTask!.questions.length) /
+          _tasks.length;
     } else {
       // Fallback nếu không có câu hỏi con
       progress += (1.0 / _tasks.length);
@@ -121,7 +127,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     try {
       if (await _audioRecorder.hasPermission()) {
         final directory = await getTemporaryDirectory();
-        final path = '${directory.path}/speaking_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final path =
+            '${directory.path}/speaking_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
         const config = RecordConfig();
         await _audioRecorder.start(config, path: path);
         _lastRecordingPath = path;
@@ -146,7 +153,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
   Future<void> _startRecording() async {
     if (_currentTask == null) return;
-    
+
     await _startRecordingLogic();
     _pulseCtrl.repeat(reverse: true);
 
@@ -171,16 +178,18 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
   Future<void> _evaluateAndNext() async {
     if (_lastRecordingPath == null || _currentTask == null) {
-       _moveToNext();
-       return;
+      _moveToNext();
+      return;
     }
 
     setState(() => _phase = _Phase.evaluating);
-    
+
     final evaluation = await context.read<SpeakingProvider>().evaluateAnswer(
-      _currentTask!.id, 
+      _currentTask!.id,
       _lastRecordingPath!,
-      subQuestionIndex: _currentTask!.questions.isNotEmpty ? _currentSubQuestionIndex : null,
+      subQuestionIndex: _currentTask!.questions.isNotEmpty
+          ? _currentSubQuestionIndex
+          : null,
     );
 
     if (evaluation != null) {
@@ -191,7 +200,9 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   void _moveToNext() {
-    if (_currentTask != null && _currentTask!.questions.isNotEmpty && _currentSubQuestionIndex < _currentTask!.questions.length - 1) {
+    if (_currentTask != null &&
+        _currentTask!.questions.isNotEmpty &&
+        _currentSubQuestionIndex < _currentTask!.questions.length - 1) {
       setState(() {
         _currentSubQuestionIndex++;
         _phase = _Phase.prepare;
@@ -218,7 +229,10 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   void _startCountdown(VoidCallback onDone) {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) { t.cancel(); return; }
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       setState(() => _secondsLeft--);
       if (_secondsLeft <= 0) {
         t.cancel();
@@ -256,8 +270,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
               _buildBottomArea(),
             ],
           ),
-          if (_phase == _Phase.evaluating) 
-            _buildEvaluatingOverlay(),
+          if (_phase == _Phase.evaluating) _buildEvaluatingOverlay(),
           _buildExplanationPanel(),
         ],
       ),
@@ -272,23 +285,41 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       title: Text(widget.part.titleVi, overflow: TextOverflow.ellipsis),
       actions: [
         IconButton(
-          onPressed: () {}, 
-          icon: const Icon(Icons.report_problem_outlined, color: Colors.white, size: 20),
+          onPressed: () {},
+          icon: const Icon(
+            Icons.report_problem_outlined,
+            color: Colors.white,
+            size: 20,
+          ),
           tooltip: 'Báo lỗi',
         ),
         IconButton(
-          onPressed: () {}, 
-          icon: const Icon(Icons.favorite_border, color: Colors.white, size: 20),
+          onPressed: () {},
+          icon: const Icon(
+            Icons.favorite_border,
+            color: Colors.white,
+            size: 20,
+          ),
           tooltip: 'Yêu thích',
         ),
         IconButton(
-          onPressed: () {}, 
-          icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 20),
+          onPressed: () {},
+          icon: const Icon(
+            Icons.settings_outlined,
+            color: Colors.white,
+            size: 20,
+          ),
           tooltip: 'Cài đặt',
         ),
         TextButton(
           onPressed: () => setState(() => _showPanel = !_showPanel),
-          child: const Text('Giải thích', style: TextStyle(color: Colors.white, decoration: TextDecoration.underline)),
+          child: const Text(
+            'Giải thích',
+            style: TextStyle(
+              color: Colors.white,
+              decoration: TextDecoration.underline,
+            ),
+          ),
         ),
       ],
     );
@@ -297,7 +328,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   Widget _buildTopProgressBar() {
     return AnimatedBuilder(
       animation: _progressAnim,
-      builder: (_, __) => LinearProgressIndicator(
+      builder: (_, _) => LinearProgressIndicator(
         value: _progressAnim.value,
         minHeight: 4,
         backgroundColor: AppColors.primaryLighter,
@@ -319,13 +350,14 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           const SizedBox(height: 16),
 
           // 1.1 Hiển thị Hình ảnh (nếu có)
-          if (_currentTask!.imageUrl != null && _currentTask!.imageUrl!.isNotEmpty)
+          if (_currentTask!.imageUrl != null &&
+              _currentTask!.imageUrl!.isNotEmpty)
             _buildImage(),
-          
+
           const SizedBox(height: 20),
 
           // 2. Hiển thị Câu hỏi con cụ thể (Rất quan trọng)
-          if (_currentTask!.questions.isNotEmpty) 
+          if (_currentTask!.questions.isNotEmpty)
             _buildCurrentQuestionCard()
           else if (widget.part.partNumber == 3 || widget.part.partNumber == 4)
             const Center(
@@ -334,13 +366,16 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                 child: Text(
                   '⚠️ Không tìm thấy dữ liệu câu hỏi cho phần này. Vui lòng kiểm tra API.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.red, fontStyle: FontStyle.italic),
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
             ),
-          
+
           const SizedBox(height: 24),
-          if (_phase != _Phase.done && _phase != _Phase.evaluating) 
+          if (_phase != _Phase.done && _phase != _Phase.evaluating)
             _buildCountdownChip(),
         ],
       ),
@@ -357,7 +392,13 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -371,9 +412,16 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
+                      Icon(
+                        Icons.broken_image_outlined,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
                       SizedBox(height: 8),
-                      Text('Không thể tải ảnh', style: TextStyle(color: Colors.grey)),
+                      Text(
+                        'Không thể tải ảnh',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
@@ -382,7 +430,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                   return Center(
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
                           : null,
                     ),
                   );
@@ -404,9 +453,23 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Ngữ cảnh:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
+          const Text(
+            'Ngữ cảnh:',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(_currentTask!.text, style: const TextStyle(fontSize: 14, height: 1.5, fontStyle: FontStyle.italic)),
+          Text(
+            _currentTask!.text,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
         ],
       ),
     );
@@ -419,7 +482,13 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
         border: Border.all(color: Colors.orange.withOpacity(0.2)),
       ),
       child: Column(
@@ -427,17 +496,32 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.help_center_rounded, color: Colors.orange, size: 20),
+              const Icon(
+                Icons.help_center_rounded,
+                color: Colors.orange,
+                size: 20,
+              ),
               const SizedBox(width: 8),
-              Text('Câu hỏi ${_currentSubQuestionIndex + 1} / 3', 
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 15)),
+              Text(
+                'Câu hỏi ${_currentSubQuestionIndex + 1} / 3',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                  fontSize: 15,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
             _currentTask!.questions[_currentSubQuestionIndex],
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.4),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -458,10 +542,20 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(isPrepare ? Icons.timer_outlined : Icons.mic_none_rounded, color: color, size: 22),
+            Icon(
+              isPrepare ? Icons.timer_outlined : Icons.mic_none_rounded,
+              color: color,
+              size: 22,
+            ),
             const SizedBox(width: 10),
-            Text('${isPrepare ? 'Chuẩn bị' : 'Ghi âm'}: ${_secondsLeft}s', 
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color)),
+            Text(
+              '${isPrepare ? 'Chuẩn bị' : 'Ghi âm'}: ${_secondsLeft}s',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
@@ -469,47 +563,81 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   Widget _buildBottomArea() {
-    if (_phase == _Phase.evaluating || _phase == _Phase.done) return const SizedBox.shrink();
-    
+    if (_phase == _Phase.evaluating || _phase == _Phase.done) {
+      return const SizedBox.shrink();
+    }
+
     return SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-        child: _phase == _Phase.prepare 
-          ? SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () { _timer?.cancel(); _startRecording(); },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary, 
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-                ),
-                child: const Text('Bắt đầu trả lời', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-              ),
-            )
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ScaleTransition(
-                  scale: _pulseAnim,
-                  child: GestureDetector(
-                    onTap: _skip,
-                    child: Container(
-                      width: 84, height: 84,
-                      decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.orangeAccent, blurRadius: 20, spreadRadius: 2)]),
-                      child: const Icon(Icons.mic_rounded, color: Colors.white, size: 44),
+        child: _phase == _Phase.prepare
+            ? SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _timer?.cancel();
+                    _startRecording();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                  ),
+                  child: const Text(
+                    'Bắt đầu trả lời',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: _skip,
-                  child: const Text('Bỏ qua / Kết thúc câu này', style: TextStyle(color: AppColors.textSecondary, decoration: TextDecoration.underline)),
-                ),
-              ],
-            ),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ScaleTransition(
+                    scale: _pulseAnim,
+                    child: GestureDetector(
+                      onTap: _skip,
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: const BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orangeAccent,
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.mic_rounded,
+                          color: Colors.white,
+                          size: 44,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: _skip,
+                    child: const Text(
+                      'Bỏ qua / Kết thúc câu này',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -523,8 +651,14 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           children: [
             const CircularProgressIndicator(color: Colors.white),
             const SizedBox(height: 20),
-            Text('AI đang đánh giá câu trả lời ${_currentSubQuestionIndex + 1}...', 
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'AI đang đánh giá câu trả lời ${_currentSubQuestionIndex + 1}...',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -533,7 +667,9 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
   Widget _buildExplanationPanel() {
     return Positioned(
-      left: 0, right: 0, bottom: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       child: SpeakingExplanationPanel(
         isVisible: _showPanel,
         transcript: _currentTask?.transcriptText,
@@ -551,35 +687,74 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
         height: MediaQuery.of(context).size.height * 0.75,
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Text('Kết quả câu hỏi ${_currentSubQuestionIndex + 1}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              'Kết quả câu hỏi ${_currentSubQuestionIndex + 1}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-              child: Text('${result.overallScore.toStringAsFixed(1)}', 
-                style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900, color: AppColors.primary)),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                result.overallScore.toStringAsFixed(1),
+                style: const TextStyle(
+                  fontSize: 44,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                ),
+              ),
             ),
             const SizedBox(height: 24),
-            const Align(alignment: Alignment.centerLeft, child: Text('Phản hồi từ giám khảo AI:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Phản hồi từ giám khảo AI:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
             const SizedBox(height: 8),
-            Expanded(child: SingleChildScrollView(child: Text(result.feedback, style: const TextStyle(fontSize: 15, height: 1.6)))),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Text(
+                  result.feedback,
+                  style: const TextStyle(fontSize: 15, height: 1.6),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () { Navigator.pop(context); _moveToNext(); },
+                onPressed: () {
+                  Navigator.pop(context);
+                  _moveToNext();
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: const Text('Tiếp tục', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Tiếp tục',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -587,10 +762,21 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   void _showCompletionDialog() {
-    showDialog(context: context, builder: (_) => AlertDialog(
-      title: const Text('🎉 Hoàn thành!'),
-      content: const Text('Bạn đã hoàn thành 3 câu hỏi của phần này.'),
-      actions: [TextButton(onPressed: () { Navigator.pop(context); Navigator.pop(context); }, child: const Text('Tuyệt vời'))],
-    ));
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('🎉 Hoàn thành!'),
+        content: const Text('Bạn đã hoàn thành 3 câu hỏi của phần này.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text('Tuyệt vời'),
+          ),
+        ],
+      ),
+    );
   }
 }

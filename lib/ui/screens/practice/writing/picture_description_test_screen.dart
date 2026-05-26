@@ -4,9 +4,12 @@ import '../../../../data/models/writing_question.dart';
 import '../../../../data/repositories/writing_repository.dart';
 import '../../../widgets/common/custom_app_bar.dart';
 import '../../../widgets/shared/bold_text_label.dart';
+import '../../../shared/practice_dialogs.dart';
 
 class PictureDescriptionTestScreen extends StatefulWidget {
-  const PictureDescriptionTestScreen({super.key});
+  final int questionLimit;
+
+  const PictureDescriptionTestScreen({super.key, required this.questionLimit});
 
   @override
   State<PictureDescriptionTestScreen> createState() =>
@@ -21,6 +24,7 @@ class _PictureDescriptionTestScreenState
   bool _isLoading = true;
   String? _error;
   bool _showExplanation = false;
+  double _fontSize = 14.0;
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -32,11 +36,11 @@ class _PictureDescriptionTestScreenState
 
   Future<void> _loadQuestions() async {
     try {
-      final questions = await _repository.getPracticeByTaskType(
+      final allQuestions = await _repository.getPracticeByTaskType(
         'write_sentence',
       );
       setState(() {
-        _questions = questions;
+        _questions = allQuestions.take(widget.questionLimit).toList();
         _currentQ = 0;
         _isLoading = false;
       });
@@ -97,7 +101,7 @@ class _PictureDescriptionTestScreenState
               color: AppColors.appBarFg,
               size: 22,
             ),
-            onPressed: () {},
+            onPressed: () => showWritingReportDialog(context),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -108,7 +112,11 @@ class _PictureDescriptionTestScreenState
               color: AppColors.appBarFg,
               size: 22,
             ),
-            onPressed: () {},
+            onPressed: () => showWritingSettingsDialog(
+              context,
+              fontSize: _fontSize,
+              onFontSizeChanged: (v) => setState(() => _fontSize = v),
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -149,26 +157,55 @@ class _PictureDescriptionTestScreenState
           ListView(
             padding: const EdgeInsets.only(bottom: 24),
             children: [
+              // Progress Strip
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Text(
-                  'Câu $questionNumber/${_questions.length}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Text(
-                  'Mô tả hình ảnh',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Part 1',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: _questions.isNotEmpty
+                              ? (_currentQ + 1) / _questions.length
+                              : 0,
+                          backgroundColor: AppColors.primaryLighter,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
+                          minHeight: 5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '${_currentQ + 1}/${_questions.length}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Padding(
@@ -209,7 +246,7 @@ class _PictureDescriptionTestScreenState
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -221,58 +258,20 @@ class _PictureDescriptionTestScreenState
                       ),
                     ],
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.lightbulb_rounded,
-                        size: 20,
-                        color: AppColors.primary,
+                  child: Center(
+                    child: Text(
+                      currentQuestion.givenWords.isNotEmpty
+                          ? currentQuestion.givenWords.join(' / ')
+                          : 'Sử dụng các từ cho trước',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          currentQuestion.givenWords.isNotEmpty
-                              ? currentQuestion.givenWords.join(' / ')
-                              : 'Sử dụng các từ cho trước',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_rounded,
-                        size: 20,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: BoldTextLabel(text: 'Describe the image'),
-                      ),
-                    ],
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ),
@@ -296,16 +295,16 @@ class _PictureDescriptionTestScreenState
                   maxLines: 10,
                   decoration: InputDecoration(
                     hintText: 'Mô tả hình ảnh của bạn...',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: AppColors.textHint,
-                      fontSize: 14,
+                      fontSize: _fontSize,
                     ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
                   ),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 14,
+                    fontSize: _fontSize,
                   ),
                 ),
               ),

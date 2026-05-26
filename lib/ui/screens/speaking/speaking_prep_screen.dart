@@ -197,7 +197,8 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
             ),
           ),
           const TextSpan(
-            text: ' để tải toàn bộ bài tập về máy, '
+            text:
+                ' để tải toàn bộ bài tập về máy, '
                 'tải dữ liệu nhanh hơn, ổn định hơn',
           ),
         ],
@@ -210,10 +211,7 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
     return Column(
       children: [
         // Số câu hỏi
-        _SettingRow(
-          label: 'Số câu hỏi:',
-          trailing: _buildQuestionDropdown(),
-        ),
+        _SettingRow(label: 'Số câu hỏi:', trailing: _buildQuestionDropdown()),
         const SizedBox(height: 16),
         // Chế độ kiểm tra
         _SettingRow(
@@ -221,7 +219,7 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
           trailing: Switch(
             value: _examMode,
             onChanged: (v) => setState(() => _examMode = v),
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
         ),
       ],
@@ -246,8 +244,11 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           value: _selectedCount,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textSecondary, size: 20),
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
@@ -326,10 +327,7 @@ class _SettingRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         const SizedBox(width: 12), // chỉnh khoảng cách tùy ý
         trailing,

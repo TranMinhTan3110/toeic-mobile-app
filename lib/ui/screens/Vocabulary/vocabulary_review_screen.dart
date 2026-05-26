@@ -30,7 +30,7 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
   int _hardCount = 0;
 
   // Floating EP animations
-  List<Widget> _floatingTexts = [];
+  final List<Widget> _floatingTexts = [];
 
   // Track starred state per word (local optimistic)
   final Map<String, bool> _starredState = {};
@@ -69,26 +69,29 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
     }
 
     // Gọi API cập nhật progress
-    _repository.updateProgress(word.id, quality).then((result) {
-      final engagement = result.engagement;
-      if (engagement != null) {
-        // Cập nhật EP + Streak lên UserProvider toàn cục
-        if (mounted) {
-          context.read<UserProvider>().updateLocalEpAndStreak(engagement);
-        }
+    _repository
+        .updateProgress(word.id, quality)
+        .then((result) {
+          final engagement = result.engagement;
+          if (engagement != null) {
+            // Cập nhật EP + Streak lên UserProvider toàn cục
+            if (mounted) {
+              context.read<UserProvider>().updateLocalEpAndStreak(engagement);
+            }
 
-        if (engagement.epAwarded > 0) {
-          setState(() {
-            _earnedEP += engagement.epAwarded;
-          });
-          _showFloatingEP('+${engagement.epAwarded} EP 🔥', Colors.orange);
-        } else if (engagement.dailyCapReached) {
-          _showSnackbar('Đạt giới hạn 500 EP/ngày 🎯', AppColors.warning);
-        }
-      }
-    }).catchError((e) {
-      debugPrint('Error updating progress: $e');
-    });
+            if (engagement.epAwarded > 0) {
+              setState(() {
+                _earnedEP += engagement.epAwarded;
+              });
+              _showFloatingEP('+${engagement.epAwarded} EP 🔥', Colors.orange);
+            } else if (engagement.dailyCapReached) {
+              _showSnackbar('Đạt giới hạn 500 EP/ngày 🎯', AppColors.warning);
+            }
+          }
+        })
+        .catchError((e) {
+          debugPrint('Error updating progress: $e');
+        });
 
     setState(() {
       _currentIndex++;
@@ -101,18 +104,21 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
       _starredState[word.id] = !current;
     });
 
-    _repository.toggleStar(word.id).then((_) {
-      // Cập nhật hub stats nếu cần
-      if (mounted) {
-        context.read<VocabularyProvider>().fetchHubStats();
-      }
-    }).catchError((e) {
-      // Rollback nếu lỗi
-      setState(() {
-        _starredState[word.id] = current;
-      });
-      debugPrint('Toggle star error: $e');
-    });
+    _repository
+        .toggleStar(word.id)
+        .then((_) {
+          // Cập nhật hub stats nếu cần
+          if (mounted) {
+            context.read<VocabularyProvider>().fetchHubStats();
+          }
+        })
+        .catchError((e) {
+          // Rollback nếu lỗi
+          setState(() {
+            _starredState[word.id] = current;
+          });
+          debugPrint('Toggle star error: $e');
+        });
   }
 
   void _showFloatingEP(String text, Color color) {
@@ -139,7 +145,10 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: color,
         duration: const Duration(milliseconds: 1800),
         behavior: SnackBarBehavior.floating,
@@ -151,16 +160,8 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
-        title: 'Ôn tập từ vựng',
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          _buildBody(),
-          ..._floatingTexts,
-        ],
-      ),
+      appBar: const CustomAppBar(title: 'Ôn tập từ vựng', centerTitle: true),
+      body: Stack(children: [_buildBody(), ..._floatingTexts]),
     );
   }
 
@@ -176,14 +177,27 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Boxicons.bx_wifi_off, size: 48, color: AppColors.textHint),
+            const Icon(
+              Boxicons.bx_wifi_off,
+              size: 48,
+              color: AppColors.textHint,
+            ),
             const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: AppColors.textSecondary), textAlign: TextAlign.center),
+            Text(
+              _error!,
+              style: const TextStyle(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadDueWords,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Thử lại', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text(
+                'Thử lại',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -223,7 +237,10 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
               const Spacer(),
               // EP badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight.withOpacity(0.25),
                   borderRadius: BorderRadius.circular(20),
@@ -300,13 +317,36 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: Row(
             children: [
-              Expanded(child: _buildRateBtn('Quên', Boxicons.bx_x, AppColors.error, 1)),
+              Expanded(
+                child: _buildRateBtn('Quên', Boxicons.bx_x, AppColors.error, 1),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _buildRateBtn('Khó', Boxicons.bx_confused, AppColors.warning, 2)),
+              Expanded(
+                child: _buildRateBtn(
+                  'Khó',
+                  Boxicons.bx_confused,
+                  AppColors.warning,
+                  2,
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _buildRateBtn('Ổn', Boxicons.bx_smile, AppColors.info, 3)),
+              Expanded(
+                child: _buildRateBtn(
+                  'Ổn',
+                  Boxicons.bx_smile,
+                  AppColors.info,
+                  3,
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _buildRateBtn('Dễ', Boxicons.bx_happy, AppColors.green, 5)),
+              Expanded(
+                child: _buildRateBtn(
+                  'Dễ',
+                  Boxicons.bx_happy,
+                  AppColors.green,
+                  5,
+                ),
+              ),
             ],
           ),
         ),
@@ -332,7 +372,10 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
         children: [
           Icon(icon, size: 22),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -345,12 +388,25 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(color: AppColors.greenBg, shape: BoxShape.circle),
-            child: const Icon(Boxicons.bx_check_circle, size: 56, color: AppColors.green),
+            decoration: const BoxDecoration(
+              color: AppColors.greenBg,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Boxicons.bx_check_circle,
+              size: 56,
+              color: AppColors.green,
+            ),
           ),
           const SizedBox(height: 20),
-          const Text('Tuyệt vời! 🎉',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          const Text(
+            'Tuyệt vời! 🎉',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 8),
           const Text(
             'Không có từ nào cần ôn tập.\nHãy quay lại sau nhé!',
@@ -365,7 +421,9 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
@@ -394,15 +452,28 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
                   ),
                 ],
               ),
-              child: const Icon(Boxicons.bx_trophy, size: 56, color: Colors.white),
+              child: const Icon(
+                Boxicons.bx_trophy,
+                size: 56,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 24),
-            const Text('Hoàn thành ôn tập! 🏆',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            const Text(
+              'Hoàn thành ôn tập! 🏆',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               'Bạn đã ôn $_reviewedCount từ và nhận được $_earnedEP EP',
-              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -412,7 +483,13 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.divider),
-                boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: Offset(0, 4))],
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -430,11 +507,16 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Boxicons.bx_home, size: 20),
-                label: const Text('Về trang chủ', style: TextStyle(fontSize: 16)),
+                label: const Text(
+                  'Về trang chủ',
+                  style: TextStyle(fontSize: 16),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
@@ -451,16 +533,26 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
         Container(
           width: 50,
           height: 50,
-          decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
           child: Center(
             child: Text(
               '$count',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
       ],
     );
   }
@@ -499,8 +591,10 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
     _opacity = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(parent: _controller, curve: const Interval(0.5, 1.0)),
     );
-    _position = Tween<double>(begin: 0.0, end: 140.0)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _position = Tween<double>(
+      begin: 0.0,
+      end: 140.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward().then((_) => widget.onComplete());
   }
@@ -528,8 +622,16 @@ class _FloatingEpAnimationState extends State<_FloatingEpAnimation>
                 fontWeight: FontWeight.w900,
                 color: widget.color,
                 shadows: const [
-                  Shadow(blurRadius: 10, color: Colors.white, offset: Offset(0, 0)),
-                  Shadow(blurRadius: 5, color: Colors.black26, offset: Offset(2, 2)),
+                  Shadow(
+                    blurRadius: 10,
+                    color: Colors.white,
+                    offset: Offset(0, 0),
+                  ),
+                  Shadow(
+                    blurRadius: 5,
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                  ),
                 ],
               ),
             ),

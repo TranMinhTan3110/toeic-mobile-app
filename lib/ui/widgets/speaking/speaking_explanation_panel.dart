@@ -129,8 +129,11 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close_rounded,
-                  color: Colors.white, size: 16),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
           ),
         ],
@@ -147,14 +150,12 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
         children: [
           // Tab 1: Phụ đề (transcript)
           _ScrollableText(
-            text: widget.transcript ??
-                'Chưa có phụ đề cho câu hỏi này.',
+            text: widget.transcript ?? 'Chưa có phụ đề cho câu hỏi này.',
           ),
 
           // Tab 2: Lời dịch (translation)
           _ScrollableText(
-            text: widget.translation ??
-                'Chưa có lời dịch cho câu hỏi này.',
+            text: widget.translation ?? 'Chưa có lời dịch cho câu hỏi này.',
           ),
 
           // Tab 3: Từ khoá
@@ -178,11 +179,7 @@ class _ScrollableText extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          height: 1.75,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.75),
       ),
     );
   }
@@ -198,8 +195,8 @@ class _KeywordList extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       itemCount: keywords.length,
-      separatorBuilder: (_, __) =>
-      const Divider(color: Colors.white24, height: 14),
+      separatorBuilder: (_, _) =>
+          const Divider(color: Colors.white24, height: 14),
       itemBuilder: (_, i) {
         final kw = keywords[i];
         return Row(
@@ -221,10 +218,7 @@ class _KeywordList extends StatelessWidget {
             Expanded(
               child: Text(
                 kw.meaning,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
             ),
           ],

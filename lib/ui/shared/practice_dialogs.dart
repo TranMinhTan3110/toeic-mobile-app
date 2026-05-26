@@ -100,6 +100,82 @@ class _ReportOption extends StatelessWidget {
   }
 }
 
+// ── Writing Report dialog ────────────────────────────────────────────────────
+
+void showWritingReportDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLighter,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.flag_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Báo lỗi câu hỏi',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Chọn loại lỗi:',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            ...[
+              'Sai đáp án',
+              'Nội dung không rõ ràng',
+              'Lỗi hình ảnh / chữ',
+              'Khác',
+            ].map((label) => _ReportOption(label: label)),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text(
+                  'Gửi báo cáo',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 // ── Settings dialog (bánh răng) ───────────────────────────────────────────────
 
 void showPracticeSettingsDialog(
@@ -328,6 +404,207 @@ class _SwitchRow extends StatelessWidget {
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ],
+    );
+  }
+}
+
+// ── Writing Settings dialog ──────────────────────────────────────────────────
+
+void showWritingSettingsDialog(
+  BuildContext context, {
+  required double fontSize,
+  required ValueChanged<double> onFontSizeChanged,
+}) {
+  showDialog(
+    context: context,
+    builder: (_) => _WritingSettingsDialog(
+      fontSize: fontSize,
+      onFontSizeChanged: onFontSizeChanged,
+    ),
+  );
+}
+
+class _WritingSettingsDialog extends StatefulWidget {
+  const _WritingSettingsDialog({
+    required this.fontSize,
+    required this.onFontSizeChanged,
+  });
+
+  final double fontSize;
+  final ValueChanged<double> onFontSizeChanged;
+
+  @override
+  State<_WritingSettingsDialog> createState() => _WritingSettingsDialogState();
+}
+
+class _WritingSettingsDialogState extends State<_WritingSettingsDialog> {
+  late double _fontSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _fontSize = widget.fontSize;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLighter,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.settings_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Cài đặt',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Font size - Compact layout like image
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLighter,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.text_fields_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Cỡ chữ',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const Spacer(),
+                // Minus button
+                GestureDetector(
+                  onTap: () => setState(() {
+                    if (_fontSize > 12) _fontSize--;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: const Icon(
+                      Icons.remove_rounded,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Font size display
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Text(
+                    '${_fontSize.toInt()}',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Plus button
+                GestureDetector(
+                  onTap: () => setState(() {
+                    if (_fontSize < 24) _fontSize++;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onFontSizeChanged(_fontSize);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text(
+                  'Lưu cài đặt',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -10,7 +10,7 @@ class _SpeakingPart {
   final int partNumber;
   final String title;
   final String subtitle;
-  final double? progress;   // null = chưa bắt đầu
+  final double? progress; // null = chưa bắt đầu
   final int totalQuestions;
   final int doneCounts;
 
@@ -95,7 +95,7 @@ class SpeakingScreen extends StatelessWidget {
             child: PracticeStatsCard(
               icon: Icons.mic_rounded,
               totalDone: _totalDone,
-              correct: 0,           // TODO: lấy từ DB
+              correct: 0, // TODO: lấy từ DB
               progress: _overallProgress,
             ),
           ),
@@ -140,10 +140,10 @@ class SpeakingScreen extends StatelessWidget {
 
           // ── Danh sách SkillCard ───────────────────
           ...SpeakingPartInfo.parts.map(
-                (part) => SkillCard(
+            (part) => SkillCard(
               partNumber: part.partNumber,
               title: part.titleVi,
-              subtitle: part.descriptionVi.split('.').first + '.',
+              subtitle: '${part.descriptionVi.split('.').first}.',
               progress: null,
               isLocked: false,
               onTap: () => Navigator.push(

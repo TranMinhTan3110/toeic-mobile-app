@@ -3,8 +3,9 @@ import '../../../core/theme/app_colors.dart';
 
 class EssayPromptCard extends StatelessWidget {
   final String prompt;
+  final double fontSize;
 
-  const EssayPromptCard({super.key, required this.prompt});
+  const EssayPromptCard({super.key, required this.prompt, this.fontSize = 14});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +22,7 @@ class EssayPromptCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Text(prompt, style: const TextStyle(height: 1.5)),
+      child: Text(prompt, style: TextStyle(height: 1.5, fontSize: fontSize)),
     );
   }
 }

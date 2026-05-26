@@ -19,20 +19,21 @@ class VocabularyAiWritingScreen extends StatefulWidget {
   });
 
   @override
-  State<VocabularyAiWritingScreen> createState() => _VocabularyAiWritingScreenState();
+  State<VocabularyAiWritingScreen> createState() =>
+      _VocabularyAiWritingScreenState();
 }
 
 class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
   final TextEditingController _controller = TextEditingController();
   final AiService _aiService = AiService();
-  
+
   late int _currentIndex;
   bool _isAnalyzing = false;
   bool _isLoadingScenario = false;
   String? _aiResponse;
   String? _scenario;
-  int  _epAwarded   = 0;    // EP nhận được sau khi AI check
-  bool _epLoading   = false;
+  int _epAwarded = 0; // EP nhận được sau khi AI check
+  bool _epLoading = false;
   bool _epShownForCurrentWord = false; // tránh cộng EP 2 lần cho cùng 1 từ
 
   @override
@@ -52,14 +53,18 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
     });
 
     try {
-      final res = await _aiService.getScenario(_currentWord.word, _currentWord.definitionVi);
+      final res = await _aiService.getScenario(
+        _currentWord.word,
+        _currentWord.definitionVi,
+      );
       setState(() {
         _scenario = res['result'];
         _isLoadingScenario = false;
       });
     } catch (e) {
       setState(() {
-        _scenario = "Hãy đặt một câu với từ '${_currentWord.word}' trong bối cảnh công việc.";
+        _scenario =
+            "Hãy đặt một câu với từ '${_currentWord.word}' trong bối cảnh công việc.";
         _isLoadingScenario = false;
       });
     }
@@ -77,11 +82,14 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
       _fetchScenario();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bạn đã hoàn thành tất cả từ vựng trong chủ đề này!')),
+        const SnackBar(
+          content: Text('Bạn đã hoàn thành tất cả từ vựng trong chủ đề này!'),
+        ),
       );
       Navigator.pop(context);
     }
   }
+
   void _handleAnalyze() async {
     if (_controller.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +112,7 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
         _currentWord.word,
         _scenario ?? "",
       );
-      
+
       setState(() {
         _isAnalyzing = false;
         _aiResponse = response['result'];
@@ -116,7 +124,7 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
         setState(() => _epLoading = true);
         final ep = await context.read<UserProvider>().recordActivity(
           activityType: 'VocabSentence',
-          referenceId : '${_currentWord.id}_sentence',
+          referenceId: '${_currentWord.id}_sentence',
         );
         if (mounted) {
           setState(() {
@@ -128,7 +136,8 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
     } catch (e) {
       setState(() {
         _isAnalyzing = false;
-        _aiResponse = " Lỗi: Không thể kết nối với AI Mentor. Vui lòng thử lại sau.\n($e)";
+        _aiResponse =
+            " Lỗi: Không thể kết nối với AI Mentor. Vui lòng thử lại sau.\n($e)";
       });
     }
   }
@@ -137,10 +146,7 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: CustomAppBar(
-        title: 'Luyện viết với AI',
-        centerTitle: true,
-      ),
+      appBar: CustomAppBar(title: 'Luyện viết với AI', centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -200,7 +206,11 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Boxicons.bxs_magic_wand, color: Colors.purple, size: 20),
+                      const Icon(
+                        Boxicons.bxs_magic_wand,
+                        color: Colors.purple,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       const Text(
                         'Thử thách từ AI Mentor:',
@@ -212,7 +222,11 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Boxicons.bx_rotate_left, color: Colors.purple, size: 18),
+                        icon: const Icon(
+                          Boxicons.bx_rotate_left,
+                          color: Colors.purple,
+                          size: 18,
+                        ),
                         onPressed: _isLoadingScenario ? null : _fetchScenario,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -221,10 +235,19 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                   ),
                   const SizedBox(height: 8),
                   if (_isLoadingScenario)
-                    const Center(child: Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.purple)),
-                    ))
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.purple,
+                          ),
+                        ),
+                      ),
+                    )
                   else
                     Text(
                       _scenario ?? 'Đang tải thử thách...',
@@ -274,12 +297,23 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                icon: _isAnalyzing 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(Boxicons.bxs_magic_wand),
-                label: Text(_isAnalyzing ? 'AI đang phân tích...' : 'AI Kiểm tra câu'),
+                icon: _isAnalyzing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Boxicons.bxs_magic_wand),
+                label: Text(
+                  _isAnalyzing ? 'AI đang phân tích...' : 'AI Kiểm tra câu',
+                ),
               ),
             ),
 
@@ -301,7 +335,9 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                   onPressed: _handleNextWord,
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   icon: const Icon(Boxicons.bx_right_arrow_alt),
                   label: const Text('Học từ tiếp theo'),
@@ -327,11 +363,21 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 14, height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
               ),
               SizedBox(width: 8),
-              Text('Đang tính EP...', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+              Text(
+                'Đang tính EP...',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
@@ -345,7 +391,8 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
         tween: Tween(begin: 0.0, end: 1.0),
         duration: const Duration(milliseconds: 500),
         curve: Curves.elasticOut,
-        builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
+        builder: (_, scale, child) =>
+            Transform.scale(scale: scale, child: child),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
           decoration: BoxDecoration(
@@ -389,15 +436,19 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
   };
 
   Widget _buildResultSection() {
-    final regExp = RegExp(r'### \[(SCORE|ANALYSIS|REVISION|SAMPLE|EXPLANATION)\]');
+    final regExp = RegExp(
+      r'### \[(SCORE|ANALYSIS|REVISION|SAMPLE|EXPLANATION)\]',
+    );
     final matches = regExp.allMatches(_aiResponse!).toList();
-    
+
     Map<String, String> sectionMap = {};
     List<String> tags = matches.map((m) => m.group(1)!).toList();
-    
+
     for (int i = 0; i < matches.length; i++) {
       int start = matches[i].end;
-      int end = (i + 1 < matches.length) ? matches[i + 1].start : _aiResponse!.length;
+      int end = (i + 1 < matches.length)
+          ? matches[i + 1].start
+          : _aiResponse!.length;
       sectionMap[tags[i]] = _aiResponse!.substring(start, end).trim();
     }
 
@@ -421,17 +472,17 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
           child: Text(
             'PHÂN TÍCH TỪ AI MENTOR',
             style: TextStyle(
-              fontWeight: FontWeight.w900, 
-              fontSize: 14, 
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
               letterSpacing: 1.2,
-              color: AppColors.textSecondary
+              color: AppColors.textSecondary,
             ),
           ),
         ),
         ...sectionMap.entries.map((entry) {
           final tag = entry.key;
           final isExpanded = _expandedSections[tag] ?? false;
-          
+
           IconData icon;
           String title;
           Color accentColor;
@@ -498,16 +549,21 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                       _expandedSections[tag] = !isExpanded;
                     });
                   },
-                  borderRadius: isExpanded 
-                    ? const BorderRadius.vertical(top: Radius.circular(24))
-                    : BorderRadius.circular(24),
+                  borderRadius: isExpanded
+                      ? const BorderRadius.vertical(top: Radius.circular(24))
+                      : BorderRadius.circular(24),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: bgColor,
-                      borderRadius: isExpanded 
-                        ? const BorderRadius.vertical(top: Radius.circular(24))
-                        : BorderRadius.circular(24),
+                      borderRadius: isExpanded
+                          ? const BorderRadius.vertical(
+                              top: Radius.circular(24),
+                            )
+                          : BorderRadius.circular(24),
                     ),
                     child: Row(
                       children: [
@@ -523,7 +579,9 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                         ),
                         const Spacer(),
                         Icon(
-                          isExpanded ? Boxicons.bx_chevron_up : Boxicons.bx_chevron_down,
+                          isExpanded
+                              ? Boxicons.bx_chevron_up
+                              : Boxicons.bx_chevron_down,
                           color: accentColor.withOpacity(0.5),
                           size: 18,
                         ),
@@ -538,16 +596,23 @@ class _VocabularyAiWritingScreenState extends State<VocabularyAiWritingScreen> {
                     child: MarkdownBody(
                       data: entry.value,
                       styleSheet: MarkdownStyleSheet(
-                        p: TextStyle(color: Colors.grey.shade800, height: 1.6, fontSize: 15),
+                        p: TextStyle(
+                          color: Colors.grey.shade800,
+                          height: 1.6,
+                          fontSize: 15,
+                        ),
                         listBullet: TextStyle(color: accentColor),
-                        strong: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                        strong: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ),
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
