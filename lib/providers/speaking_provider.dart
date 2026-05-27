@@ -142,9 +142,10 @@ class SpeakingProvider with ChangeNotifier {
     final total = answersToSave.length;
     final correct = answersToSave.where((a) => a.passed).length;
     final percent = total > 0 ? (correct / total) * 100 : 0.0;
-    final avgScore = answersToSave.isNotEmpty
-        ? answersToSave.map((a) => a.overallScore).reduce((a, b) => a + b) /
-            answersToSave.length
+    final evaluatedAnswers = answersToSave.where((a) => a.overallScore > 0).toList();
+    final avgScore = evaluatedAnswers.isNotEmpty
+        ? evaluatedAnswers.map((a) => a.overallScore).reduce((a, b) => a + b) /
+            evaluatedAnswers.length
         : 0.0;
 
     final criteria = <String, double>{};

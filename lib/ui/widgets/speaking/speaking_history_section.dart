@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/speaking_provider.dart';
-import '../../../data/models/speaking_history_item.dart';
 import '../../screens/speaking/speaking_history_detail_screen.dart';
 
 class SpeakingHistorySection extends StatelessWidget {
@@ -77,15 +76,16 @@ class SpeakingHistorySection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${item.correctCount}/${item.totalQuestions}',
+                        '${(item.score * 20).round()}/200',
                         style: const TextStyle(
                           color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
                         ),
                       ),
                       const Text(
-                        'Đúng',
-                        style: TextStyle(fontSize: 10, color: AppColors.textHint),
+                        'TOEIC Speaking',
+                        style: TextStyle(fontSize: 9, color: AppColors.textHint, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
