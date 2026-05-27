@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import '../../../data/models/speaking_part_info.dart';
-import '../../widgets/speaking/speaking_history_section.dart';
+import '../../../data/models/speaking_history_item.dart';
 import 'speaking_prep_screen.dart';
 import 'speaking_history_overview_screen.dart';
+import 'speaking_doing_screen.dart';
 
 class SpeakingHistoryDetailScreen extends StatelessWidget {
   final SpeakingHistoryItem item;
@@ -34,7 +35,7 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Lịch sử luyện tập',
+          'Kết quả luyện tập',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -62,7 +63,7 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
             ),
           ),
 
-          // --- BUTTONS: CHI TIẾT & LÀM LẠI (Dưới cùng) ---
+          // --- BUTTONS: CHI TIẾT & LÀM LẠI ---
           _buildBottomControls(context, partInfo),
         ],
       ),
@@ -138,7 +139,9 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
   }
 
   Widget _buildScoreDetailsCard() {
-    double percent = (item.correctCount / item.totalQuestions) * 100;
+    double percent = item.totalQuestions > 0 
+        ? (item.correctCount / item.totalQuestions) * 100 
+        : 0;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -270,13 +273,13 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
-                // Điều hướng đến trang TỔNG QUAN mới thiết kế
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => SpeakingHistoryOverviewScreen(
                       partNumber: item.partNumber,
                       partTitle: item.partTitle,
+                      historyId: item.historyId,
                     ),
                   ),
                 );
@@ -307,7 +310,11 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => SpeakingPrepScreen(part: partInfo),
+                    builder: (_) => SpeakingDoingScreen(
+                      part: partInfo,
+                      questionCount: item.totalQuestions,
+                      examMode: false,
+                    ),
                   ),
                 );
               },

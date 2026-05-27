@@ -8,8 +8,6 @@ import '../../widgets/practice/practice_stats_card.dart';
 import '../../widgets/speaking/speaking_history_section.dart';
 import 'speaking_prep_screen.dart';
 
-
-// ── Màn hình chính ──────────────────────────────────────────────────────────
 class SpeakingScreen extends StatefulWidget {
   const SpeakingScreen({super.key});
 
@@ -21,12 +19,12 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   @override
   void initState() {
     super.initState();
-    // Tải dữ liệu tất cả các phần để lấy tổng số câu hỏi thực tế
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<SpeakingProvider>();
       for (var part in SpeakingPartInfo.parts) {
         provider.fetchQuestionsByPart(part.partNumber, practiceMode: true);
       }
+      provider.fetchHistory();
     });
   }
 
@@ -47,102 +45,90 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                   forceRefresh: true,
                 );
               }
+              await provider.fetchHistory(forceRefresh: true);
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 16),
               children: [
-              // ── Thẻ thống kê tổng quan ────────────────
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: PracticeStatsCard(
-                  icon: Icons.mic_rounded,
-                  totalDone: 0,
-                  correct: 0,
-                  progress: 0.0,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ── Tiêu đề danh sách phần ────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Chọn phần luyện tập',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${SpeakingPartInfo.parts.length} phần',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // ── Danh sách SkillCard ───────────────────
-              ...SpeakingPartInfo.parts.map(
-                (part) {
-                  final questions = provider.getQuestionsForPart(
-                    part.partNumber,
-                    practiceMode: true,
-                  );
-                  final totalCount = questions.length;
-                  
-                  return SkillCard(
-                    partNumber: part.partNumber,
-                    title: part.titleVi,
-                    // Thay đổi: Xóa chữ nhỏ mô tả, thay bằng số câu đúng tương tự phần nghe
-                    subtitle: 'Câu trả lời đúng 0/$totalCount',
-                    // Hiển thị thanh tiến độ (0.0 là chưa làm)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: PracticeStatsCard(
+                    icon: Icons.mic_rounded,
+                    totalDone: 0,
+                    correct: 0,
                     progress: 0.0,
-                    isLocked: false,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SpeakingPrepScreen(part: part),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Chọn phần luyện tập',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${SpeakingPartInfo.parts.length} phần',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...SpeakingPartInfo.parts.map(
+                  (part) {
+                    final questions = provider.getQuestionsForPart(
+                      part.partNumber,
+                      practiceMode: true,
+                    );
+                    final totalCount = questions.length;
+                    
+                    return SkillCard(
+                      partNumber: part.partNumber,
+                      title: part.titleVi,
+                      subtitle: 'Câu trả lời đúng 0/$totalCount',
+                      progress: 0.0,
+                      isLocked: false,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SpeakingPrepScreen(part: part),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                // Xóa const ở đây để tránh lỗi biên dịch nếu widget dependency thay đổi
+                SpeakingHistorySection(),
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-              const SizedBox(height: 24),
-
-              // ── Lịch sử luyện tập ─────────────────────
-              const SpeakingHistorySection(),
-
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
-    ),
-  );
-}
-
-  // ── AppBar ────────────────────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.primary,
