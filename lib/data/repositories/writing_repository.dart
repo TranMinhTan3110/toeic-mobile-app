@@ -1,9 +1,19 @@
 import 'package:dio/dio.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/auth_service.dart';
+import '../models/writing_history_item.dart';
 import '../models/writing_question.dart';
 
 class WritingRepository {
   final Dio _dio = Dio();
+  final AuthService _authService = AuthService();
+
+  Future<Options> _getAuthOptions() async {
+    final token = await _authService.getIdToken();
+    return Options(
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+  }
 
   /// Get all writing questions
   Future<List<WritingQuestion>> getAll() async {
@@ -121,6 +131,74 @@ class WritingRepository {
       return List<String>.from(response.data);
     } catch (e) {
       throw Exception('Lỗi khi lấy danh sách task types: $e');
+    }
+  }
+
+  Future<List<WritingHistoryItem>> getHistory({String? sessionType}) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing/history',
+        queryParameters: {if (sessionType != null) 'sessionType': sessionType},
+        options: options,
+      );
+      final List<dynamic> data = response.data;
+      return data
+          .map(
+            (json) => WritingHistoryItem.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
+    } catch (e) {
+      throw Exception('Lỗi khi tải lịch sử Writing: $e');
+    }
+  }
+
+  Future<WritingHistoryItem> getHistoryById(String id) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing/history/$id',
+        options: options,
+      );
+      return WritingHistoryItem.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Lỗi khi tải chi tiết lịch sử Writing: $e');
+    }
+  }
+
+  Future<String> saveSubmission({
+    String? questionId,
+    String sessionType = 'practice',
+    String? userAnswer,
+    List<String>? questionIds,
+    Map<String, String>? answers,
+    int? questionCount,
+    int? taskNumber,
+    String? taskType,
+    int? wordCount,
+    int? timeUsed,
+  }) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/writing/history',
+        data: {
+          if (questionId != null) 'questionId': questionId,
+          'sessionType': sessionType,
+          if (userAnswer != null) 'userAnswer': userAnswer,
+          if (questionIds != null) 'questionIds': questionIds,
+          if (answers != null) 'answers': answers,
+          if (questionCount != null) 'questionCount': questionCount,
+          if (taskNumber != null) 'taskNumber': taskNumber,
+          if (taskType != null) 'taskType': taskType,
+          if (wordCount != null) 'wordCount': wordCount,
+          if (timeUsed != null) 'timeUsed': timeUsed,
+        },
+        options: options,
+      );
+      return (response.data as Map<String, dynamic>)['id']?.toString() ?? '';
+    } catch (e) {
+      throw Exception('Lỗi khi lưu lịch sử Writing: $e');
     }
   }
 }

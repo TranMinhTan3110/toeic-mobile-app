@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/writing_question.dart';
 import '../../../../data/repositories/writing_repository.dart';
+import '../../../../providers/writing_provider.dart';
 import '../../../widgets/common/custom_app_bar.dart';
 import '../../../shared/practice_dialogs.dart';
 
@@ -21,6 +23,7 @@ class _PictureDescriptionTestScreenState
   late List<WritingQuestion> _questions;
   int _currentQ = 0;
   bool _isLoading = true;
+  bool _isSubmitting = false;
   String? _error;
   bool _showExplanation = false;
   double _fontSize = 14.0;
@@ -51,15 +54,50 @@ class _PictureDescriptionTestScreenState
     }
   }
 
-  void _nextQuestion() {
+  Future<void> _saveAndNextQuestion() async {
+    if (_isSubmitting) return;
+
+    final answer = _controller.text.trim();
+    final wordCount = answer.isEmpty
+        ? 0
+        : answer.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+
     setState(() {
-      if (_currentQ < _questions.length - 1) {
+      _isSubmitting = true;
+    });
+
+    final id = await context.read<WritingProvider>().saveSubmission(
+      questionId: _questions[_currentQ].id,
+      sessionType: 'practice',
+      userAnswer: answer,
+      wordCount: wordCount,
+      timeUsed: null,
+    );
+
+    if (mounted) {
+      if (id == null || id.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không lưu được bài viết.')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Đã lưu bài viết.')));
+      }
+    }
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    if (_currentQ < _questions.length - 1) {
+      setState(() {
         _currentQ++;
         _controller.clear();
-      } else {
-        Navigator.pop(context);
-      }
-    });
+      });
+    } else if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -338,7 +376,7 @@ class _PictureDescriptionTestScreenState
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _nextQuestion,
+                  onPressed: _isSubmitting ? null : _saveAndNextQuestion,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textOnPrimary,
@@ -348,13 +386,22 @@ class _PictureDescriptionTestScreenState
                     ),
                     elevation: 4,
                   ),
-                  child: Text(
-                    _currentQ >= _questions.length - 1 ? 'Xong' : 'Tiếp',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          _currentQ >= _questions.length - 1 ? 'Xong' : 'Tiếp',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],

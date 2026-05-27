@@ -6,12 +6,12 @@ import 'package:toeicmobileapp/providers/user_provider.dart';
 import 'package:toeicmobileapp/providers/speaking_provider.dart';
 import 'package:toeicmobileapp/providers/listening_provider.dart';
 import 'package:toeicmobileapp/providers/grammar_provider.dart';
+import 'package:toeicmobileapp/providers/writing_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:toeicmobileapp/ui/screens/settings/settings_screen.dart';
 import 'package:toeicmobileapp/providers/exam_provider.dart';
 
 void main() async {
@@ -29,6 +29,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SpeakingProvider()),
         ChangeNotifierProvider(create: (_) => ListeningProvider()),
         ChangeNotifierProvider(create: (_) => GrammarProvider()),
+        ChangeNotifierProvider(create: (_) => WritingProvider()),
         ChangeNotifierProvider(create: (_) => ExamProvider()),
       ],
       child: const MyApp(),
