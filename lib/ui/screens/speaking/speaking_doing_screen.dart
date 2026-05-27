@@ -197,9 +197,11 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           if (_sttEnabled) {
             _speech.listen(
               onResult: (result) {
-                setState(() {
-                  _recognizedText = result.recognizedWords;
-                });
+                if (mounted) {
+                  setState(() {
+                    _recognizedText = result.recognizedWords;
+                  });
+                }
               },
               localeId: 'en_US',
             );
@@ -262,7 +264,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
   void _onRecordingTimeUp() async {
     if (_isListening) {
-      await _audioRecorder.stop();
+      final path = await _audioRecorder.stop();
+      if (path != null) _lastRecordingPath = path;
       await _speech.stop();
       _pulseCtrl.stop();
       if (mounted) setState(() => _isListening = false);
