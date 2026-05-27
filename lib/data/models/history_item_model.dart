@@ -1,13 +1,21 @@
+import 'package:flutter/material.dart';
+
 class HistoryItem {
   final String title;
-  final String type; // 'Luyện tập' | 'Thi'
-  final double percent;
   final DateTime date;
+  final double percent;
+  final String type; // 'practice' or 'exam'
+  final IconData? icon;
+  final Color? color;
+  final String? score;
 
-  const HistoryItem({
+  HistoryItem({
     required this.title,
-    required this.type,
-    required this.percent,
     required this.date,
+    required this.percent,
+    required this.type,
+    this.icon,
+    this.color,
+    this.score,
   });
 }
