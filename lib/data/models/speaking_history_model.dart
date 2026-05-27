@@ -55,6 +55,21 @@ class SpeakingHistoryModel {
           .toList(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'userId': userId,
+        'part': part,
+        'correctCount': correctCount,
+        'totalCount': totalCount,
+        'percent': percent,
+        'score': score,
+        'feedbackSummary': feedbackSummary,
+        'criteria': criteria,
+        'sessionType': sessionType,
+        'date': date.toIso8601String(),
+        'answers': answers.map((e) => e.toJson()).toList(),
+      };
 }
 
 class SpeakingHistoryAnswerModel {

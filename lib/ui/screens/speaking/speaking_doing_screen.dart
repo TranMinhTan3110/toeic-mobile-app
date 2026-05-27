@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
@@ -14,6 +15,7 @@ import '../../../data/models/speaking_history_item.dart';
 import '../../../providers/speaking_provider.dart';
 import '../../../core/services/tts_service.dart';
 import '../../widgets/speaking/speaking_explanation_panel.dart';
+import '../../shared/practice_dialogs.dart';
 import 'speaking_history_detail_screen.dart';
 
 enum _Phase { prepare, recording, evaluating, done }
@@ -175,8 +177,13 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     try {
       if (await _audioRecorder.hasPermission()) {
         try {
-          final directory = await getTemporaryDirectory();
-          final path = '${directory.path}/speaking_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          String path = '';
+          
+          if (!kIsWeb) {
+            final directory = await getTemporaryDirectory();
+            path = '${directory.path}/speaking_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          }
+
           const config = RecordConfig();
           await _audioRecorder.start(config, path: path);
           _lastRecordingPath = path;
@@ -239,7 +246,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   void _startRecording() {
     if (_currentTask == null) return;
     
-    _lastRecordingPath = null; // Reset audio path
+    _lastRecordingPath = null; 
     setState(() {
       _phase = _Phase.recording;
       if (_currentTask!.questions.isNotEmpty) {
@@ -266,10 +273,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   Future<void> _evaluateAndNext() async {
-    // Nếu không có audio (user bỏ qua), lưu câu trả lời trống vào session
     if (_lastRecordingPath == null || _currentTask == null) {
       if (_currentTask != null) {
-        // Lưu câu bỏ qua (transcript trống)
         final provider = context.read<SpeakingProvider>();
         provider.addSessionAnswer(SpeakingHistoryAnswerModel(
           questionId: _currentTask!.id,
@@ -290,7 +295,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
     final provider = context.read<SpeakingProvider>();
     
-    // Chỉ gọi scoring nếu có audio được ghi
     if (_lastRecordingPath != null && _lastRecordingPath!.isNotEmpty) {
       final evaluation = await provider.evaluateAnswer(
             _currentTask!.id,
@@ -315,7 +319,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
         _showEvaluationResult(evaluation);
       } else {
-        // Lưu answer ngay cả khi evaluation thất bại
         provider.addSessionAnswer(SpeakingHistoryAnswerModel(
           questionId: _currentTask!.id,
           subQuestionIndex: _currentTask!.questions.isNotEmpty ? _currentSubQuestionIndex : null,
@@ -329,20 +332,19 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
         _moveToNext();
       }
     } else {
-      // Nếu không có audio, tiếp tục câu tiếp theo
       _moveToNext();
     }
   }
 
   void _moveToNext() {
     TtsService().stop();
-    _lastRecordingPath = null; // Reset audio path cho câu tiếp theo
+    _lastRecordingPath = null;
     if (_currentTask != null &&
         _currentTask!.questions.isNotEmpty &&
         _currentSubQuestionIndex < _currentTask!.questions.length - 1) {
       setState(() {
         _currentSubQuestionIndex++;
-        _phase = _Phase.prepare; // Quay lại chờ nhấn bắt đầu câu tiếp theo
+        _phase = _Phase.prepare; 
         _recognizedText = '';
       });
       _updateProgress();
@@ -362,7 +364,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   Future<void> _handleFinishSession() async {
     final provider = context.read<SpeakingProvider>();
 
-    // Lưu lịch sử kể cả khi không trả lời câu nào
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -377,10 +378,9 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       );
 
       if (mounted) {
-        Navigator.pop(context); // Close loading
+        Navigator.pop(context); 
 
         if (historyId != null && historyId.isNotEmpty) {
-          // Tìm session history vừa lưu và hiển thị chi tiết kết quả
           try {
             SpeakingHistoryItem? newItem;
             if (provider.historyItems.isNotEmpty) {
@@ -394,7 +394,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
             }
             
             if (newItem != null) {
-              final item = newItem; // Tạo reference không nullable
+              final item = newItem; 
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -421,7 +421,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Close loading
+        Navigator.pop(context); 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lỗi hệ thống khi lưu: $e')),
         );
@@ -449,6 +449,16 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     _onRecordingTimeUp();
   }
 
+  Future<void> _requestExit() async {
+    final shouldExit = await showExitPracticeDialog(
+      context,
+      text: 'Tiến trình làm bài nói của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+    );
+    if (shouldExit && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SpeakingProvider>();
@@ -457,43 +467,50 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              _buildTopProgressBar(),
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(child: _buildPageViewBody()),
-                    if (_phase == _Phase.recording)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                        constraints: const BoxConstraints(minHeight: 100),
-                        alignment: Alignment.center,
-                        child: Text(
-                          _isListening && _recognizedText.isEmpty ? "..." : _recognizedText,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            fontStyle: FontStyle.italic,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _requestExit();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: _buildAppBar(),
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                _buildTopProgressBar(),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(child: _buildPageViewBody()),
+                      if (_phase == _Phase.recording)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                          constraints: const BoxConstraints(minHeight: 100),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _isListening && _recognizedText.isEmpty ? "..." : _recognizedText,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              _buildBottomArea(),
-            ],
-          ),
-          if (_phase == _Phase.evaluating) _buildEvaluatingOverlay(),
-          _buildExplanationPanel(),
-        ],
+                _buildBottomArea(),
+              ],
+            ),
+            if (_phase == _Phase.evaluating) _buildEvaluatingOverlay(),
+            _buildExplanationPanel(),
+          ],
+        ),
       ),
     );
   }
@@ -510,7 +527,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       titleSpacing: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-        onPressed: () => Navigator.pop(context),
+        onPressed: _requestExit,
       ),
       title: Text(
         title,
