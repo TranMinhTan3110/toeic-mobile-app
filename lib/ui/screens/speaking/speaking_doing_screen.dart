@@ -226,7 +226,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
   // ── Flow Control ──────────────────────────────────────────
 
-  void _startPractice() {
+  void _startRecording() {
     if (_currentTask == null) return;
     
     setState(() {
@@ -496,7 +496,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           else if (widget.part.partNumber == 3 || widget.part.partNumber == 4)
             const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('⚠️ Không tìm thấy dữ liệu câu hỏi.'))),
           const SizedBox(height: 24),
-          if (_phase == _Phase.recording) _buildCountdownChip(),
+          if (_phase == _Phase.recording || _phase == _Phase.prepare) _buildCountdownChip(),
         ],
       ),
     );
@@ -668,7 +668,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         child: _phase == _Phase.prepare
             ? SizedBox(
@@ -694,56 +693,10 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                     ),
                   ),
                 ),
-            ? ElevatedButton(
-                onPressed: _startPractice,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-                ),
-                child: const Text('Bắt đầu trả lời', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
               )
             : Column(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  ScaleTransition(
-                    scale: _pulseAnim,
-                    child: GestureDetector(
-                      onTap: _skip,
-                      child: Container(
-                        width: 84,
-                        height: 84,
-                        decoration: const BoxDecoration(
-                          color: Colors.orange,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.orangeAccent,
-                              blurRadius: 20,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.mic_rounded,
-                          color: Colors.white,
-                          size: 44,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: _skip,
-                    child: const Text(
-                      'Bỏ qua / Kết thúc câu này',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
                   // LỜI NHẮC NGAY TRÊN MICRO
                   Text(
                     _isListening ? "Đang lắng nghe..." : "Giữ để nói",
