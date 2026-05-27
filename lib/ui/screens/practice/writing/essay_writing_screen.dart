@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/writing_data.dart';
+import '../../../../data/repositories/writing_repository.dart';
 import '../../../widgets/common/custom_app_bar.dart';
 import '../../../widgets/practice/part_history_sheet.dart';
 import 'essay_writing_test_screen.dart';
@@ -14,7 +15,32 @@ class EssayWritingScreen extends StatefulWidget {
 
 class _EssayWritingScreenState extends State<EssayWritingScreen> {
   final WritingPartInfo part = WritingData.parts[2]; // Part 3
-  int _questionCount = 2;
+  int _questionCount = 1;
+  late WritingRepository _repository;
+  int _totalQuestions = 0;
+  bool _loadingCount = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = WritingRepository();
+    _loadTotalQuestions();
+  }
+
+  Future<void> _loadTotalQuestions() async {
+    try {
+      final questions = await _repository.getPracticeByTaskType('opinion_essay');
+      setState(() {
+        _totalQuestions = questions.length;
+        _questionCount = 1;
+        _loadingCount = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loadingCount = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,11 +126,15 @@ class _EssayWritingScreenState extends State<EssayWritingScreen> {
             right: 0,
             child: _BottomControls(
               questionCount: _questionCount,
+              totalQuestions: _totalQuestions,
+              loadingCount: _loadingCount,
               onCountChanged: (v) => setState(() => _questionCount = v),
               onStart: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const EssayWritingTestScreen(),
+                  builder: (_) => EssayWritingTestScreen(
+                    questionLimit: _questionCount,
+                  ),
                 ),
               ),
             ),
@@ -226,11 +256,15 @@ class _Row extends StatelessWidget {
 class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.questionCount,
+    required this.totalQuestions,
+    required this.loadingCount,
     required this.onCountChanged,
     required this.onStart,
   });
 
   final int questionCount;
+  final int totalQuestions;
+  final bool loadingCount;
   final ValueChanged<int> onCountChanged;
   final VoidCallback onStart;
 
@@ -259,19 +293,37 @@ class _BottomControls extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.divider),
                 ),
-                child: DropdownButton<int>(
-                  value: questionCount,
-                  isDense: true,
-                  underline: const SizedBox(),
-                  items: [1, 2, 3, 5]
-                      .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
-                      .toList(),
-                  onChanged: (v) => onCountChanged(v!),
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                  ),
-                ),
+                child: loadingCount
+                    ? const SizedBox(
+                        width: 50,
+                        height: 24,
+                        child: Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                      )
+                    : DropdownButton<int>(
+                        value: questionCount,
+                        isDense: true,
+                        underline: const SizedBox(),
+                        items: List.generate(
+                          totalQuestions,
+                          (index) => DropdownMenuItem(
+                            value: index + 1,
+                            child: Text('${index + 1}'),
+                          ),
+                        ),
+                        onChanged: (v) => onCountChanged(v!),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
+                      ),
               ),
             ],
           ),

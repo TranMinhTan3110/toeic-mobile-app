@@ -53,12 +53,14 @@ class SettingTile extends StatelessWidget {
                 ),
               ),
               if (trailingText != null)
-                Text(trailingText!,
-                    style: TextStyle(
-                      color: trailingTextColor ?? AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    )),
-              if (trailingWidget != null) trailingWidget!,
+                Text(
+                  trailingText!,
+                  style: TextStyle(
+                    color: trailingTextColor ?? AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ?trailingWidget,
               const SizedBox(width: 8),
               const Icon(Icons.chevron_right, color: AppColors.tabInactive),
             ],

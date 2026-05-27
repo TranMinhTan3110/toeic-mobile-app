@@ -31,12 +31,17 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final token = await _authService.getIdToken();
       final response = await _dio.get(
         '${AppConstants.baseUrl}/vocabularies/review-schedule',
-        options: Options(headers: { if (token != null) 'Authorization': 'Bearer $token' }),
+        options: Options(
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
+        ),
       );
       final List<dynamic> data = response.data;
       setState(() {
@@ -44,7 +49,10 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() { _error = e.toString(); _isLoading = false; });
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
@@ -54,8 +62,8 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered     = _filteredItems;
-    final dueItems     = filtered.where((i) => i.isDue).toList();
+    final filtered = _filteredItems;
+    final dueItems = filtered.where((i) => i.isDue).toList();
     final masteredCount = _items.where((i) => i.isMastered).length;
 
     return Scaffold(
@@ -65,26 +73,28 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
           ? null
           : _buildBottomBar(dueItems),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : _error != null
-              ? _buildError()
-              : _items.isEmpty
-                  ? _buildEmpty()
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                        children: [
-                          // ── Tóm tắt + Toggle ────────────────────────────
-                          _buildHeaderRow(dueItems.length, masteredCount),
-                          const SizedBox(height: 16),
+          ? _buildError()
+          : _items.isEmpty
+          ? _buildEmpty()
+          : RefreshIndicator(
+              onRefresh: _load,
+              color: AppColors.primary,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                children: [
+                  // ── Tóm tắt + Toggle ────────────────────────────
+                  _buildHeaderRow(dueItems.length, masteredCount),
+                  const SizedBox(height: 16),
 
-                          // ── Các nhóm thời gian ───────────────────────────
-                          ..._buildGroupedSections(filtered),
-                        ],
-                      ),
-                    ),
+                  // ── Các nhóm thời gian ───────────────────────────
+                  ..._buildGroupedSections(filtered),
+                ],
+              ),
+            ),
     );
   }
 
@@ -100,11 +110,16 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
 
     for (final item in items) {
       final d = item.daysUntilDue;
-      if (d < 0)       groups['overdue']!.add(item);
-      else if (d == 0) groups['today']!.add(item);
-      else if (d == 1) groups['tomorrow']!.add(item);
-      else if (d <= 7) groups['thisWeek']!.add(item);
-      else             groups['later']!.add(item);
+      if (d < 0) {
+        groups['overdue']!.add(item);
+      } else if (d == 0)
+        groups['today']!.add(item);
+      else if (d == 1)
+        groups['tomorrow']!.add(item);
+      else if (d <= 7)
+        groups['thisWeek']!.add(item);
+      else
+        groups['later']!.add(item);
     }
 
     final sections = <Widget>[];
@@ -112,30 +127,46 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
     void addSection(String key, String title, Color color, IconData icon) {
       final list = groups[key]!;
       if (list.isEmpty) return;
-      sections.add(_CollapsibleSection(
-        title: '$title (${list.length})',
-        color: color,
-        icon: icon,
-        defaultExpanded: key == 'overdue' || key == 'today',
-        children: list.map((item) => _buildCard(item)).toList(),
-      ));
+      sections.add(
+        _CollapsibleSection(
+          title: '$title (${list.length})',
+          color: color,
+          icon: icon,
+          defaultExpanded: key == 'overdue' || key == 'today',
+          children: list.map((item) => _buildCard(item)).toList(),
+        ),
+      );
       sections.add(const SizedBox(height: 12));
     }
 
-    addSection('overdue',  'Quá hạn',      AppColors.error,   Boxicons.bx_error_circle);
-    addSection('today',    'Hôm nay',      AppColors.warning, Boxicons.bx_time);
-    addSection('tomorrow', 'Ngày mai',     AppColors.info,    Boxicons.bx_calendar_check);
-    addSection('thisWeek', 'Tuần này',     AppColors.primary, Boxicons.bx_calendar);
-    addSection('later',    'Sau này',      AppColors.textSecondary, Boxicons.bx_calendar_alt);
+    addSection('overdue', 'Quá hạn', AppColors.error, Boxicons.bx_error_circle);
+    addSection('today', 'Hôm nay', AppColors.warning, Boxicons.bx_time);
+    addSection(
+      'tomorrow',
+      'Ngày mai',
+      AppColors.info,
+      Boxicons.bx_calendar_check,
+    );
+    addSection('thisWeek', 'Tuần này', AppColors.primary, Boxicons.bx_calendar);
+    addSection(
+      'later',
+      'Sau này',
+      AppColors.textSecondary,
+      Boxicons.bx_calendar_alt,
+    );
 
     if (sections.isEmpty) {
-      sections.add(const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text('Không có từ nào để hiển thị',
-              style: TextStyle(color: AppColors.textHint)),
+      sections.add(
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Text(
+              'Không có từ nào để hiển thị',
+              style: TextStyle(color: AppColors.textHint),
+            ),
+          ),
         ),
-      ));
+      );
     }
     return sections;
   }
@@ -221,23 +252,40 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: hasDue
           ? ElevatedButton.icon(
               onPressed: () async {
-                await Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const VocabularyReviewScreen()));
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const VocabularyReviewScreen(),
+                  ),
+                );
                 _load();
               },
               icon: const Icon(Icons.play_arrow_rounded, size: 22),
-              label: Text('Bắt đầu ôn tập (${dueItems.length} từ)',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              label: Text(
+                'Bắt đầu ôn tập (${dueItems.length} từ)',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 elevation: 0,
               ),
             )
@@ -252,11 +300,20 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle_outline, color: AppColors.green, size: 22),
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: AppColors.green,
+                    size: 22,
+                  ),
                   SizedBox(height: 4),
-                  Text('Chưa có từ nào đến hạn hôm nay',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                      textAlign: TextAlign.center),
+                  Text(
+                    'Chưa có từ nào đến hạn hôm nay',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             ),
@@ -265,10 +322,10 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
 
   Widget _buildCard(ReviewScheduleItem item) {
     final isDue = item.isDue;
-    final days  = item.daysUntilDue;
+    final days = item.daysUntilDue;
 
     String daysLabel;
-    Color  daysColor;
+    Color daysColor;
     if (isDue) {
       daysLabel = days == 0 ? 'Hôm nay' : 'Quá hạn ${(-days)} ngày';
       daysColor = AppColors.error;
@@ -286,13 +343,20 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
         border: Border.all(
           color: isDue ? AppColors.error.withOpacity(0.25) : AppColors.divider,
         ),
-        boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2))],
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           // Mastery %
           Container(
-            width: 40, height: 40,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: item.isMastered
@@ -300,11 +364,14 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
                   : AppColors.primarySurface,
             ),
             child: Center(
-              child: Text('${item.masteryLevel}%',
-                  style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.bold,
-                    color: item.isMastered ? AppColors.green : AppColors.primary,
-                  )),
+              child: Text(
+                '${item.masteryLevel}%',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: item.isMastered ? AppColors.green : AppColors.primary,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -315,23 +382,43 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
               children: [
                 Row(
                   children: [
-                    Text(item.word, style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                    Text(
+                      item.word,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(width: 5),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primarySurface,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(item.wordType,
-                          style: const TextStyle(fontSize: 9, color: AppColors.primary)),
+                      child: Text(
+                        item.wordType,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                Text(item.definitionVi,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  item.definitionVi,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
@@ -344,8 +431,14 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: daysColor.withOpacity(0.3)),
             ),
-            child: Text(daysLabel,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: daysColor)),
+            child: Text(
+              daysLabel,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: daysColor,
+              ),
+            ),
           ),
         ],
       ),
@@ -359,11 +452,15 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
         children: [
           Icon(Boxicons.bx_book_open, size: 64, color: AppColors.textHint),
           SizedBox(height: 16),
-          Text('Chưa có từ nào đã học',
-              style: TextStyle(fontSize: 18, color: AppColors.textSecondary)),
+          Text(
+            'Chưa có từ nào đã học',
+            style: TextStyle(fontSize: 18, color: AppColors.textSecondary),
+          ),
           SizedBox(height: 8),
-          Text('Hãy học flashcard để bắt đầu!',
-              style: TextStyle(fontSize: 14, color: AppColors.textHint)),
+          Text(
+            'Hãy học flashcard để bắt đầu!',
+            style: TextStyle(fontSize: 14, color: AppColors.textHint),
+          ),
         ],
       ),
     );
@@ -376,8 +473,11 @@ class _ReviewScheduleScreenState extends State<ReviewScheduleScreen> {
         children: [
           const Icon(Boxicons.bx_wifi_off, size: 48, color: AppColors.textHint),
           const SizedBox(height: 12),
-          Text(_error!, style: const TextStyle(color: AppColors.textSecondary),
-              textAlign: TextAlign.center),
+          Text(
+            _error!,
+            style: const TextStyle(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _load,
@@ -437,23 +537,28 @@ class _CollapsibleSectionState extends State<_CollapsibleSection> {
               children: [
                 Icon(widget.icon, color: widget.color, size: 16),
                 const SizedBox(width: 8),
-                Text(widget.title,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: widget.color, fontSize: 13)),
+                Text(
+                  widget.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: widget.color,
+                    fontSize: 13,
+                  ),
+                ),
                 const Spacer(),
                 Icon(
-                  _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                  color: widget.color, size: 20,
+                  _expanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: widget.color,
+                  size: 20,
                 ),
               ],
             ),
           ),
         ),
         // Nội dung
-        if (_expanded) ...[
-          const SizedBox(height: 6),
-          ...widget.children,
-        ],
+        if (_expanded) ...[const SizedBox(height: 6), ...widget.children],
       ],
     );
   }

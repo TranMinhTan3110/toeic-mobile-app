@@ -6,7 +6,6 @@ import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import 'vocabulary_screen.dart';
 import 'vocabulary_notebook_screen.dart';
-import 'vocabulary_review_screen.dart';
 import 'review_schedule_screen.dart';
 
 class VocabularyHubScreen extends StatefulWidget {
@@ -31,10 +30,7 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
-        title: 'Học Từ Vựng',
-        centerTitle: true,
-      ),
+      appBar: const CustomAppBar(title: 'Học Từ Vựng', centerTitle: true),
       body: Consumer<VocabularyProvider>(
         builder: (context, provider, _) {
           final stats = provider.hubStats;
@@ -65,7 +61,8 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const VocabularyNotebookScreen(),
+                                  builder: (_) =>
+                                      const VocabularyNotebookScreen(),
                                 ),
                               );
                             },
@@ -107,7 +104,9 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
                         Expanded(
                           child: _buildMiniStat(
                             label: 'Đã học',
-                            value: isLoading ? '...' : '${stats?.studiedCount ?? 0}',
+                            value: isLoading
+                                ? '...'
+                                : '${stats?.studiedCount ?? 0}',
                             icon: Boxicons.bx_book_reader,
                             color: AppColors.blue,
                             bgColor: AppColors.blueBg,
@@ -117,7 +116,9 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
                         Expanded(
                           child: _buildMiniStat(
                             label: 'Thành thạo',
-                            value: isLoading ? '...' : '${stats?.masteredCount ?? 0}',
+                            value: isLoading
+                                ? '...'
+                                : '${stats?.masteredCount ?? 0}',
                             icon: Boxicons.bx_medal,
                             color: AppColors.green,
                             bgColor: AppColors.greenBg,
@@ -127,7 +128,9 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
                         Expanded(
                           child: _buildMiniStat(
                             label: 'Cần ôn',
-                            value: isLoading ? '...' : '${stats?.dueCount ?? 0}',
+                            value: isLoading
+                                ? '...'
+                                : '${stats?.dueCount ?? 0}',
                             icon: Boxicons.bx_time,
                             color: AppColors.primary,
                             bgColor: AppColors.primarySurface,
@@ -138,7 +141,7 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  
+
                   // ── Nút Học từ vựng mới ────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -242,17 +245,18 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.divider),
         boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 6, offset: Offset(0, 3)),
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 8),
@@ -267,7 +271,10 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -389,7 +396,11 @@ class _VocabularyHubScreenState extends State<VocabularyHubScreen> {
                 ],
               ),
             ),
-            const Icon(Boxicons.bx_chevron_right, color: AppColors.textHint, size: 16),
+            const Icon(
+              Boxicons.bx_chevron_right,
+              color: AppColors.textHint,
+              size: 16,
+            ),
           ],
         ),
       ),

@@ -141,9 +141,23 @@ class _SpeakingExplanationPanelState extends State<SpeakingExplanationPanel>
               tabs: _tabs.map((t) => Tab(text: t)).toList(),
             ),
           ),
-          IconButton(
-            onPressed: widget.onClose,
-            icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+          // nút đóng
+          GestureDetector(
+            onTap: widget.onClose,
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              width: 28,
+              height: 28,
+              decoration: const BoxDecoration(
+                color: Colors.white24,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
           ),
         ],
       ),
@@ -256,3 +270,4 @@ class _KeywordList extends StatelessWidget {
     );
   }
 }
+

@@ -1,12 +1,20 @@
 import 'package:flutter/foundation.dart';
 import '../data/models/listening_question.dart';
 import '../data/repositories/listening_repository.dart';
+import '../data/models/listening_history_model.dart';
 
 class ListeningProvider with ChangeNotifier {
   final ListeningRepository _repository = ListeningRepository();
 
   List<ListeningQuestion> _questions = [];
   List<ListeningQuestion> get questions => _questions;
+
+  List<ListeningHistoryModel> _history = [];
+  List<ListeningHistoryModel> get history => _history;
+
+  bool _isHistoryLoading = false;
+  bool get isHistoryLoading => _isHistoryLoading;
+
 
   List<ListeningGroup> _groups = [];
   List<ListeningGroup> get groups => _groups;
@@ -16,9 +24,11 @@ class ListeningProvider with ChangeNotifier {
 
   /// Cache toàn bộ câu hỏi Part 1/2.
   final Map<int, List<ListeningQuestion>> _questionsCache = {};
+  Map<int, List<ListeningQuestion>> get questionsCache => _questionsCache;
 
   /// Cache toàn bộ nhóm Part 3/4.
   final Map<int, List<ListeningGroup>> _groupsCache = {};
+  Map<int, List<ListeningGroup>> get groupsCache => _groupsCache;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -52,6 +62,7 @@ class ListeningProvider with ChangeNotifier {
         _questionsCache[partNumber] = list;
         // Cập nhật count cache từ data thật (chính xác hơn)
         _countCache[partNumber] = list.length;
+        notifyListeners();
       }).catchError((e) {
         debugPrint('[Preload P$partNumber] $e');
       });
@@ -60,11 +71,35 @@ class ListeningProvider with ChangeNotifier {
       _repository.getGroupsByPart(partNumber).then((list) {
         _groupsCache[partNumber] = list;
         _countCache[partNumber] = list.length;
+        notifyListeners();
       }).catchError((e) {
         debugPrint('[Preload P$partNumber] $e');
       });
     }
   }
+
+  /// Đảm bảo dữ liệu của một Part được tải vào cache (dùng trong màn hình kết quả)
+  Future<void> ensurePartLoaded(int partNumber) async {
+    try {
+      if (partNumber <= 2) {
+        if (_questionsCache.containsKey(partNumber)) return;
+        final list = await _repository.getQuestionsByPart(partNumber);
+        _questionsCache[partNumber] = list;
+        _countCache[partNumber] = list.length;
+        notifyListeners();
+      } else {
+        if (_groupsCache.containsKey(partNumber)) return;
+        final list = await _repository.getGroupsByPart(partNumber);
+        _groupsCache[partNumber] = list;
+        _countCache[partNumber] = list.length;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('[ensurePartLoaded P$partNumber] $e');
+      rethrow;
+    }
+  }
+
   /// Preload toàn bộ 4 Part trong background khi user vừa mở app / vào menu Nghe.
   /// Giúp trải nghiệm cực kỳ mượt mà, khi click vào bất kỳ Part nào cũng là INSTANT.
   void preloadAllParts() {
@@ -134,4 +169,47 @@ class ListeningProvider with ChangeNotifier {
   }
 
   void clearGroupsCache() => _groupsCache.clear();
+
+  // --- Lịch sử luyện tập Nghe ---
+
+  Future<void> fetchHistory() async {
+    _isHistoryLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _history = await _repository.getHistory();
+    } catch (e) {
+      _errorMessage = 'Lỗi tải lịch sử: $e';
+    } finally {
+      _isHistoryLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String> savePracticeHistory({
+    required int part,
+    required int correctCount,
+    required int totalCount,
+    required double percent,
+    required List<String> incorrectQuestionIds,
+    required Map<String, String> selectedAnswers,
+  }) async {
+    try {
+      final id = await _repository.saveHistory(
+        part: part,
+        correctCount: correctCount,
+        totalCount: totalCount,
+        percent: percent,
+        incorrectQuestionIds: incorrectQuestionIds,
+        selectedAnswers: selectedAnswers,
+      );
+      // Reload history
+      fetchHistory();
+      return id;
+    } catch (e) {
+      debugPrint('Lỗi lưu lịch sử: $e');
+      rethrow;
+    }
+  }
 }

@@ -3,7 +3,6 @@ import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
 import '../models/vocabulary_model.dart';
 import '../models/vocabulary_hub_stats.dart';
-import '../models/user_vocabulary_progress.dart';
 import '../models/update_progress_result.dart';
 
 class VocabularyRepository {
@@ -13,9 +12,7 @@ class VocabularyRepository {
   Future<Options> _getAuthOptions() async {
     final token = await _authService.getIdToken();
     return Options(
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
   }
 
@@ -48,7 +45,9 @@ class VocabularyRepository {
 
   Future<List<String>> getTopics() async {
     try {
-      final response = await _dio.get('${AppConstants.baseUrl}/vocabularies/topics');
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/vocabularies/topics',
+      );
       return List<String>.from(response.data);
     } catch (e) {
       throw Exception('Lỗi lấy danh sách chủ đề: $e');
@@ -57,22 +56,24 @@ class VocabularyRepository {
 
   Future<List<String>> getLevels() async {
     try {
-      final response = await _dio.get('${AppConstants.baseUrl}/vocabularies/levels');
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/vocabularies/levels',
+      );
       return List<String>.from(response.data);
     } catch (e) {
       throw Exception('Lỗi lấy danh sách cấp độ: $e');
     }
   }
 
-  Future<UpdateProgressResult> updateProgress(String vocabularyId, int quality) async {
+  Future<UpdateProgressResult> updateProgress(
+    String vocabularyId,
+    int quality,
+  ) async {
     try {
       final options = await _getAuthOptions();
       final response = await _dio.post(
         '${AppConstants.baseUrl}/vocabularies/progress',
-        data: {
-          'vocabularyId': vocabularyId,
-          'quality': quality,
-        },
+        data: {'vocabularyId': vocabularyId, 'quality': quality},
         options: options,
       );
       return UpdateProgressResult.fromJson(response.data);
