@@ -156,7 +156,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       _phase = _Phase.prepare;
       _secondsLeft = 0; 
     });
-    _timer?.cancel(); // Bỏ đếm ngược chuẩn bị
+    _timer?.cancel(); 
   }
 
   @override
@@ -310,7 +310,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           questionId: _currentTask!.id,
           subQuestionIndex: _currentTask!.questions.isNotEmpty ? _currentSubQuestionIndex : null,
           transcript: evaluation.transcript ?? _recognizedText,
-          audioUrl: '', 
+          audioUrl: evaluation.audioUrl ?? '', // Sửa từ '' thành lấy từ evaluation
           overallScore: evaluation.overallScore,
           passed: evaluation.passed,
           feedback: evaluation.feedback,
@@ -326,7 +326,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           audioUrl: '', 
           overallScore: 0.0,
           passed: false,
-          feedback: 'Lỗi đánh giá câu trả lời',
+          feedback: 'Lỗi chấm điểm AI',
           criteriaScores: {},
         ));
         _moveToNext();
@@ -450,6 +450,14 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   Future<void> _requestExit() async {
+    if (_isListening) {
+      await _audioRecorder.stop();
+      await _speech.stop();
+      _pulseCtrl.stop();
+    }
+    TtsService().stop();
+    _timer?.cancel();
+
     final shouldExit = await showExitPracticeDialog(
       context,
       text: 'Tiến trình làm bài nói của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
@@ -469,7 +477,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
+      onPopInvoked: (didPop) async {
         if (didPop) return;
         await _requestExit();
       },

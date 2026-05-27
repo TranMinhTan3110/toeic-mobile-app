@@ -3,27 +3,20 @@ import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import '../../widgets/speaking/speaking_explanation_panel.dart';
 import '../../../data/models/speaking_question.dart';
+import '../../../data/models/speaking_history_model.dart';
 import '../../../core/services/tts_service.dart';
 import '../../../providers/speaking_provider.dart';
 
 class SpeakingHistoryReviewScreen extends StatefulWidget {
-  final String title;
-  final SpeakingQuestion? question;
   final int partNumber;
-  final String transcript;
-  final String? questionId;
-  final String? feedback;
-  final double? score;
+  final List<SpeakingHistoryAnswerModel> answers;
+  final int initialIndex;
   
   const SpeakingHistoryReviewScreen({
     super.key, 
-    required this.title,
-    this.question,
     required this.partNumber,
-    this.transcript = '',
-    this.questionId,
-    this.feedback,
-    this.score,
+    required this.answers,
+    this.initialIndex = 0,
   });
 
   @override
@@ -31,24 +24,15 @@ class SpeakingHistoryReviewScreen extends StatefulWidget {
 }
 
 class _SpeakingHistoryReviewScreenState extends State<SpeakingHistoryReviewScreen> {
+  late PageController _pageController;
+  int _currentIndex = 0;
   bool _showPanel = false;
-  SpeakingQuestion? _actualQuestion;
 
   @override
   void initState() {
     super.initState();
-    
-    if (widget.questionId != null && widget.questionId!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final provider = context.read<SpeakingProvider>();
-        final question = provider.getQuestionById(widget.questionId!);
-        if (question != null) {
-          setState(() => _actualQuestion = question);
-        }
-      });
-    } else if (widget.question != null) {
-      _actualQuestion = widget.question;
-    }
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
     
     // Tự động trượt bảng giải thích lên sau khi vào màn hình
     Future.delayed(const Duration(milliseconds: 400), () {
@@ -57,18 +41,13 @@ class _SpeakingHistoryReviewScreenState extends State<SpeakingHistoryReviewScree
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Dữ liệu mẫu khớp với cấu trúc UI luyện tập
-    final SpeakingQuestion displayTask = _actualQuestion ?? SpeakingQuestion(
-      id: 'review_1',
-      taskNumber: widget.partNumber,
-      prepSeconds: 45,
-      recordSeconds: 45,
-      text: 'Chưa tải dữ liệu câu hỏi...',
-      imageUrl: widget.partNumber == 2 ? 'https://example.com/image.jpg' : null,
-      questions: widget.partNumber >= 3 ? ['...'] : [],
-    );
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
@@ -84,106 +63,142 @@ class _SpeakingHistoryReviewScreenState extends State<SpeakingHistoryReviewScree
                 valueColor: const AlwaysStoppedAnimation(AppColors.primary),
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 1. Đề bài & Hình ảnh (Sử dụng lại style SpeakingDoingScreen)
-                      _buildPromptAndImage(displayTask),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // 2. Card câu hỏi (nếu có - Part 3, 4)
-                      if (displayTask.questions.isNotEmpty)
-                        _buildCurrentQuestionCard(displayTask),
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  itemCount: widget.answers.length,
+                  itemBuilder: (context, index) {
+                    final answer = widget.answers[index];
+                    final provider = context.read<SpeakingProvider>();
+                    final question = provider.getQuestionById(answer.questionId);
+                    
+                    final SpeakingQuestion displayTask = question ?? SpeakingQuestion(
+                      id: answer.questionId,
+                      taskNumber: widget.partNumber,
+                      prepSeconds: 45,
+                      recordSeconds: 45,
+                      text: 'Đang tải dữ liệu câu hỏi...',
+                      imageUrl: null,
+                      questions: widget.partNumber >= 3 ? ['...'] : [],
+                    );
 
-                      const SizedBox(height: 24),
-                      
-                      // 3. Hiển thị câu trả lời của bạn (Thay thế vùng ghi âm)
-                      const Text(
-                        'Câu trả lời của bạn:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold, 
-                          color: AppColors.primary, 
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 30),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          widget.transcript.isEmpty 
-                            ? '(Chưa có câu trả lời)' 
-                            : widget.transcript, 
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 19,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-
-                      if (widget.feedback != null && widget.feedback!.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Phản hồi từ giám khảo AI:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold, 
-                            color: AppColors.primary, 
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.orange.withOpacity(0.2)),
-                          ),
-                          child: Text(
-                            widget.feedback!,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                              height: 1.6,
-                            ),
-                          ),
-                        ),
-                      ],
-                      
-                      const SizedBox(height: 350), // Khoảng trống cho panel trượt lên
-                    ],
-                  ),
+                    return _buildPageContent(displayTask, answer);
+                  },
                 ),
               ),
             ],
           ),
 
-          // Panel giải thích tự động trượt lên (Y hệt luyện tập)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: SpeakingExplanationPanel(
-              isVisible: _showPanel,
-              question: displayTask,
-              partNumber: widget.partNumber,
-              onClose: () => setState(() => _showPanel = false),
+          // Panel giải thích tự động trượt lên
+          Consumer<SpeakingProvider>(
+            builder: (context, provider, _) {
+              final currentAnswer = widget.answers[_currentIndex];
+              final currentQuestion = provider.getQuestionById(currentAnswer.questionId);
+              
+              return Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SpeakingExplanationPanel(
+                  isVisible: _showPanel,
+                  question: currentQuestion,
+                  partNumber: widget.partNumber,
+                  onClose: () => setState(() => _showPanel = false),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageContent(SpeakingQuestion displayTask, SpeakingHistoryAnswerModel answer) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Đề bài & Hình ảnh
+          _buildPromptAndImage(displayTask),
+          
+          const SizedBox(height: 20),
+          
+          // 2. Card câu hỏi (nếu có - Part 3, 4)
+          if (displayTask.questions.isNotEmpty)
+            _buildCurrentQuestionCard(displayTask),
+
+          const SizedBox(height: 24),
+          
+          // 3. Hiển thị câu trả lời của bạn
+          const Text(
+            'Câu trả lời của bạn:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold, 
+              color: AppColors.primary, 
+              fontSize: 14,
             ),
           ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+              border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              answer.transcript.isEmpty 
+                ? '(Chưa có câu trả lời)' 
+                : answer.transcript, 
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 19,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+
+          if (answer.feedback.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            const Text(
+              'Phản hồi từ giám khảo AI:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold, 
+                color: AppColors.primary, 
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.withOpacity(0.2)),
+              ),
+              child: Text(
+                answer.feedback,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ],
+          
+          const SizedBox(height: 350), // Khoảng trống cho panel trượt lên
         ],
       ),
     );
@@ -201,7 +216,7 @@ class _SpeakingHistoryReviewScreenState extends State<SpeakingHistoryReviewScree
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
-        widget.title,
+        'Câu ${_currentIndex + 1}/${widget.answers.length}',
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
       ),
       actions: [
@@ -303,7 +318,7 @@ class _SpeakingHistoryReviewScreenState extends State<SpeakingHistoryReviewScree
         children: [
           const Text('Câu hỏi:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
           const SizedBox(height: 12),
-          Text(task.questions.first, 
+          Text(task.questions.isNotEmpty ? task.questions.first : '...',
             textAlign: TextAlign.center, 
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary)
           ),

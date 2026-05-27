@@ -90,12 +90,9 @@ class _SpeakingHistoryOverviewScreenState extends State<SpeakingHistoryOverviewS
                           context,
                           MaterialPageRoute(
                             builder: (_) => SpeakingHistoryReviewScreen(
-                              title: 'Câu ${index + 1}',
                               partNumber: widget.partNumber,
-                              questionId: answer.questionId,
-                              transcript: answer.transcript,
-                              feedback: answer.feedback,
-                              score: answer.overallScore,
+                              answers: history.answers,
+                              initialIndex: index,
                             ),
                           ),
                         );
@@ -149,7 +146,7 @@ class _SpeakingHistoryOverviewScreenState extends State<SpeakingHistoryOverviewS
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 color: const Color(0xFFFF8C42), 
                 child: const Text(
-                  'Ấn vào từng câu để xem giải thích chi tiết',
+                  'Ấn vào từng câu để xem giải giải thích chi tiết',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                 ),

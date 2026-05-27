@@ -3,6 +3,7 @@ class SpeakingEvaluation {
   final Map<String, double> criteriaScores;
   final String feedback;
   final String? transcript;
+  final String? audioUrl; // Thêm trường này
   final bool passed;
 
   SpeakingEvaluation({
@@ -10,6 +11,7 @@ class SpeakingEvaluation {
     required this.criteriaScores,
     required this.feedback,
     this.transcript,
+    this.audioUrl,
     this.passed = false,
   });
 
@@ -28,6 +30,7 @@ class SpeakingEvaluation {
       ),
       feedback: json['feedback'] ?? '',
       transcript: json['transcript']?.toString(),
+      audioUrl: json['audioUrl'] ?? json['audio_url']?.toString(), // Lấy từ API
       passed: json['passed'] == true || overall >= 6.0,
     );
   }

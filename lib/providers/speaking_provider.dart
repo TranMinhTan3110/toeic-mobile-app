@@ -83,7 +83,6 @@ class SpeakingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Lấy tất cả lịch sử (practice & exam)
       final models = await _repository.getHistory(sessionType: sessionType);
       _historyItems = models
           .map((m) => _mapToHistoryItem(m))
@@ -114,16 +113,18 @@ class SpeakingProvider with ChangeNotifier {
     required bool examMode,
     List<SpeakingQuestion>? allTasks,
   }) async {
-    // Lưu lịch sử với tất cả các câu (những câu không làm sẽ có transcript trống)
     final answersToSave = <SpeakingHistoryAnswerModel>[];
     
     if (allTasks != null && allTasks.isNotEmpty) {
-      // Lặp qua tất cả các task
       for (final task in allTasks) {
-        // Tìm answer cho task này
-        final existingAnswer = _currentSessionAnswers.firstWhere(
-          (a) => a.questionId == task.id,
-          orElse: () => SpeakingHistoryAnswerModel(
+        try {
+          final existingAnswer = _currentSessionAnswers.firstWhere(
+            (a) => a.questionId == task.id,
+          );
+          answersToSave.add(existingAnswer);
+        } catch (_) {
+          // Nếu không tìm thấy answer (bỏ qua câu), tạo answer trống
+          answersToSave.add(SpeakingHistoryAnswerModel(
             questionId: task.id,
             transcript: '',
             audioUrl: '',
@@ -131,12 +132,10 @@ class SpeakingProvider with ChangeNotifier {
             passed: false,
             feedback: '',
             criteriaScores: {},
-          ),
-        );
-        answersToSave.add(existingAnswer);
+          ));
+        }
       }
     } else {
-      // Nếu không truyền allTasks, chỉ lưu những câu đã làm
       answersToSave.addAll(_currentSessionAnswers);
     }
 
@@ -239,9 +238,6 @@ class SpeakingProvider with ChangeNotifier {
       );
 
       if (results.isEmpty) {
-        debugPrint(
-          'API returned empty for part $partNumber (practice=$practiceMode), using mock.',
-        );
         _questionsByPart[cacheKey] = SpeakingQuestionData.byPart[partNumber] ?? [];
       } else {
         _questionsByPart[cacheKey] =
