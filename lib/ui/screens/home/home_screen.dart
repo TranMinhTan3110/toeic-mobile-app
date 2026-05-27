@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/user_provider.dart';
+import '../../../providers/speaking_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/skill_card.dart';
@@ -23,7 +24,6 @@ import '../leaderboard/leaderboard_screen.dart';
 import '../settings/settings_screen.dart';
 import '../speaking/speaking_screen.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -40,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.microtask(() {
       if (mounted) {
         context.read<UserProvider>().fetchProfile();
+        // Load lịch sử speaking ngay từ đầu để đảm bảo dữ liệu sẵn sàng
+        context.read<SpeakingProvider>().fetchHistory();
       }
     });
   }
