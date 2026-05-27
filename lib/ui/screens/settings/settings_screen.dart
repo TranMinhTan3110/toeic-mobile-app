@@ -5,6 +5,8 @@ import 'package:toeicmobileapp/ui/shared/practice_dialogs.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/ui/widgets/common/custom_app_bar.dart';
 import 'package:toeicmobileapp/providers/user_provider.dart';
+import 'package:toeicmobileapp/providers/grammar_provider.dart';
+import 'package:toeicmobileapp/providers/listening_provider.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
 import '../../widgets/settings/profile_header.dart';
 import '../../widgets/settings/setting_tile.dart';
@@ -52,6 +54,8 @@ class SettingsScreen extends StatelessWidget {
                 if (confirm && context.mounted) {
                   await AuthService().signOut();
                   context.read<UserProvider>().clear();
+                  context.read<GrammarProvider>().clearCache();
+                  context.read<ListeningProvider>().clearCache();
                 }
               },
             ),

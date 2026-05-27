@@ -133,7 +133,7 @@ class _GrammarHubScreenState extends State<GrammarHubScreen> {
             t.category != 'tense' && t.category != 'word_form' && t.category != 'preposition').toList();
 
           return RefreshIndicator(
-            onRefresh: () => grammarProvider.fetchTopics(),
+            onRefresh: () => grammarProvider.fetchTopics(forceRefresh: true),
             color: AppColors.primary,
             child: ListView(
               padding: const EdgeInsets.all(16),
