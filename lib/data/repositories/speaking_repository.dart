@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
 import '../models/speaking_question.dart';
@@ -58,15 +59,21 @@ class SpeakingRepository {
   }) async {
     try {
       final options = await _getAuthOptions();
-      final formData = FormData.fromMap({
+      
+      final Map<String, dynamic> dataMap = {
         'questionId': questionId,
         if (subQuestionIndex != null) 'subQuestionIndex': subQuestionIndex,
         'transcript': transcript,
-        'audio': await MultipartFile.fromFile(
+      };
+
+      if (!kIsWeb && audioPath.isNotEmpty) {
+        dataMap['audio'] = await MultipartFile.fromFile(
           audioPath,
           filename: 'recording.m4a',
-        ),
-      });
+        );
+      }
+
+      final formData = FormData.fromMap(dataMap);
 
       final response = await _dio.post(
         '${AppConstants.baseUrl}/speaking/evaluate',
