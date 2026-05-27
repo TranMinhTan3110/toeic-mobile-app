@@ -848,7 +848,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _isListening ? "Đang lắng nghe..." : "Giữ để nói",
+                    _isListening ? "Đang lắng nghe..." : "Nhấp để nói",
                     style: TextStyle(
                       color: _isListening ? AppColors.primary : Colors.grey.shade600,
                       fontSize: 15,
@@ -858,26 +858,35 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                   const SizedBox(height: 16),
 
                   GestureDetector(
-                    onLongPressStart: (_) => _handleStartListening(),
-                    onLongPressEnd: (_) => _handleStopListening(),
+                    onTap: () {
+                      if (_isListening) {
+                        _handleStopListening();
+                      } else {
+                        _handleStartListening();
+                      }
+                    },
                     child: ScaleTransition(
                       scale: _pulseAnim,
                       child: Container(
                         width: 84,
                         height: 84,
                         decoration: BoxDecoration(
-                          color: Colors.orange,
+                          color: _isListening ? Colors.red : Colors.orange,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orange.withOpacity(0.4),
+                              color: (_isListening ? Colors.red : Colors.orange).withOpacity(0.4),
                               blurRadius: 20,
                               spreadRadius: 2,
                               offset: const Offset(0, 6),
                             )
                           ],
                         ),
-                        child: const Icon(Icons.mic_rounded, size: 42, color: Colors.white),
+                        child: Icon(
+                          _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                          size: 42,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -885,7 +894,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: _skip, 
-                    child: const Text('Bỏ qua / Kết thúc câu này', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                    child: const Text('Tiếp tục', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 15)),
                   ),
                 ],
               ),
