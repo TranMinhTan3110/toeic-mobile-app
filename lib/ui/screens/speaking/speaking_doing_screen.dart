@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 import '../../../data/models/speaking_part_info.dart';
@@ -35,6 +36,12 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   final AudioRecorder _audioRecorder = AudioRecorder();
   final PageController _pageController = PageController();
   String? _lastRecordingPath;
+
+  // Speech to Text
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _sttEnabled = false;
+  String _recognizedText = '';
+  bool _isListening = false;
 
   List<SpeakingQuestion> _tasks = [];
   int _currentTaskIndex = 0;
@@ -78,6 +85,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     );
     _progressAnim = Tween<double>(begin: 0, end: 0).animate(_progressCtrl);
 
+    _initSTT();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final practiceMode = !widget.examMode;
       context
@@ -106,6 +115,17 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     });
   }
 
+  Future<void> _initSTT() async {
+    try {
+      _sttEnabled = await _speech.initialize(
+        onStatus: (status) => debugPrint('STT Status: $status'),
+        onError: (error) => debugPrint('STT Error: $error'),
+      );
+    } catch (e) {
+      debugPrint('STT Init failed: $e');
+    }
+  }
+
   void _updateProgress() {
     double progress = (_currentTaskIndex) / _tasks.length;
     if (_currentTask != null && _currentTask!.questions.isNotEmpty) {
@@ -130,32 +150,71 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     _progressCtrl.dispose();
     _audioRecorder.dispose();
     _pageController.dispose();
+    _speech.stop();
     TtsService().stop();
     super.dispose();
   }
 
-  Future<void> _startRecordingLogic() async {
+  // ── Recording Logic ──────────────────────────────────────────
+
+  Future<void> _handleStartListening() async {
+    if (_phase != _Phase.recording || _isListening) return;
+
     try {
       if (await _audioRecorder.hasPermission()) {
         final directory = await getTemporaryDirectory();
-        final path =
-            '${directory.path}/speaking_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final path = '${directory.path}/speaking_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
         const config = RecordConfig();
         await _audioRecorder.start(config, path: path);
         _lastRecordingPath = path;
+
+        setState(() {
+          _isListening = true;
+          _recognizedText = '';
+        });
+        _pulseCtrl.repeat(reverse: true);
+
+        if (_sttEnabled) {
+          _speech.listen(
+            onResult: (result) {
+              setState(() {
+                _recognizedText = result.recognizedWords;
+              });
+            },
+            localeId: 'en_US',
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng cấp quyền truy cập Micro')),
+        );
       }
     } catch (e) {
       debugPrint('Lỗi mic: $e');
     }
   }
 
-  Future<void> _startRecording() async {
+  Future<void> _handleStopListening() async {
+    if (!_isListening) return;
+
+    final path = await _audioRecorder.stop();
+    if (path != null) _lastRecordingPath = path;
+    
+    await _speech.stop();
+    _pulseCtrl.stop();
+
+    setState(() {
+      _isListening = false;
+    });
+
+    _onRecordingTimeUp();
+  }
+
+  // ── Flow Control ──────────────────────────────────────────
+
+  void _startPractice() {
     if (_currentTask == null) return;
-
-    await _startRecordingLogic();
-    _pulseCtrl.repeat(reverse: true);
-
-    if (!mounted) return;
+    
     setState(() {
       _phase = _Phase.recording;
       if (_currentTask!.questions.isNotEmpty) {
@@ -163,14 +222,21 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       } else {
         _secondsLeft = _currentTask!.recordSeconds;
       }
+      _recognizedText = '';
     });
+    
     _startCountdown(_onRecordingTimeUp);
   }
 
   void _onRecordingTimeUp() async {
-    final path = await _audioRecorder.stop();
-    if (path != null) _lastRecordingPath = path;
-    _pulseCtrl.stop();
+    if (_isListening) {
+      await _audioRecorder.stop();
+      await _speech.stop();
+      _pulseCtrl.stop();
+      if (mounted) setState(() => _isListening = false);
+    }
+
+    _timer?.cancel();
     _evaluateAndNext();
   }
 
@@ -205,6 +271,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       setState(() {
         _currentSubQuestionIndex++;
         _phase = _Phase.prepare;
+        _recognizedText = '';
       });
       _updateProgress();
     } else {
@@ -236,12 +303,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   void _skip() {
-    if (_phase == _Phase.recording) {
-      _timer?.cancel();
-      _onRecordingTimeUp();
-    } else {
-      _moveToNext();
-    }
+    _timer?.cancel();
+    _onRecordingTimeUp();
   }
 
   @override
@@ -260,7 +323,30 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           Column(
             children: [
               _buildTopProgressBar(),
-              Expanded(child: _buildPageViewBody()),
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: _buildPageViewBody()),
+                    // transcription Area - Vùng hiển thị văn bản khi nói
+                    if (_phase == _Phase.recording)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                        constraints: const BoxConstraints(minHeight: 100),
+                        alignment: Alignment.center,
+                        child: Text(
+                          _isListening && _recognizedText.isEmpty ? "..." : _recognizedText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
               _buildBottomArea(),
             ],
           ),
@@ -357,8 +443,9 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       onPageChanged: (index) {
         _timer?.cancel();
         TtsService().stop();
-        if (_phase == _Phase.recording) {
+        if (_isListening) {
           _audioRecorder.stop();
+          _speech.stop();
           _pulseCtrl.stop();
         }
         setState(() {
@@ -366,6 +453,7 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           _currentSubQuestionIndex = 0;
           _phase = _Phase.prepare;
           _showPanel = false;
+          _recognizedText = '';
         });
         _updateProgress();
       },
@@ -382,7 +470,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gộp Card tiêu đề và Hình ảnh vào 1 Container duy nhất
           _buildPromptAndImage(task),
           
           const SizedBox(height: 20),
@@ -412,7 +499,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Phần Text Hướng dẫn
           Stack(
             children: [
               Padding(
@@ -440,7 +526,6 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                 ),
             ],
           ),
-          // Phần Hình ảnh (nằm ngay dưới text, không khoảng trống)
           if (hasImage)
             ClipRRect(
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
@@ -464,18 +549,12 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
   String _getPromptLabel(int partNumber) {
     switch (partNumber) {
-      case 1:
-        return 'Đọc văn bản';
-      case 2:
-        return 'Mô tả tranh';
-      case 3:
-        return 'Trả lời câu hỏi';
-      case 4:
-        return 'Trả lời câu hỏi';
-      case 5:
-        return 'Bày tỏ quan điểm';
-      default:
-        return 'Ngữ cảnh';
+      case 1: return 'Đọc văn bản';
+      case 2: return 'Mô tả tranh';
+      case 3: return 'Trả lời câu hỏi';
+      case 4: return 'Trả lời câu hỏi';
+      case 5: return 'Bày tỏ quan điểm';
+      default: return 'Ngữ cảnh';
     }
   }
 
@@ -510,23 +589,65 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
 
   Widget _buildBottomArea() {
     if (_phase == _Phase.evaluating || _phase == _Phase.done) return const SizedBox.shrink();
+    
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         child: _phase == _Phase.prepare
             ? ElevatedButton(
-                onPressed: _startRecording,
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32))),
-                child: const Text('Bắt đầu trả lời', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                onPressed: _startPractice,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                ),
+                child: const Text('Bắt đầu trả lời', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
               )
             : Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  ScaleTransition(
-                    scale: _pulseAnim,
-                    child: FloatingActionButton(onPressed: _skip, backgroundColor: Colors.orange, child: const Icon(Icons.mic_rounded, size: 36, color: Colors.white)),
+                  // LỜI NHẮC NGAY TRÊN MICRO
+                  Text(
+                    _isListening ? "Đang lắng nghe..." : "Giữ để nói",
+                    style: TextStyle(
+                      color: _isListening ? AppColors.primary : Colors.grey.shade600,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  TextButton(onPressed: _skip, child: const Text('Bỏ qua / Kết thúc câu này')),
+                  const SizedBox(height: 16),
+
+                  // Nút Micro "Hold to talk"
+                  GestureDetector(
+                    onLongPressStart: (_) => _handleStartListening(),
+                    onLongPressEnd: (_) => _handleStopListening(),
+                    child: ScaleTransition(
+                      scale: _pulseAnim,
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.withOpacity(0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 6),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.mic_rounded, size: 42, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: _skip, 
+                    child: const Text('Bỏ qua / Kết thúc câu này', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                  ),
                 ],
               ),
       ),
