@@ -3,7 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/writing_data.dart';
 import '../../../../data/repositories/writing_repository.dart';
 import '../../../widgets/common/custom_app_bar.dart';
-import '../../../widgets/practice/part_history_sheet.dart';
+import 'writing_history_screen.dart';
 import 'essay_writing_test_screen.dart';
 
 class EssayWritingScreen extends StatefulWidget {
@@ -51,11 +51,11 @@ class _EssayWritingScreenState extends State<EssayWritingScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.history_rounded, color: AppColors.appBarFg),
-            onPressed: () => PartHistorySheet.show(
+            onPressed: () => Navigator.push(
               context,
-              partNumber: part.partNumber,
-              partTitle: part.titleVi,
-              items: WritingData.demoHistory(part.partNumber),
+              MaterialPageRoute(
+                builder: (_) => const WritingHistoryScreen(),
+              ),
             ),
             tooltip: 'Lịch sử',
           ),

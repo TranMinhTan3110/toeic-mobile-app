@@ -1,9 +1,19 @@
 import 'package:dio/dio.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/auth_service.dart';
+import '../models/writing_history_item.dart';
 import '../models/writing_question.dart';
 
 class WritingRepository {
   final Dio _dio = Dio();
+  final AuthService _authService = AuthService();
+
+  Future<Options> _getAuthOptions() async {
+    final token = await _authService.getIdToken();
+    return Options(
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+  }
 
   /// Get all writing questions
   Future<List<WritingQuestion>> getAll() async {
@@ -124,16 +134,118 @@ class WritingRepository {
     }
   }
 
-  /// Get writing questions by exam set ID
-  Future<List<WritingQuestion>> getQuestionsByExamSetId(String examSetId) async {
+  Future<List<WritingHistoryItem>> getHistory({String? sessionType}) async {
     try {
+      final options = await _getAuthOptions();
       final response = await _dio.get(
-        '${AppConstants.baseUrl}/writing-questions/exam/$examSetId',
+        '${AppConstants.baseUrl}/writing/history',
+        queryParameters: {
+          if (sessionType != null && sessionType.isNotEmpty)
+            'sessionType': sessionType,
+        },
+        options: options,
       );
       final List<dynamic> data = response.data;
-      return data.map((json) => WritingQuestion.fromJson(json)).toList();
+      return data
+          .map(
+            (json) => WritingHistoryItem.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
     } catch (e) {
-      throw Exception('Lỗi khi tải câu hỏi Writing của đề thi $examSetId: $e');
+      throw Exception('Lỗi khi tải lịch sử Writing: $e');
+    }
+  }
+
+  Future<WritingHistoryItem> getHistoryById(String id) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/writing/history/$id',
+        options: options,
+      );
+      return WritingHistoryItem.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Lỗi khi tải chi tiết lịch sử Writing: $e');
+    }
+  }
+
+  /// Save a single submission (for individual question saves)
+  Future<String?> saveSubmission({
+    required String questionId,
+    String sessionType = 'practice',
+    required String userAnswer,
+    int? taskNumber,
+    String? taskType,
+    int? wordCount,
+    int? timeUsed,
+    int? aiScore,
+    WritingAiFeedback? aiFeedback,
+  }) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/writing/history',
+        data: {
+          'questionId': questionId,
+          'taskNumber': taskNumber,
+          'taskType': taskType,
+          'sessionType': sessionType,
+          'userAnswer': userAnswer,
+          'wordCount': wordCount,
+          'timeUsed': timeUsed,
+          'aiScore': aiScore,
+          'aiFeedback': aiFeedback?.toJson(),
+        },
+        options: options,
+      );
+      return (response.data as Map<String, dynamic>)['id']?.toString();
+    } on DioException catch (e) {
+      throw Exception(
+        'Lỗi khi lưu lịch sử Writing: ${e.response?.data ?? e.message}',
+      );
+    } catch (e) {
+      throw Exception('Lỗi khi lưu lịch sử Writing: $e');
+    }
+  }
+
+  /// Save a complete session with multiple answers (only save once when session is completed)
+  Future<String?> saveSession({
+    String? historyId,
+    required List<String> questionIds,
+    required Map<String, String> answers,
+    required String sessionType,
+    int? taskNumber,
+    String? taskType,
+    int? questionCount,
+    int? correctCount,
+    int? timeSpent,
+    List<String>? incorrectIds,
+  }) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/writing/session',
+        data: {
+          'id': historyId,
+          'questionIds': questionIds,
+          'answers': answers,
+          'taskNumber': taskNumber,
+          'taskType': taskType,
+          'sessionType': sessionType,
+          'questionCount': questionCount,
+          'correctCount': correctCount,
+          'timeSpent': timeSpent,
+          'incorrectIds': incorrectIds,
+        },
+        options: options,
+      );
+      return (response.data as Map<String, dynamic>)['id']?.toString();
+    } on DioException catch (e) {
+      throw Exception(
+        'Lỗi khi lưu phiên Writing: ${e.response?.data ?? e.message}',
+      );
+    } catch (e) {
+      throw Exception('Lỗi khi lưu phiên Writing: $e');
     }
   }
 }
