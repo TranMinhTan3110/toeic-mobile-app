@@ -2,12 +2,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../data/models/writing_history_item.dart';
 import '../data/repositories/writing_repository.dart';
+import '../data/models/writing_evaluation_model.dart';
+import '../data/repositories/user_repository.dart';
 
 class WritingProvider with ChangeNotifier {
   final WritingRepository _repository = WritingRepository();
 
   bool _isHistoryLoading = false;
   bool get isHistoryLoading => _isHistoryLoading;
+
+  bool _isEvaluating = false;
+  bool get isEvaluating => _isEvaluating;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
@@ -17,6 +22,9 @@ class WritingProvider with ChangeNotifier {
 
   WritingHistoryItem? _selectedSubmission;
   WritingHistoryItem? get selectedSubmission => _selectedSubmission;
+
+  WritingEvaluation? _lastEvaluation;
+  WritingEvaluation? get lastEvaluation => _lastEvaluation;
 
   Future<void> fetchHistory({
     bool forceRefresh = false,
@@ -90,6 +98,22 @@ class WritingProvider with ChangeNotifier {
         aiFeedback: aiFeedback,
       );
       await fetchHistory(forceRefresh: true);
+
+      // Ghi nhận EP cho Writing
+      if (id != null && sessionType == 'practice' && aiScore != null && aiScore > 0) {
+        try {
+          final userRepository = UserRepository();
+          await userRepository.recordActivity(
+            activityType: 'WritingComplete',
+            referenceId: id,
+            correctAnswers: aiScore,
+            totalAnswers: 10,
+          );
+        } catch (epError) {
+          debugPrint('Lỗi ghi nhận EP cho Writing submission: $epError');
+        }
+      }
+
       return id;
     } catch (e) {
       if (e is DioException) {
@@ -118,6 +142,8 @@ class WritingProvider with ChangeNotifier {
     int? correctCount,
     int? timeSpent,
     List<String>? incorrectIds,
+    int? aiScore,
+    WritingAiFeedback? aiFeedback,
   }) async {
     _errorMessage = null;
     try {
@@ -132,8 +158,26 @@ class WritingProvider with ChangeNotifier {
         correctCount: correctCount,
         timeSpent: timeSpent,
         incorrectIds: incorrectIds,
+        aiScore: aiScore,
+        aiFeedback: aiFeedback,
       );
       await fetchHistory(forceRefresh: true);
+
+      // Ghi nhận EP cho Writing
+      if (id != null && sessionType == 'practice' && aiScore != null && aiScore > 0) {
+        try {
+          final userRepository = UserRepository();
+          await userRepository.recordActivity(
+            activityType: 'WritingComplete',
+            referenceId: id,
+            correctAnswers: aiScore,
+            totalAnswers: 10,
+          );
+        } catch (epError) {
+          debugPrint('Lỗi ghi nhận EP cho Writing session: $epError');
+        }
+      }
+
       return id;
     } catch (e) {
       if (e is DioException) {
@@ -148,5 +192,33 @@ class WritingProvider with ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  Future<WritingEvaluation?> evaluateAnswer(
+    String questionId,
+    String userAnswer,
+  ) async {
+    _isEvaluating = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _lastEvaluation = await _repository.evaluateWriting(
+        questionId: questionId,
+        userAnswer: userAnswer,
+      );
+      return _lastEvaluation;
+    } catch (e) {
+      _errorMessage = 'Lỗi chấm điểm AI: $e';
+      return null;
+    } finally {
+      _isEvaluating = false;
+      notifyListeners();
+    }
+  }
+
+  void clearEvaluation() {
+    _lastEvaluation = null;
+    notifyListeners();
   }
 }

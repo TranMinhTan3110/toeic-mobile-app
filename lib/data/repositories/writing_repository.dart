@@ -3,6 +3,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
 import '../models/writing_history_item.dart';
 import '../models/writing_question.dart';
+import '../models/writing_evaluation_model.dart';
 
 class WritingRepository {
   final Dio _dio = Dio();
@@ -134,6 +135,28 @@ class WritingRepository {
     }
   }
 
+  Future<WritingEvaluation> evaluateWriting({
+    required String questionId,
+    required String userAnswer,
+  }) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/writing/evaluate',
+        data: {
+          'questionId': questionId,
+          'userAnswer': userAnswer,
+        },
+        options: options,
+      );
+      return WritingEvaluation.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      throw Exception('Lỗi khi chấm điểm bài viết: $e');
+    }
+  }
+
   Future<List<WritingHistoryItem>> getHistory({String? sessionType}) async {
     try {
       final options = await _getAuthOptions();
@@ -220,6 +243,8 @@ class WritingRepository {
     int? correctCount,
     int? timeSpent,
     List<String>? incorrectIds,
+    int? aiScore,
+    WritingAiFeedback? aiFeedback,
   }) async {
     try {
       final options = await _getAuthOptions();
@@ -236,6 +261,8 @@ class WritingRepository {
           'correctCount': correctCount,
           'timeSpent': timeSpent,
           'incorrectIds': incorrectIds,
+          'aiScore': aiScore,
+          'aiFeedback': aiFeedback?.toJson(),
         },
         options: options,
       );

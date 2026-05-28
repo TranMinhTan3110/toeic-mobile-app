@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/speaking_provider.dart';
-import '../../screens/speaking/speaking_history_detail_screen.dart';
+import '../../screens/speaking/speaking_history_screen.dart';
+import 'speaking_history_card.dart';
 
 class SpeakingHistorySection extends StatelessWidget {
   const SpeakingHistorySection({super.key});
@@ -12,31 +13,48 @@ class SpeakingHistorySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Lịch sử luyện tập',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Lịch sử luyện tập',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SpeakingHistoryScreen(),
+                    ),
+                  );
+                },
+                child: const Text('Xem tất cả'),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Consumer<SpeakingProvider>(
           builder: (context, provider, child) {
             if (provider.isHistoryLoading) {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20.0),
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               );
             }
 
-            final items = provider.historyItems;
-            if (items.isEmpty) {
+            final allItems = provider.historyItems;
+            if (allItems.isEmpty) {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
@@ -46,59 +64,14 @@ class SpeakingHistorySection extends StatelessWidget {
               );
             }
 
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: items.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.mic, color: AppColors.primary, size: 20),
-                  ),
-                  title: Text(
-                    item.partTitle,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  subtitle: Text(
-                    'Ngày: ${item.date} • Điểm: ${item.score.toStringAsFixed(1)}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${(item.score * 20).round()}/200',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const Text(
-                        'TOEIC Speaking',
-                        style: TextStyle(fontSize: 9, color: AppColors.textHint, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SpeakingHistoryDetailScreen(item: item),
-                      ),
-                    );
-                  },
-                );
-              },
+            final items = allItems.take(3).toList();
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: items
+                    .map((item) => SpeakingHistoryCard(item: item))
+                    .toList(),
+              ),
             );
           },
         ),

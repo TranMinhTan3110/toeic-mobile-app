@@ -83,6 +83,11 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SpeakingProvider>();
+    final partHistory = provider.historyItems.where((h) => h.partNumber == widget.part.partNumber).toList();
+
+    final totalDone = partHistory.map((h) => h.totalQuestions).fold<int>(0, (sum, val) => sum + val);
+    final totalCorrect = partHistory.map((h) => h.correctCount).fold<int>(0, (sum, val) => sum + val);
+    final progress = totalDone > 0 ? (totalCorrect / totalDone) : 0.0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -111,9 +116,9 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: PracticeStatsCard(
                         icon: widget.part.icon,
-                        totalDone: widget.totalDone,
-                        correct: widget.correct,
-                        progress: widget.progress,
+                        totalDone: totalDone,
+                        correct: totalCorrect,
+                        progress: progress,
                       ),
                     ),
 

@@ -27,7 +27,10 @@ class _ListeningPartDetailScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMaxQuestions());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMaxQuestions();
+      context.read<ListeningProvider>().fetchHistory();
+    });
   }
 
   /// Bước 1: Lấy số câu bằng API count (nhanh, 1 Firestore read).
@@ -65,6 +68,13 @@ class _ListeningPartDetailScreenState
   @override
   Widget build(BuildContext context) {
     final part = widget.part;
+    final listeningProvider = context.watch<ListeningProvider>();
+    final partHistory = listeningProvider.history.where((h) => h.part == part.partNumber).toList();
+
+    final totalDone = partHistory.map((h) => h.totalCount).fold<int>(0, (sum, val) => sum + val);
+    final totalCorrect = partHistory.map((h) => h.correctCount).fold<int>(0, (sum, val) => sum + val);
+    final completionRate = totalDone > 0 ? (totalCorrect / totalDone) : 0.0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(
@@ -95,7 +105,12 @@ class _ListeningPartDetailScreenState
             padding: const EdgeInsets.only(bottom: 170),
             children: [
               // ── Stats header ─────────────────────────────────
-              _StatsHeader(part: part),
+              _StatsHeader(
+                part: part,
+                totalDone: totalDone,
+                totalCorrect: totalCorrect,
+                completionRate: completionRate,
+              ),
 
               // ── Instruction card ──────────────────────────────
               Container(
@@ -166,8 +181,16 @@ class _ListeningPartDetailScreenState
 // ── Stats header ─────────────────────────────────────────────────────────────
 
 class _StatsHeader extends StatelessWidget {
-  const _StatsHeader({required this.part});
+  const _StatsHeader({
+    required this.part,
+    required this.totalDone,
+    required this.totalCorrect,
+    required this.completionRate,
+  });
   final ListeningPartInfo part;
+  final int totalDone;
+  final int totalCorrect;
+  final double completionRate;
 
   @override
   Widget build(BuildContext context) {
@@ -198,9 +221,9 @@ class _StatsHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Row(label: 'Số câu đã làm', value: '0'),
+                _Row(label: 'Số câu đã làm', value: '$totalDone'),
                 const SizedBox(height: 4),
-                _Row(label: 'Trả lời đúng', value: '0'),
+                _Row(label: 'Trả lời đúng', value: '$totalCorrect'),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -214,7 +237,7 @@ class _StatsHeader extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: 0.0,
+                          value: completionRate.clamp(0.0, 1.0),
                           backgroundColor: AppColors.primaryLighter,
                           valueColor: const AlwaysStoppedAnimation<Color>(
                               AppColors.primary),

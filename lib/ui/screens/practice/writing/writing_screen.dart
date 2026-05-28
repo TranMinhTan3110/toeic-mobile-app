@@ -5,6 +5,7 @@ import '../../../widgets/common/custom_app_bar.dart';
 import '../../../widgets/writing/writing_history_section.dart';
 import '../../../../data/models/writing_data.dart';
 import '../../../../providers/writing_provider.dart';
+import '../../../widgets/practice/skill_card.dart';
 
 // Screens
 import 'picture_description_screen.dart';
@@ -15,10 +16,6 @@ import 'writing_history_screen.dart';
 /// Screen danh sách 3 Part của phần Viết.
 class WritingScreen extends StatefulWidget {
   const WritingScreen({super.key});
-
-  // Stats tổng hợp (demo)
-  static const int _totalDone = 0;
-  static const int _totalCorrect = 0;
 
   @override
   State<WritingScreen> createState() => _WritingScreenState();
@@ -38,104 +35,141 @@ class _WritingScreenState extends State<WritingScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(title: 'Viết'),
-      body: ListView(
-        children: [
-          // ── Stats header ───────────────────────────────────────
-          _StatsCard(
-            totalDone: WritingScreen._totalDone,
-            totalCorrect: WritingScreen._totalCorrect,
-          ),
-          const Divider(color: AppColors.divider, height: 1),
-          const SizedBox(height: 8),
+      body: Consumer<WritingProvider>(
+        builder: (context, provider, child) {
+          final historyItems = provider.historyItems;
+          final totalSessions = historyItems.length;
 
-          // ── Part cards ─────────────────────────────────────────
-          ...WritingData.parts.map((part) {
-            Widget screen;
-            switch (part.partNumber) {
-              case 1:
-                screen = const PictureDescriptionScreen();
-                break;
-              case 2:
-                screen = const RespondRequestScreen();
-                break;
-              case 3:
-                screen = const EssayWritingScreen();
-                break;
-              default:
-                screen = const PictureDescriptionScreen();
-            }
-            return _PartCard(
-              part: part,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => screen),
+          final scoredItems = historyItems.where((h) => h.aiScore != null).toList();
+          final avgScore = scoredItems.isNotEmpty
+              ? scoredItems.map((item) => item.aiScore!.toDouble()).reduce((a, b) => a + b) / scoredItems.length
+              : 0.0;
+          final estimatedToeic = (avgScore * 20).round();
+
+          return ListView(
+            children: [
+              // ── Stats header ───────────────────────────────────────
+              _StatsCard(
+                totalSessions: totalSessions,
+                avgScore: avgScore,
+                estimatedToeic: estimatedToeic,
               ),
-            );
-          }),
+              const Divider(color: AppColors.divider, height: 1),
+              const SizedBox(height: 8),
 
-          // ── Divider & History ───────────────────────────────────
-          const SizedBox(height: 8),
-          const Divider(color: AppColors.divider, height: 1),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Divider(color: AppColors.divider, thickness: 1.5),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(
-                    Icons.history_rounded,
-                    color: AppColors.textHint,
-                    size: 20,
+              // ── Part cards ─────────────────────────────────────────
+              ...WritingData.parts.map((part) {
+                Widget screen;
+                switch (part.partNumber) {
+                  case 1:
+                    screen = const PictureDescriptionScreen();
+                    break;
+                  case 2:
+                    screen = const RespondRequestScreen();
+                    break;
+                  case 3:
+                    screen = const EssayWritingScreen();
+                    break;
+                  default:
+                    screen = const PictureDescriptionScreen();
+                }
+
+                final partHistory = historyItems
+                    .where((h) => (h.taskNumber ?? 0) == part.partNumber)
+                    .toList();
+                final maxScore = partHistory.isNotEmpty
+                    ? partHistory
+                        .where((h) => h.aiScore != null)
+                        .map((h) => h.aiScore!.toDouble())
+                        .fold(0.0, (prev, element) => element > prev ? element : prev)
+                    : 0.0;
+
+                final hasProgress = partHistory.isNotEmpty;
+                int qCount = 5;
+                if (part.partNumber == 2) qCount = 2;
+                if (part.partNumber == 3) qCount = 1;
+
+                final subtitleText = hasProgress
+                    ? 'Điểm cao nhất: ${maxScore.toStringAsFixed(1)}/10 (${(maxScore * 20).round()}/200 TOEIC)'
+                    : 'Số câu hỏi: $qCount câu';
+
+                return SkillCard(
+                  partNumber: part.partNumber,
+                  title: part.titleVi,
+                  subtitle: subtitleText,
+                  progress: hasProgress ? maxScore / 10.0 : null,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => screen),
                   ),
-                ),
-                Expanded(
-                  child: Divider(color: AppColors.divider, thickness: 1.5),
-                ),
-              ],
-            ),
-          ),
+                );
+              }),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Lịch sử luyện tập',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+              // ── Divider & History ───────────────────────────────────
+              const SizedBox(height: 8),
+              const Divider(color: AppColors.divider, height: 1),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: AppColors.divider, thickness: 1.5),
                     ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const WritingHistoryScreen(),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(
+                        Icons.history_rounded,
+                        color: AppColors.textHint,
+                        size: 20,
                       ),
-                    );
-                  },
-                  child: const Text('Xem tất cả'),
+                    ),
+                    Expanded(
+                      child: Divider(color: AppColors.divider, thickness: 1.5),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
 
-          const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Lịch sử luyện tập',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WritingHistoryScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('Xem tất cả'),
+                    ),
+                  ],
+                ),
+              ),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: WritingHistorySection(),
-          ),
+              const SizedBox(height: 16),
 
-          const SizedBox(height: 16),
-        ],
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: WritingHistorySection(),
+              ),
+
+              const SizedBox(height: 16),
+            ],
+          );
+        },
       ),
     );
   }
@@ -144,223 +178,140 @@ class _WritingScreenState extends State<WritingScreen> {
 // ── Stats card ───────────────────────────────────────────────────────────────
 
 class _StatsCard extends StatelessWidget {
-  const _StatsCard({required this.totalDone, required this.totalCorrect});
-  final int totalDone;
-  final int totalCorrect;
+  const _StatsCard({
+    required this.totalSessions,
+    required this.avgScore,
+    required this.estimatedToeic,
+  });
+
+  final int totalSessions;
+  final double avgScore;
+  final int estimatedToeic;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, 2),
+            blurRadius: 15,
+            offset: Offset(0, 5),
           ),
         ],
+        border: Border.all(color: AppColors.primary.withOpacity(0.08)),
       ),
       child: Row(
         children: [
           // Icon
           Container(
-            width: 68,
-            height: 68,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF9F43), Color(0xFFFF5252)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF9F43).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Icon(
-              Icons.draw_rounded,
-              size: 38,
-              color: AppColors.primary,
-            ),
+            child: const Icon(Icons.draw_rounded, size: 40, color: Colors.white),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           // Stats
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatRow(label: 'Số câu đã làm', value: '$totalDone'),
-                const SizedBox(height: 4),
-                _StatRow(label: 'Trả lời đúng', value: '$totalCorrect'),
-                const SizedBox(height: 8),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Hoàn thành',
+                      'Lượt luyện tập:',
                       style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: 0.0,
-                          backgroundColor: AppColors.primaryLighter,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
-                          ),
-                          minHeight: 6,
-                        ),
+                    Text(
+                      '$totalSessions lượt',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Điểm trung bình:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '${avgScore.toStringAsFixed(1)} / 10',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Ước lượng TOEIC:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$estimatedToeic / 200',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.green,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: totalSessions > 0 ? avgScore / 10.0 : 0.0,
+                    minHeight: 8,
+                    backgroundColor: AppColors.primaryLighter.withOpacity(0.5),
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                  ),
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          value,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-      ],
-    );
-  }
-}
-
-// ── Part card ────────────────────────────────────────────────────────────────
-
-class _PartCard extends StatelessWidget {
-  const _PartCard({required this.part, required this.onTap});
-  final WritingPartInfo part;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Part icon badge
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'P${part.partNumber}',
-                      style: const TextStyle(
-                        color: AppColors.textOnPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Part ${part.partNumber} – ${part.titleVi}',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        'Câu trả lời đúng  0/0',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Progress row
-            Row(
-              children: [
-                const Text(
-                  'Hoàn thành',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: 0.0,
-                      backgroundColor: AppColors.primaryLighter,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
-                      minHeight: 5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -65,27 +65,240 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
     }
   }
 
-  /// Save current answer and move to next question
+  /// Save current answer, evaluate with AI and move to next question
   Future<void> _saveAndNextQuestion() async {
     final answer = _controller.text.trim();
-    final wordCount = answer.isEmpty
-        ? 0
-        : answer.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
-
-    // Store answer in the map
-    _allAnswers[_questions[_currentQ].id] = answer;
-    _wordCounts[_questions[_currentQ].id] = wordCount;
-
-    // Move to next question or save session if completed
-    if (_currentQ < _questions.length - 1) {
-      setState(() {
-        _currentQ++;
-        _controller.clear();
-      });
-    } else {
-      // Last question - save the entire session
-      await _saveSession();
+    if (answer.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng viết câu trả lời trước khi tiếp tục.')),
+      );
+      return;
     }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final provider = context.read<WritingProvider>();
+    final evaluation = await provider.evaluateAnswer(
+      _questions[_currentQ].id,
+      answer,
+    );
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    if (evaluation != null) {
+      // Store answer and stats in the map
+      _allAnswers[_questions[_currentQ].id] = answer;
+      _wordCounts[_questions[_currentQ].id] = answer.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+
+      // Show beautiful AI feedback modal bottom sheet
+      await _showEvaluationResult(evaluation);
+
+      // Move to next question or save session if completed
+      if (_currentQ < _questions.length - 1) {
+        setState(() {
+          _currentQ++;
+          _controller.clear();
+        });
+      } else {
+        // Last question - save the entire session
+        await _saveSession();
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.errorMessage ?? 'Không chấm điểm được bằng AI. Vui lòng thử lại.')),
+      );
+    }
+  }
+
+  Future<void> _showEvaluationResult(dynamic result) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                'Kết quả câu hỏi ${widget.questionLimit > 1 ? (_currentQ + 1) : 1}',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  result.overallScore.toStringAsFixed(1),
+                  style: const TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. Criteria scores progress bars
+                    const Text(
+                      'Tiêu chí đánh giá:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 8),
+                    ...result.criteriaScores.entries.map<Widget>((entry) {
+                      final key = entry.key;
+                      final val = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(key, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                                Text('${val.toStringAsFixed(1)}/10', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: val / 10.0,
+                                minHeight: 6,
+                                backgroundColor: Colors.grey[200],
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  val >= 7.0 ? AppColors.green : (val >= 5.0 ? Colors.orange : Colors.red),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 16),
+
+                    // 2. Feedback general
+                    const Text(
+                      'Phản hồi từ giám khảo AI:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      result.feedback,
+                      style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 3. Corrections
+                    if (result.correctionsVi.isNotEmpty) ...[
+                      const Text(
+                        'Phân tích lỗi & Sửa lại:',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primary),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                        ),
+                        child: Text(
+                          result.correctionsVi,
+                          style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // 4. Suggested Improvement
+                    if (result.suggestedImprovement.isNotEmpty) ...[
+                      const Text(
+                        'Bài viết đề xuất cải tiến:',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.green),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.green.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.green.withOpacity(0.2)),
+                        ),
+                        child: Text(
+                          result.suggestedImprovement,
+                          style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary, fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  'Tiếp tục',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Save the entire session with all answers (only called once at the end)
@@ -97,6 +310,18 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
     });
 
     try {
+      final lastEval = context.read<WritingProvider>().lastEvaluation;
+      final overallScoreInt = lastEval != null ? lastEval.overallScore.round() : 0;
+      final writingAiFeedback = lastEval != null
+          ? WritingAiFeedback(
+              grammarScore: lastEval.criteriaScores['Ngữ pháp']?.round() ?? lastEval.criteriaScores['Grammar']?.round() ?? 0,
+              vocabularyScore: lastEval.criteriaScores['Từ vựng']?.round() ?? lastEval.criteriaScores['Vocabulary']?.round() ?? 0,
+              cohesionScore: lastEval.criteriaScores['Bố cục & Liên kết']?.round() ?? lastEval.criteriaScores['Cohesion']?.round() ?? 0,
+              correctionsVi: lastEval.correctionsVi,
+              suggestedImprovement: lastEval.suggestedImprovement,
+            )
+          : null;
+
       final sessionId = await context.read<WritingProvider>().saveSession(
         historyId: widget.retryHistoryId,
         questionIds: _questions.map((q) => q.id).toList(),
@@ -105,6 +330,8 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
         taskNumber: 2,
         taskType: 'respond_email',
         questionCount: _questions.length,
+        aiScore: overallScoreInt,
+        aiFeedback: writingAiFeedback,
       );
 
       if (mounted) {
@@ -116,6 +343,7 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Đã lưu phiên luyện tập thành công!')),
           );
+
           final resultItem = WritingHistoryItem(
             id: sessionId,
             userId: '',
@@ -128,7 +356,10 @@ class _RespondRequestTestScreenState extends State<RespondRequestTestScreen> {
             questionCount: _questions.length,
             questionIds: _questions.map((q) => q.id).toList(),
             answers: Map<String, String>.from(_allAnswers),
+            aiScore: overallScoreInt,
+            aiFeedback: writingAiFeedback,
           );
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

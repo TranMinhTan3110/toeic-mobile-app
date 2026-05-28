@@ -55,6 +55,10 @@ class _ListeningScreenState extends State<ListeningScreen> {
       }
     }
 
+    final accuracyPercent = totalDone > 0 ? (totalCorrect * 100.0 / totalDone) : 0.0;
+    final rawScore = totalDone > 0 ? (totalCorrect * 495.0 / totalDone) : 0.0;
+    final estimatedScore = ((rawScore / 5).round() * 5).clamp(5, 495);
+
     // Lấy 3 lịch sử làm bài gần nhất
     final recentHistory = history.take(3).toList();
 
@@ -64,7 +68,12 @@ class _ListeningScreenState extends State<ListeningScreen> {
       body: ListView(
         children: [
           // ── Stats header ───────────────────────────────────────
-          _StatsCard(totalDone: totalDone, totalCorrect: totalCorrect),
+          _StatsCard(
+            totalDone: totalDone,
+            totalCorrect: totalCorrect,
+            accuracyPercent: accuracyPercent,
+            estimatedScore: estimatedScore,
+          ),
           const Divider(color: AppColors.divider, height: 1),
           const SizedBox(height: 8),
 
@@ -117,15 +126,32 @@ class _ListeningScreenState extends State<ListeningScreen> {
               ),
             ),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Lịch sử luyện tập',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Lịch sử luyện tập',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ListeningHistoryListScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Xem tất cả'),
+                  ),
+                ],
               ),
             ),
 
@@ -157,31 +183,7 @@ class _ListeningScreenState extends State<ListeningScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
-                  children: [
-                    ...recentHistory.map((item) => _buildHistoryItem(context, item)),
-                    
-                    if (history.length > 3) ...[
-                      const SizedBox(height: 6),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ListeningHistoryListScreen(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          'Xem thêm (${history.length - 3})',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                  children: recentHistory.map((item) => _buildHistoryItem(context, item)).toList(),
                 ),
               ),
           ],
@@ -303,99 +305,166 @@ class _ListeningScreenState extends State<ListeningScreen> {
 }
 
 
-// ── Stats card ───────────────────────────────────────────────────────────────
-
 class _StatsCard extends StatelessWidget {
-  const _StatsCard({required this.totalDone, required this.totalCorrect});
+  const _StatsCard({
+    required this.totalDone,
+    required this.totalCorrect,
+    required this.accuracyPercent,
+    required this.estimatedScore,
+  });
+
   final int totalDone;
   final int totalCorrect;
+  final double accuracyPercent;
+  final int estimatedScore;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
-              color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2)),
+            color: AppColors.shadow,
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
         ],
+        border: Border.all(color: AppColors.primary.withOpacity(0.08)),
       ),
       child: Row(
         children: [
           // Icon
           Container(
-            width: 68,
-            height: 68,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF9F43), Color(0xFFFF5252)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF9F43).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Icon(Icons.headphones_rounded,
-                size: 38, color: AppColors.primary),
+            child: const Icon(Icons.headphones_rounded, size: 40, color: Colors.white),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           // Stats
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatRow(label: 'Số câu đã làm', value: '$totalDone'),
-                const SizedBox(height: 4),
-                _StatRow(label: 'Trả lời đúng', value: '$totalCorrect'),
-                const SizedBox(height: 8),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Hoàn thành',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                            fontSize: 13)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: 0.0,
-                          backgroundColor: AppColors.primaryLighter,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                              AppColors.primary),
-                          minHeight: 6,
-                        ),
+                    const Text(
+                      'Số câu đã làm:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$totalDone câu',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Trả lời đúng:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$totalCorrect câu',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Tỷ lệ chính xác:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '${accuracyPercent.toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Ước lượng TOEIC:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$estimatedScore / 495',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.green,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: totalDone > 0 ? (totalCorrect / totalDone) : 0.0,
+                    minHeight: 8,
+                    backgroundColor: AppColors.primaryLighter.withOpacity(0.5),
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                  ),
                 ),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-                fontSize: 13)),
-        const SizedBox(width: 8),
-        Text(value,
-            style: const TextStyle(
-                color: AppColors.textSecondary, fontSize: 13)),
-      ],
     );
   }
 }

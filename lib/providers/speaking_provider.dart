@@ -5,6 +5,7 @@ import '../data/models/speaking_history_model.dart';
 import '../data/models/speaking_part_info.dart';
 import '../data/models/speaking_history_item.dart';
 import '../data/repositories/speaking_repository.dart';
+import '../data/repositories/user_repository.dart';
 
 class SpeakingProvider with ChangeNotifier {
   final SpeakingRepository _repository = SpeakingRepository();
@@ -179,6 +180,22 @@ class SpeakingProvider with ChangeNotifier {
       );
       _currentSessionAnswers.clear();
       await fetchHistory(forceRefresh: true);
+
+      // Ghi nhận EP cho Speaking
+      if (id != null && !examMode && correct > 0) {
+        try {
+          final userRepository = UserRepository();
+          await userRepository.recordActivity(
+            activityType: 'SpeakingComplete',
+            referenceId: id,
+            correctAnswers: correct,
+            totalAnswers: total,
+          );
+        } catch (epError) {
+          debugPrint('Lỗi ghi nhận EP cho Speaking: $epError');
+        }
+      }
+
       return id;
     } catch (e) {
       debugPrint('Error saving speaking history: $e');
@@ -197,8 +214,12 @@ class SpeakingProvider with ChangeNotifier {
       partInfo = SpeakingPartInfo.parts.first;
     }
 
-    final dateStr =
-        '${model.date.day.toString().padLeft(2, '0')}/${model.date.month.toString().padLeft(2, '0')}/${model.date.year}';
+    final day = model.date.day.toString().padLeft(2, '0');
+    final month = model.date.month.toString().padLeft(2, '0');
+    final year = model.date.year;
+    final hour = model.date.hour.toString().padLeft(2, '0');
+    final minute = model.date.minute.toString().padLeft(2, '0');
+    final dateStr = '$hour:$minute - $day/$month/$year';
 
     return SpeakingHistoryItem(
       historyId: model.id,
