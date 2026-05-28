@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../data/models/writing_history_item.dart';
 import '../../../../data/models/writing_question.dart';
 import '../../../../data/repositories/writing_repository.dart';
 import '../../../../providers/writing_provider.dart';
 import '../../../widgets/common/custom_app_bar.dart';
 import '../../../widgets/cards/essay_prompt_card.dart';
 import '../../../shared/practice_dialogs.dart';
+import 'writing_history_detail_screen.dart';
 
 class EssayWritingTestScreen extends StatefulWidget {
   final int questionLimit;
+  final String? retryHistoryId;
 
-  const EssayWritingTestScreen({super.key, required this.questionLimit});
+  const EssayWritingTestScreen({
+    super.key,
+    required this.questionLimit,
+    this.retryHistoryId,
+  });
 
   @override
   State<EssayWritingTestScreen> createState() => _EssayWritingTestScreenState();
@@ -27,6 +34,10 @@ class _EssayWritingTestScreenState extends State<EssayWritingTestScreen> {
   bool _showExplanation = false;
   double _fontSize = 14.0;
   final TextEditingController _controller = TextEditingController();
+
+  /// Store all answers in a map: questionId -> answer
+  final Map<String, String> _allAnswers = {};
+  final Map<String, int> _wordCounts = {};
 
   @override
   void initState() {
@@ -58,49 +69,90 @@ class _EssayWritingTestScreenState extends State<EssayWritingTestScreen> {
     }
   }
 
+  /// Save current answer and move to next question
   Future<void> _saveAndNextQuestion() async {
-    if (_isSubmitting) return;
-
     final answer = _controller.text.trim();
     final wordCount = answer.isEmpty
         ? 0
         : answer.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    // Store answer in the map
+    _allAnswers[_questions[_currentQ].id] = answer;
+    _wordCounts[_questions[_currentQ].id] = wordCount;
 
-    final id = await context.read<WritingProvider>().saveSubmission(
-          questionId: _questions[_currentQ].id,
-          sessionType: 'practice',
-          userAnswer: answer,
-          wordCount: wordCount,
-          timeUsed: null,
-        );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            id != null && id.isNotEmpty
-                ? 'Đã lưu bài viết.'
-                : 'Không lưu được bài viết.',
-          ),
-        ),
-      );
-    }
-
-    setState(() {
-      _isSubmitting = false;
-    });
-
+    // Move to next question or save session if completed
     if (_currentQ < _questions.length - 1) {
       setState(() {
         _currentQ++;
         _controller.clear();
       });
-    } else if (mounted) {
-      Navigator.pop(context);
+    } else {
+      // Last question - save the entire session
+      await _saveSession();
+    }
+  }
+
+  /// Save the entire session with all answers (only called once at the end)
+  Future<void> _saveSession() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final sessionId = await context.read<WritingProvider>().saveSession(
+        historyId: widget.retryHistoryId,
+        questionIds: _questions.map((q) => q.id).toList(),
+        answers: _allAnswers,
+        sessionType: 'practice',
+        taskNumber: 3,
+        taskType: 'opinion_essay',
+        questionCount: _questions.length,
+      );
+
+      if (mounted) {
+        if (sessionId == null || sessionId.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không lưu được phiên luyện tập.')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã lưu phiên luyện tập thành công!')),
+          );
+          final resultItem = WritingHistoryItem(
+            id: sessionId,
+            userId: '',
+            questionId: _questions.first.id,
+            sessionType: 'practice',
+            userAnswer: _allAnswers[_questions.first.id] ?? '',
+            submittedAt: DateTime.now(),
+            taskNumber: 3,
+            taskType: 'opinion_essay',
+            questionCount: _questions.length,
+            questionIds: _questions.map((q) => q.id).toList(),
+            answers: Map<String, String>.from(_allAnswers),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => WritingHistoryDetailScreen(item: resultItem),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 

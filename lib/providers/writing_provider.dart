@@ -35,7 +35,7 @@ class WritingProvider with ChangeNotifier {
       }
     } catch (e) {
       _historyItems = [];
-      if (e is DioError) {
+      if (e is DioException) {
         final statusCode = e.response?.statusCode;
         final serverMessage = e.response?.data?.toString();
         _errorMessage =
@@ -66,16 +66,15 @@ class WritingProvider with ChangeNotifier {
   }
 
   Future<String?> saveSubmission({
-    String? questionId,
+    required String questionId,
+    required String userAnswer,
     String sessionType = 'practice',
-    String? userAnswer,
-    List<String>? questionIds,
-    Map<String, String>? answers,
-    int? questionCount,
     int? taskNumber,
     String? taskType,
     int? wordCount,
     int? timeUsed,
+    int? aiScore,
+    WritingAiFeedback? aiFeedback,
   }) async {
     _errorMessage = null;
     try {
@@ -83,18 +82,17 @@ class WritingProvider with ChangeNotifier {
         questionId: questionId,
         sessionType: sessionType,
         userAnswer: userAnswer,
-        questionIds: questionIds,
-        answers: answers,
-        questionCount: questionCount,
         taskNumber: taskNumber,
         taskType: taskType,
         wordCount: wordCount,
         timeUsed: timeUsed,
+        aiScore: aiScore,
+        aiFeedback: aiFeedback,
       );
       await fetchHistory(forceRefresh: true);
       return id;
     } catch (e) {
-      if (e is DioError) {
+      if (e is DioException) {
         final statusCode = e.response?.statusCode;
         _errorMessage =
             'Không lưu được bài Writing.'
@@ -103,6 +101,50 @@ class WritingProvider with ChangeNotifier {
         _errorMessage = 'Không lưu được bài Writing. Vui lòng thử lại.';
       }
       debugPrint('Error saving writing submission: $e');
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Save a complete writing session with multiple answers (only save once when session is completed)
+  Future<String?> saveSession({
+    String? historyId,
+    required List<String> questionIds,
+    required Map<String, String> answers,
+    required String sessionType,
+    int? taskNumber,
+    String? taskType,
+    int? questionCount,
+    int? correctCount,
+    int? timeSpent,
+    List<String>? incorrectIds,
+  }) async {
+    _errorMessage = null;
+    try {
+      final id = await _repository.saveSession(
+        historyId: historyId,
+        questionIds: questionIds,
+        answers: answers,
+        sessionType: sessionType,
+        taskNumber: taskNumber,
+        taskType: taskType,
+        questionCount: questionCount,
+        correctCount: correctCount,
+        timeSpent: timeSpent,
+        incorrectIds: incorrectIds,
+      );
+      await fetchHistory(forceRefresh: true);
+      return id;
+    } catch (e) {
+      if (e is DioException) {
+        final statusCode = e.response?.statusCode;
+        _errorMessage =
+            'Không lưu được phiên Writing.'
+            '${statusCode != null ? ' ($statusCode)' : ''}';
+      } else {
+        _errorMessage = 'Không lưu được phiên Writing. Vui lòng thử lại.';
+      }
+      debugPrint('Error saving writing session: $e');
       notifyListeners();
       return null;
     }

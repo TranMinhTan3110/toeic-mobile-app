@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../providers/writing_provider.dart';
-import 'writing_history_detail_screen.dart';
+import '../../../widgets/common/custom_app_bar.dart';
+import '../../../widgets/writing/writing_history_section.dart';
 
 class WritingHistoryScreen extends StatefulWidget {
   const WritingHistoryScreen({super.key});
@@ -24,15 +25,13 @@ class _WritingHistoryScreenState extends State<WritingHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Lịch sử Writing'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+      appBar: CustomAppBar(
+        title: 'Lịch sử Writing',
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => context.read<WritingProvider>().fetchHistory(
+          AppBarIconAction(
+            icon: Icons.refresh_rounded,
+            onTap: () => context.read<WritingProvider>().fetchHistory(
               forceRefresh: true,
             ),
             tooltip: 'Làm mới',
@@ -40,7 +39,7 @@ class _WritingHistoryScreenState extends State<WritingHistoryScreen> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Consumer<WritingProvider>(
           builder: (context, provider, child) {
             if (provider.isHistoryLoading) {
@@ -54,7 +53,11 @@ class _WritingHistoryScreenState extends State<WritingHistoryScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 52, color: AppColors.error),
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      size: 52,
+                      color: AppColors.error,
+                    ),
                     const SizedBox(height: 14),
                     Text(
                       provider.errorMessage!,
@@ -66,7 +69,7 @@ class _WritingHistoryScreenState extends State<WritingHistoryScreen> {
                     ),
                     const SizedBox(height: 14),
                     ElevatedButton.icon(
-                      icon: const Icon(Icons.refresh),
+                      icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Thử lại'),
                       onPressed: () =>
                           provider.fetchHistory(forceRefresh: true),
@@ -84,12 +87,12 @@ class _WritingHistoryScreenState extends State<WritingHistoryScreen> {
                   children: [
                     Icon(
                       Icons.history_rounded,
-                      size: 72,
-                      color: AppColors.textHint.withOpacity(0.5),
+                      size: 64,
+                      color: AppColors.textHint.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Chưa có lịch sử Writing',
+                      'Chưa có lịch sử luyện tập',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -98,7 +101,7 @@ class _WritingHistoryScreenState extends State<WritingHistoryScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Hoàn thành một bài Writing để lưu lịch sử ở đây.',
+                      'Hãy bắt đầu làm bài Writing để lưu lại tiến độ học của bạn!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -110,72 +113,10 @@ class _WritingHistoryScreenState extends State<WritingHistoryScreen> {
               );
             }
 
-            return ListView.separated(
+            return ListView.builder(
               itemCount: items.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final item = items[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => WritingHistoryDetailScreen(item: item),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.edit_note,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.sessionLabel,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Ngày ${item.formattedDate} • ${item.wordCount ?? 0} từ',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: AppColors.textHint,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return WritingHistoryCard(item: items[index]);
               },
             );
           },

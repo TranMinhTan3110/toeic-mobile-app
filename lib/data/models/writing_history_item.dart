@@ -2,64 +2,44 @@ class WritingHistoryItem {
   final String id;
   final String userId;
   final String questionId;
-  final int? taskNumber;
-  final String? taskType;
-  final List<String> questionIds;
-  final int questionCount;
-  final Map<String, String> answers;
   final String sessionType;
   final String userAnswer;
   final int? wordCount;
   final int? timeUsed;
   final int? aiScore;
   final WritingAiFeedback? aiFeedback;
-  final String status;
+  final DateTime submittedAt;
+  final int? taskNumber;
+  final String? taskType;
+  final int? questionCount;
+  final String? aiModel;
   final DateTime? scoredAt;
   final String? resultId;
-  final String? aiModel;
-  final DateTime submittedAt;
+  final List<String> questionIds;
+  final Map<String, String> answers;
 
   WritingHistoryItem({
     required this.id,
     required this.userId,
     required this.questionId,
-    this.taskNumber,
-    this.taskType,
-    required this.questionIds,
-    required this.questionCount,
-    required this.answers,
     required this.sessionType,
     required this.userAnswer,
     this.wordCount,
     this.timeUsed,
     this.aiScore,
     this.aiFeedback,
-    required this.status,
+    required this.submittedAt,
+    this.taskNumber,
+    this.taskType,
+    this.questionCount,
+    this.aiModel,
     this.scoredAt,
     this.resultId,
-    this.aiModel,
-    required this.submittedAt,
+    this.questionIds = const [],
+    this.answers = const {},
   });
 
   factory WritingHistoryItem.fromJson(Map<String, dynamic> json) {
-    final questionIdsRaw = json['questionIds'] ?? json['question_ids'];
-    final questionIds = <String>[];
-    if (questionIdsRaw is List) {
-      for (final entry in questionIdsRaw) {
-        if (entry != null) questionIds.add(entry.toString());
-      }
-    }
-
-    final answersRaw = json['answers'];
-    final answers = <String, String>{};
-    if (answersRaw is Map) {
-      answersRaw.forEach((key, value) {
-        if (key != null) {
-          answers[key.toString()] = value?.toString() ?? '';
-        }
-      });
-    }
-
     return WritingHistoryItem(
       id: json['id']?.toString() ?? '',
       userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
@@ -67,16 +47,6 @@ class WritingHistoryItem {
           json['questionId']?.toString() ??
           json['question_id']?.toString() ??
           '',
-      taskNumber: json['taskNumber'] is int
-          ? json['taskNumber'] as int
-          : int.tryParse(json['taskNumber']?.toString() ?? ''),
-      taskType: json['taskType']?.toString() ?? json['task_type']?.toString(),
-      questionIds: questionIds,
-      questionCount: json['questionCount'] is int
-          ? json['questionCount'] as int
-          : int.tryParse(json['questionCount']?.toString() ?? '') ??
-                (questionIds.isNotEmpty ? questionIds.length : 1),
-      answers: answers,
       sessionType:
           json['sessionType']?.toString() ??
           json['session_type']?.toString() ??
@@ -97,12 +67,6 @@ class WritingHistoryItem {
       aiFeedback: WritingAiFeedback.fromJson(
         json['aiFeedback'] ?? json['ai_feedback'],
       ),
-      status: json['status']?.toString() ?? 'pending',
-      scoredAt: DateTime.tryParse(
-        json['scoredAt']?.toString() ?? json['scored_at']?.toString() ?? '',
-      ),
-      resultId: json['resultId']?.toString() ?? json['result_id']?.toString(),
-      aiModel: json['aiModel']?.toString() ?? json['ai_model']?.toString(),
       submittedAt:
           DateTime.tryParse(
             json['submittedAt']?.toString() ??
@@ -110,6 +74,32 @@ class WritingHistoryItem {
                 '',
           ) ??
           DateTime.now(),
+      taskNumber: json['taskNumber'] is int
+          ? json['taskNumber'] as int
+          : int.tryParse(json['taskNumber']?.toString() ?? ''),
+      taskType: json['taskType']?.toString() ?? json['task_type']?.toString(),
+      questionCount: json['questionCount'] is int
+          ? json['questionCount'] as int
+          : int.tryParse(
+              json['questionCount']?.toString() ??
+                  json['question_count']?.toString() ??
+                  '',
+            ),
+      aiModel: json['aiModel']?.toString() ?? json['ai_model']?.toString(),
+      scoredAt: json['scoredAt'] != null
+          ? DateTime.tryParse(json['scoredAt'].toString())
+          : json['scored_at'] != null
+          ? DateTime.tryParse(json['scored_at'].toString())
+          : null,
+      resultId: json['resultId']?.toString() ?? json['result_id']?.toString(),
+      questionIds: (json['questionIds'] ?? json['question_ids']) is List
+          ? List<String>.from(json['questionIds'] ?? json['question_ids'])
+          : [],
+      answers: json['answers'] is Map
+          ? (json['answers'] as Map).map(
+              (key, value) => MapEntry(key.toString(), value.toString()),
+            )
+          : {},
     );
   }
 
@@ -118,22 +108,21 @@ class WritingHistoryItem {
       'id': id,
       'userId': userId,
       'questionId': questionId,
-      if (taskNumber != null) 'taskNumber': taskNumber,
-      if (taskType != null) 'taskType': taskType,
-      'questionIds': questionIds,
-      'questionCount': questionCount,
-      'answers': answers,
       'sessionType': sessionType,
       'userAnswer': userAnswer,
       'wordCount': wordCount,
       'timeUsed': timeUsed,
       'aiScore': aiScore,
       'aiFeedback': aiFeedback?.toJson(),
-      'status': status,
+      'submittedAt': submittedAt.toIso8601String(),
+      'taskNumber': taskNumber,
+      'taskType': taskType,
+      'questionCount': questionCount,
+      'aiModel': aiModel,
       'scoredAt': scoredAt?.toIso8601String(),
       'resultId': resultId,
-      'aiModel': aiModel,
-      'submittedAt': submittedAt.toIso8601String(),
+      'questionIds': questionIds,
+      'answers': answers,
     };
   }
 
@@ -148,16 +137,28 @@ class WritingHistoryItem {
     }
   }
 
-  String get taskTypeLabel {
-    switch (taskType?.toLowerCase()) {
-      case 'write_sentence':
-        return 'Viết câu';
-      case 'respond_email':
-        return 'Viết email';
-      case 'opinion_essay':
-        return 'Bài luận';
+  String get statusLabel {
+    switch (sessionType.toLowerCase()) {
+      case 'exam':
+        return 'Thi';
+      case 'practice':
+        return 'Luyện tập';
       default:
-        return taskType ?? '-';
+        return sessionType;
+    }
+  }
+
+  String get taskTypeLabel {
+    if (taskType == null) return '-';
+    switch (taskType!.toLowerCase()) {
+      case 'write_sentence':
+        return 'Mô tả tranh';
+      case 'respond_email':
+        return 'Phản hồi yêu cầu';
+      case 'opinion_essay':
+        return 'Viết luận';
+      default:
+        return taskType!;
     }
   }
 
@@ -165,26 +166,13 @@ class WritingHistoryItem {
     return '${submittedAt.day.toString().padLeft(2, '0')}/${submittedAt.month.toString().padLeft(2, '0')}/${submittedAt.year}';
   }
 
-  String get statusLabel {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Chờ chấm';
-      case 'scored':
-        return 'Đã chấm';
-      default:
-        return status;
-    }
-  }
-
   bool get hasAiFeedback {
     return aiScore != null || (aiFeedback?.hasAnyField ?? false);
   }
 
-  bool get hasQuestionSession =>
-      questionIds.isNotEmpty ||
-      answers.isNotEmpty ||
-      taskNumber != null ||
-      taskType != null;
+  bool get hasQuestionSession {
+    return questionIds.isNotEmpty;
+  }
 }
 
 class WritingAiFeedback {

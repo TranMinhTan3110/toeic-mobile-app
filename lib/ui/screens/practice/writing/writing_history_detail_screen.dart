@@ -1,11 +1,51 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/writing_history_item.dart';
+import 'essay_writing_test_screen.dart';
+import 'picture_description_test_screen.dart';
+import 'respond_request_test_screen.dart';
+import 'writing_history_overview_screen.dart';
 
 class WritingHistoryDetailScreen extends StatelessWidget {
+  const WritingHistoryDetailScreen({super.key, required this.item});
+
   final WritingHistoryItem item;
 
-  const WritingHistoryDetailScreen({super.key, required this.item});
+  int get _questionCount {
+    if (item.questionCount != null && item.questionCount! > 0) {
+      return item.questionCount!;
+    }
+    if (item.questionIds.isNotEmpty) return item.questionIds.length;
+    if (item.answers.isNotEmpty) return item.answers.length;
+    return 1;
+  }
+
+  int get _partNumber {
+    if (item.taskNumber != null && item.taskNumber! > 0) {
+      return item.taskNumber!;
+    }
+    switch (item.taskType?.toLowerCase()) {
+      case 'write_sentence':
+        return 1;
+      case 'respond_email':
+        return 2;
+      case 'opinion_essay':
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  String get _partTitle {
+    final label = item.taskTypeLabel == '-' ? 'Writing' : item.taskTypeLabel;
+    final part = _partNumber;
+    return part > 0 ? 'Part $part - $label' : label;
+  }
+
+  String get _feedbackSummary {
+    final part = _partNumber > 0 ? ' Part $_partNumber' : '';
+    return 'Hoàn thành phiên luyện tập$part.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,39 +54,109 @@ class WritingHistoryDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        centerTitle: true,
         elevation: 0,
-        title: const Text('Chi tiết Writing'),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Kết quả luyện tập',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          _InfoCard(item: item),
-          const SizedBox(height: 16),
-          _DetailCard(item: item),
-          const SizedBox(height: 16),
-          if (item.hasQuestionSession) _SessionDetailCard(item: item),
-          const SizedBox(height: 16),
-          _UserAnswerCard(answer: item.userAnswer, answers: item.answers),
-          const SizedBox(height: 16),
-          if (item.hasAiFeedback)
-            _AiFeedbackCard(item: item)
-          else
-            const _AiPlaceholderCard(),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildBannerCard(),
+                const SizedBox(height: 16),
+                _buildScoreDetailsCard(),
+                const SizedBox(height: 16),
+                _buildAiFeedbackCard(),
+              ],
+            ),
+          ),
+          _buildBottomControls(context),
         ],
       ),
     );
   }
-}
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.item});
-  final WritingHistoryItem item;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildBannerCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.emoji_events_rounded,
+              color: Colors.yellow,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Bạn đã hoàn thành bài luyện tập',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _partTitle,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Hãy cố gắng hơn lần sau nhé!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreDetailsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -58,368 +168,106 @@ class _InfoCard extends StatelessWidget {
           ),
         ],
       ),
+      child: Row(
+        children: [
+          const _AccuracyIndicator(percent: 0),
+          const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'KẾT QUẢ ĐẠT ĐƯỢC',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textHint,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.green,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Đúng: 0/$_questionCount câu',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.stars_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Tỷ lệ chính xác: 0%',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiFeedbackCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.primarySurface.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primaryLighter.withValues(alpha: 0.5),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 16,
+                color: AppColors.primaryDark,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Nhận xét từ AI',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Text(
-            item.sessionLabel,
+            _feedbackSummary,
             style: const TextStyle(
-              color: AppColors.primary,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Ngày gửi', value: item.formattedDate),
-          const SizedBox(height: 8),
-          _InfoRow(label: 'Câu hỏi', value: item.questionId),
-          const SizedBox(height: 8),
-          _InfoRow(label: 'Trạng thái', value: item.statusLabel),
-          const SizedBox(height: 8),
-          _InfoRow(label: 'Điểm AI', value: item.aiScore?.toString() ?? '-'),
-          const SizedBox(height: 8),
-          _InfoRow(label: 'Số từ', value: item.wordCount?.toString() ?? '-'),
-          const SizedBox(height: 8),
-          _InfoRow(
-            label: 'Thời gian',
-            value: item.timeUsed != null ? '${item.timeUsed}s' : '-',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailCard extends StatelessWidget {
-  const _DetailCard({required this.item});
-  final WritingHistoryItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Chi tiết nộp bài',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          _InfoRow(
-            label: 'Question ID',
-            value: item.questionId.isNotEmpty ? item.questionId : '-',
-          ),
-          const SizedBox(height: 6),
-          _InfoRow(label: 'Task', value: item.taskTypeLabel),
-          const SizedBox(height: 6),
-          _InfoRow(
-            label: 'Task number',
-            value: item.taskNumber?.toString() ?? '-',
-          ),
-          const SizedBox(height: 6),
-          _InfoRow(
-            label: 'Question count',
-            value: item.questionCount.toString(),
-          ),
-          const SizedBox(height: 6),
-          _InfoRow(label: 'Session', value: item.sessionLabel),
-          const SizedBox(height: 6),
-          _InfoRow(label: 'Trạng thái', value: item.statusLabel),
-          const SizedBox(height: 6),
-          _InfoRow(label: 'Model AI', value: item.aiModel ?? '-'),
-          const SizedBox(height: 6),
-          _InfoRow(
-            label: 'Scored at',
-            value: item.scoredAt != null
-                ? item.scoredAt!.toLocal().toString().split('.').first
-                : '-',
-          ),
-          const SizedBox(height: 6),
-          _InfoRow(label: 'Result ID', value: item.resultId ?? '-'),
-        ],
-      ),
-    );
-  }
-}
-
-class _SessionDetailCard extends StatelessWidget {
-  const _SessionDetailCard({required this.item});
-  final WritingHistoryItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!item.hasQuestionSession) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Phiên Writing',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          if (item.questionIds.isNotEmpty) ...[
-            const Text(
-              'Question IDs',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-            ),
-            const SizedBox(height: 8),
-            ...item.questionIds.map(
-              (id) => Text(
-                id,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (item.answers.isNotEmpty) ...[
-            const Text(
-              'Answers',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-            ),
-            const SizedBox(height: 8),
-            ...item.answers.entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.key,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      entry.value,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _AiFeedbackCard extends StatelessWidget {
-  const _AiFeedbackCard({required this.item});
-  final WritingHistoryItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final feedback = item.aiFeedback;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Đánh giá AI',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          _InfoRow(label: 'Điểm AI', value: item.aiScore?.toString() ?? '-'),
-          if (feedback?.grammarScore != null) ...[
-            const SizedBox(height: 8),
-            _InfoRow(
-              label: 'Grammar',
-              value: feedback!.grammarScore.toString(),
-            ),
-          ],
-          if (feedback?.vocabularyScore != null) ...[
-            const SizedBox(height: 8),
-            _InfoRow(
-              label: 'Vocabulary',
-              value: feedback!.vocabularyScore.toString(),
-            ),
-          ],
-          if (feedback?.cohesionScore != null) ...[
-            const SizedBox(height: 8),
-            _InfoRow(
-              label: 'Cohesion',
-              value: feedback!.cohesionScore.toString(),
-            ),
-          ],
-          if (feedback?.correctionsVi != null &&
-              feedback!.correctionsVi!.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const Text(
-              'Chỉnh sửa',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              feedback.correctionsVi!,
-              style: const TextStyle(color: AppColors.textPrimary, height: 1.6),
-            ),
-          ],
-          if (feedback?.suggestedImprovement != null &&
-              feedback!.suggestedImprovement!.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const Text(
-              'Gợi ý cải thiện',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              feedback.suggestedImprovement!,
-              style: const TextStyle(color: AppColors.textPrimary, height: 1.6),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _UserAnswerCard extends StatelessWidget {
-  const _UserAnswerCard({required this.answer, required this.answers});
-  final String answer;
-  final Map<String, String> answers;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Nội dung bài viết',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          if (answers.isNotEmpty) ...[
-            ...answers.entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      entry.value.isNotEmpty
-                          ? entry.value
-                          : 'Không có nội dung. Có thể bạn chưa gửi câu trả lời.',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ] else ...[
-            Text(
-              answer.isNotEmpty
-                  ? answer
-                  : 'Không có nội dung. Có thể bạn chưa gửi câu trả lời.',
-              style: const TextStyle(color: AppColors.textPrimary, height: 1.6),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _AiPlaceholderCard extends StatelessWidget {
-  const _AiPlaceholderCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withAlpha(45),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLighter.withAlpha(128)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text(
-            'Đánh giá AI',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryDark,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'Phần chấm điểm AI chưa được bật. Các thông tin phản hồi sẽ hiển thị ở bản cập nhật tiếp theo.',
-            style: TextStyle(
               fontSize: 13,
               height: 1.6,
               color: AppColors.textPrimary,
@@ -429,37 +277,147 @@ class _AiPlaceholderCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildBottomControls(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WritingHistoryOverviewScreen(item: item),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.assignment_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              label: const Text(
+                'Chi tiết',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _retryPractice(context),
+              icon: const Icon(
+                Icons.replay_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              label: const Text(
+                'Làm lại',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _retryPractice(BuildContext context) {
+    final count = _questionCount;
+    Widget screen;
+    switch (_partNumber) {
+      case 1:
+        screen = PictureDescriptionTestScreen(
+          questionLimit: count,
+          retryHistoryId: item.id,
+        );
+        break;
+      case 2:
+        screen = RespondRequestTestScreen(
+          questionLimit: count,
+          retryHistoryId: item.id,
+        );
+        break;
+      case 3:
+        screen = EssayWritingTestScreen(
+          questionLimit: count,
+          retryHistoryId: item.id,
+        );
+        break;
+      default:
+        screen = PictureDescriptionTestScreen(
+          questionLimit: count,
+          retryHistoryId: item.id,
+        );
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-  final String label;
-  final String value;
+class _AccuracyIndicator extends StatelessWidget {
+  const _AccuracyIndicator({required this.percent});
+
+  final double percent;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 3,
-          child: Text(
-            '$label:',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              fontSize: 13,
+    final progress = (percent / 100).clamp(0.0, 1.0);
+    return SizedBox(
+      width: 80,
+      height: 80,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 76,
+            height: 76,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 7,
+              backgroundColor: AppColors.divider.withValues(alpha: 0.5),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                percent >= 70 ? AppColors.green : Colors.orange,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          flex: 5,
-          child: Text(
-            value,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+          Text(
+            '${percent.toInt()}%',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -139,7 +139,10 @@ class WritingRepository {
       final options = await _getAuthOptions();
       final response = await _dio.get(
         '${AppConstants.baseUrl}/writing/history',
-        queryParameters: {if (sessionType != null) 'sessionType': sessionType},
+        queryParameters: {
+          if (sessionType != null && sessionType.isNotEmpty)
+            'sessionType': sessionType,
+        },
         options: options,
       );
       final List<dynamic> data = response.data;
@@ -166,39 +169,83 @@ class WritingRepository {
     }
   }
 
-  Future<String> saveSubmission({
-    String? questionId,
+  /// Save a single submission (for individual question saves)
+  Future<String?> saveSubmission({
+    required String questionId,
     String sessionType = 'practice',
-    String? userAnswer,
-    List<String>? questionIds,
-    Map<String, String>? answers,
-    int? questionCount,
+    required String userAnswer,
     int? taskNumber,
     String? taskType,
     int? wordCount,
     int? timeUsed,
+    int? aiScore,
+    WritingAiFeedback? aiFeedback,
   }) async {
     try {
       final options = await _getAuthOptions();
       final response = await _dio.post(
         '${AppConstants.baseUrl}/writing/history',
         data: {
-          if (questionId != null) 'questionId': questionId,
+          'questionId': questionId,
+          'taskNumber': taskNumber,
+          'taskType': taskType,
           'sessionType': sessionType,
-          if (userAnswer != null) 'userAnswer': userAnswer,
-          if (questionIds != null) 'questionIds': questionIds,
-          if (answers != null) 'answers': answers,
-          if (questionCount != null) 'questionCount': questionCount,
-          if (taskNumber != null) 'taskNumber': taskNumber,
-          if (taskType != null) 'taskType': taskType,
-          if (wordCount != null) 'wordCount': wordCount,
-          if (timeUsed != null) 'timeUsed': timeUsed,
+          'userAnswer': userAnswer,
+          'wordCount': wordCount,
+          'timeUsed': timeUsed,
+          'aiScore': aiScore,
+          'aiFeedback': aiFeedback?.toJson(),
         },
         options: options,
       );
-      return (response.data as Map<String, dynamic>)['id']?.toString() ?? '';
+      return (response.data as Map<String, dynamic>)['id']?.toString();
+    } on DioException catch (e) {
+      throw Exception(
+        'Lỗi khi lưu lịch sử Writing: ${e.response?.data ?? e.message}',
+      );
     } catch (e) {
       throw Exception('Lỗi khi lưu lịch sử Writing: $e');
+    }
+  }
+
+  /// Save a complete session with multiple answers (only save once when session is completed)
+  Future<String?> saveSession({
+    String? historyId,
+    required List<String> questionIds,
+    required Map<String, String> answers,
+    required String sessionType,
+    int? taskNumber,
+    String? taskType,
+    int? questionCount,
+    int? correctCount,
+    int? timeSpent,
+    List<String>? incorrectIds,
+  }) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/writing/session',
+        data: {
+          'id': historyId,
+          'questionIds': questionIds,
+          'answers': answers,
+          'taskNumber': taskNumber,
+          'taskType': taskType,
+          'sessionType': sessionType,
+          'questionCount': questionCount,
+          'correctCount': correctCount,
+          'timeSpent': timeSpent,
+          'incorrectIds': incorrectIds,
+        },
+        options: options,
+      );
+      return (response.data as Map<String, dynamic>)['id']?.toString();
+    } on DioException catch (e) {
+      throw Exception(
+        'Lỗi khi lưu phiên Writing: ${e.response?.data ?? e.message}',
+      );
+    } catch (e) {
+      throw Exception('Lỗi khi lưu phiên Writing: $e');
     }
   }
 }
