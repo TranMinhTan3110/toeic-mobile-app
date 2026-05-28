@@ -27,10 +27,29 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => VocabularyProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => SpeakingProvider()),
-        ChangeNotifierProvider(create: (_) => ListeningProvider()),
+        // Inject UserProvider vào 3 provider để cập nhật EP real-time sau khi làm bài
+        ChangeNotifierProxyProvider<UserProvider, SpeakingProvider>(
+          create: (_) => SpeakingProvider(),
+          update: (_, userProvider, speakingProvider) {
+            speakingProvider!.setUserProvider(userProvider);
+            return speakingProvider;
+          },
+        ),
+        ChangeNotifierProxyProvider<UserProvider, ListeningProvider>(
+          create: (_) => ListeningProvider(),
+          update: (_, userProvider, listeningProvider) {
+            listeningProvider!.setUserProvider(userProvider);
+            return listeningProvider;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => GrammarProvider()),
-        ChangeNotifierProvider(create: (_) => WritingProvider()),
+        ChangeNotifierProxyProvider<UserProvider, WritingProvider>(
+          create: (_) => WritingProvider(),
+          update: (_, userProvider, writingProvider) {
+            writingProvider!.setUserProvider(userProvider);
+            return writingProvider;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => ExamProvider()),
       ],
       child: const MyApp(),
