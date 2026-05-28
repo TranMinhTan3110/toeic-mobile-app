@@ -25,9 +25,24 @@ class UserProvider with ChangeNotifier {
   String? _leaderboardError;
   String? get leaderboardError => _leaderboardError;
 
+  // TTL cache: profile 10 phút, leaderboard 5 phút
+  DateTime? _profileFetchedAt;
+  DateTime? _leaderboardFetchedAt;
+  static const _profileTtl = Duration(minutes: 10);
+  static const _leaderboardTtl = Duration(minutes: 5);
+
+  bool get _profileIsStale =>
+      _profileFetchedAt == null ||
+      DateTime.now().difference(_profileFetchedAt!) > _profileTtl;
+
+  bool get _leaderboardIsStale =>
+      _leaderboardFetchedAt == null ||
+      DateTime.now().difference(_leaderboardFetchedAt!) > _leaderboardTtl;
+
   Future<void> fetchProfile({bool forceRefresh = false}) async {
-    if (_profile != null && !forceRefresh) {
-      debugPrint('ℹ️ [UserProvider] Profile already loaded. Using cached profile.');
+    // Dùng cache nếu dữ liệu còn mới (< 10 phút) và không yêu cầu force refresh
+    if (_profile != null && !forceRefresh && !_profileIsStale) {
+      debugPrint('ℹ️ [UserProvider] Profile cache still fresh (< 10min). Skipping fetch.');
       return;
     }
 
@@ -38,6 +53,7 @@ class UserProvider with ChangeNotifier {
     try {
       debugPrint('🔄 [UserProvider] Fetching profile from API...');
       _profile = await _userRepository.getProfile();
+      _profileFetchedAt = DateTime.now();
       debugPrint('✅ [UserProvider] Profile loaded: ${_profile?.displayName} | EP: ${_profile?.experiencePoints}');
     } catch (e) {
       _profileError = e.toString();
@@ -74,8 +90,9 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> fetchLeaderboard({bool forceRefresh = false}) async {
-    if (_leaderboard.isNotEmpty && !forceRefresh) {
-      debugPrint('ℹ️ [UserProvider] Leaderboard already loaded. Using cached leaderboard.');
+    // Dùng cache nếu dữ liệu còn mới (< 5 phút) và không yêu cầu force refresh
+    if (_leaderboard.isNotEmpty && !forceRefresh && !_leaderboardIsStale) {
+      debugPrint('ℹ️ [UserProvider] Leaderboard cache still fresh (< 5min). Skipping fetch.');
       return;
     }
 
@@ -86,6 +103,7 @@ class UserProvider with ChangeNotifier {
     try {
       debugPrint('🔄 [UserProvider] Fetching leaderboard from API...');
       _leaderboard = await _userRepository.getWeeklyLeaderboard();
+      _leaderboardFetchedAt = DateTime.now();
       debugPrint('✅ [UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.');
     } catch (e) {
       _leaderboardError = e.toString();
@@ -142,6 +160,8 @@ class UserProvider with ChangeNotifier {
     _leaderboard = [];
     _profileError = null;
     _leaderboardError = null;
+    _profileFetchedAt = null;
+    _leaderboardFetchedAt = null;
     notifyListeners();
   }
 
