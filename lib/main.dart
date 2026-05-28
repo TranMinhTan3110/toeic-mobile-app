@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'ui/screens/auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
@@ -46,7 +47,7 @@ class MyApp extends StatelessWidget {
       title: 'TOEIC Master',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'Poppins',
+        textTheme: GoogleFonts.interTextTheme(),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF1A73E8),
           brightness: Brightness.light,

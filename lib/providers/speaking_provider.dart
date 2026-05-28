@@ -5,6 +5,7 @@ import '../data/models/speaking_history_model.dart';
 import '../data/models/speaking_part_info.dart';
 import '../data/models/speaking_history_item.dart';
 import '../data/repositories/speaking_repository.dart';
+import '../data/repositories/user_repository.dart';
 
 class SpeakingProvider with ChangeNotifier {
   final SpeakingRepository _repository = SpeakingRepository();
@@ -142,9 +143,10 @@ class SpeakingProvider with ChangeNotifier {
     final total = answersToSave.length;
     final correct = answersToSave.where((a) => a.passed).length;
     final percent = total > 0 ? (correct / total) * 100 : 0.0;
-    final avgScore = answersToSave.isNotEmpty
-        ? answersToSave.map((a) => a.overallScore).reduce((a, b) => a + b) /
-            answersToSave.length
+    final evaluatedAnswers = answersToSave.where((a) => a.overallScore > 0).toList();
+    final avgScore = evaluatedAnswers.isNotEmpty
+        ? evaluatedAnswers.map((a) => a.overallScore).reduce((a, b) => a + b) /
+            evaluatedAnswers.length
         : 0.0;
 
     final criteria = <String, double>{};
@@ -178,6 +180,22 @@ class SpeakingProvider with ChangeNotifier {
       );
       _currentSessionAnswers.clear();
       await fetchHistory(forceRefresh: true);
+
+      // Ghi nhận EP cho Speaking
+      if (id != null && !examMode && correct > 0) {
+        try {
+          final userRepository = UserRepository();
+          await userRepository.recordActivity(
+            activityType: 'SpeakingComplete',
+            referenceId: id,
+            correctAnswers: correct,
+            totalAnswers: total,
+          );
+        } catch (epError) {
+          debugPrint('Lỗi ghi nhận EP cho Speaking: $epError');
+        }
+      }
+
       return id;
     } catch (e) {
       debugPrint('Error saving speaking history: $e');
@@ -196,8 +214,12 @@ class SpeakingProvider with ChangeNotifier {
       partInfo = SpeakingPartInfo.parts.first;
     }
 
-    final dateStr =
-        '${model.date.day.toString().padLeft(2, '0')}/${model.date.month.toString().padLeft(2, '0')}/${model.date.year}';
+    final day = model.date.day.toString().padLeft(2, '0');
+    final month = model.date.month.toString().padLeft(2, '0');
+    final year = model.date.year;
+    final hour = model.date.hour.toString().padLeft(2, '0');
+    final minute = model.date.minute.toString().padLeft(2, '0');
+    final dateStr = '$hour:$minute - $day/$month/$year';
 
     return SpeakingHistoryItem(
       historyId: model.id,
@@ -253,6 +275,28 @@ class SpeakingProvider with ChangeNotifier {
     }
   }
 
+  List<SpeakingQuestion> _examQuestions = [];
+  List<SpeakingQuestion> get examQuestions => _examQuestions;
+
+  Future<void> fetchExamQuestions(String examId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _examQuestions = [];
+    notifyListeners();
+
+    try {
+      final results = await _repository.getQuestionsByExamSetId(examId);
+      _examQuestions = results;
+    } catch (e) {
+      debugPrint('Error fetching exam $examId: $e');
+      _errorMessage = 'Lỗi kết nối API. Không thể tải đề thi.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Gửi bài nói lên AI để chấm điểm
   Future<SpeakingEvaluation?> evaluateAnswer(
     String questionId,
     String audioPath, {

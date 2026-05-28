@@ -4,6 +4,9 @@ import 'package:flutter_boxicons/flutter_boxicons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/speaking_provider.dart';
+import '../../../providers/listening_provider.dart';
+import '../../../providers/writing_provider.dart';
+import '../../../providers/vocabulary_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/skill_card.dart';
@@ -40,8 +43,12 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.microtask(() {
       if (mounted) {
         context.read<UserProvider>().fetchProfile();
-        // Load lịch sử speaking ngay từ đầu để đảm bảo dữ liệu sẵn sàng
+        // Load lịch sử các kỹ năng để đảm bảo dữ liệu sẵn sàng ngoài trang chủ
         context.read<SpeakingProvider>().fetchHistory();
+        context.read<ListeningProvider>().fetchHistory();
+        context.read<WritingProvider>().fetchHistory();
+        // Load thông số từ vựng cần ôn ở sổ tay
+        context.read<VocabularyProvider>().fetchHubStats(forceRefresh: true);
       }
     });
   }
@@ -120,18 +127,24 @@ class _HomeScreenState extends State<HomeScreen> {
       type: 'Luyện tập',
       percent: 15,
       date: DateTime.now(),
+      icon: Icons.edit_note_rounded,
+      color: AppColors.purple,
     ),
     HistoryItem(
       title: 'Nghe Hiểu Part 1',
       type: 'Luyện tập',
       percent: 30,
       date: DateTime.now(),
+      icon: Icons.headphones_rounded,
+      color: AppColors.primary,
     ),
     HistoryItem(
       title: 'Đọc Hiểu',
       type: 'Luyện tập',
       percent: 30,
       date: DateTime.now(),
+      icon: Icons.menu_book_rounded,
+      color: AppColors.green,
     ),
   ];
 
@@ -196,6 +209,89 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeTabContent() {
+    final speakingProvider = context.watch<SpeakingProvider>();
+    final listeningProvider = context.watch<ListeningProvider>();
+    final writingProvider = context.watch<WritingProvider>();
+    final vocabProvider = context.watch<VocabularyProvider>();
+
+    final vocabDueCount = vocabProvider.hubStats?.dueCount ?? 0;
+
+    final List<HistoryItem> mergedHistory = [];
+
+    // 1. Map Speaking history
+    for (final item in speakingProvider.historyItems) {
+      DateTime parsedDate;
+      try {
+        final parts = item.date.split('/');
+        parsedDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+      } catch (_) {
+        parsedDate = DateTime.now();
+      }
+
+      mergedHistory.add(HistoryItem(
+        title: item.partTitle,
+        date: parsedDate,
+        percent: item.score * 10.0,
+        type: 'Luyện tập',
+        icon: Icons.mic_rounded,
+        color: AppColors.blue,
+      ));
+    }
+
+    // 2. Map Writing history
+    for (final item in writingProvider.historyItems) {
+      final partNumber = item.taskNumber ?? 0;
+      final label = item.taskTypeLabel == '-' ? 'Writing' : item.taskTypeLabel;
+      final title = partNumber > 0 ? 'Phần $partNumber - $label' : label;
+
+      mergedHistory.add(HistoryItem(
+        title: title,
+        date: item.submittedAt,
+        percent: item.aiScore != null ? (item.aiScore!.toDouble() * 10.0) : 0.0,
+        type: 'Luyện tập',
+        icon: Icons.draw_rounded,
+        color: AppColors.purple,
+      ));
+    }
+
+    // 3. Map Listening history
+    for (final item in listeningProvider.history) {
+      String partTitle = '';
+      switch (item.part) {
+        case 1:
+          partTitle = 'Phần 1 - Mô tả tranh';
+          break;
+        case 2:
+          partTitle = 'Phần 2 - Phản hồi yêu cầu';
+          break;
+        case 3:
+          partTitle = 'Phần 3 - Đoạn hội thoại';
+          break;
+        case 4:
+          partTitle = 'Phần 4 - Bài nói chuyện ngắn';
+          break;
+        default:
+          partTitle = 'Phần ${item.part}';
+      }
+
+      mergedHistory.add(HistoryItem(
+        title: partTitle,
+        date: item.date,
+        percent: item.totalCount > 0 ? (item.correctCount * 100.0 / item.totalCount) : 0.0,
+        type: 'Luyện tập',
+        icon: Icons.headphones_rounded,
+        color: AppColors.primary,
+      ));
+    }
+
+    final List<HistoryItem> finalPracticeHistory;
+    if (mergedHistory.isEmpty) {
+      finalPracticeHistory = _practiceHistory;
+    } else {
+      mergedHistory.sort((a, b) => b.date.compareTo(a.date));
+      finalPracticeHistory = mergedHistory;
+    }
+
     return Column(
       children: [
         Consumer<UserProvider>(
@@ -255,19 +351,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildExamSection(),
                 // ── Lịch sử ──────────────────────────────────
                 HistorySection(
-                  practiceItems: _practiceHistory,
+                  practiceItems: finalPracticeHistory,
                   examItems: _examHistory,
-                  previewCount: 5,
+                  previewCount: 3,
                 ),
                 // ── Sổ tay ───────────────────────────────────
                 NotebookSection(
-                  vocabularyCount: 0,       // TODO: lấy từ DB
+                  vocabularyCount: vocabDueCount,
                   questionCount: 0,          // TODO: lấy từ DB
                   onVocabReview: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const VocabularyHubScreen()),
-                    );
+                    ).then((_) {
+                      if (mounted) {
+                        context.read<VocabularyProvider>().fetchHubStats(forceRefresh: true);
+                      }
+                    });
                   },
                   onQuestionReview: () {},
                 ),
@@ -303,15 +403,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else if (e.label == 'Nghe Hiểu') {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const ListeningScreen(),
-                    ));
+                    )).then((_) {
+                      if (mounted) {
+                        context.read<UserProvider>().fetchProfile(forceRefresh: true);
+                        context.read<ListeningProvider>().fetchHistory();
+                      }
+                    });
                   } else if (e.label == 'Viết') {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const WritingScreen(),
-                    ));
+                    )).then((_) {
+                      if (mounted) {
+                        context.read<UserProvider>().fetchProfile(forceRefresh: true);
+                        context.read<WritingProvider>().fetchHistory();
+                      }
+                    });
                   } else if (e.label == 'Luyện Nói') {
                     Navigator.push(context, MaterialPageRoute(
                       builder: (_) => const SpeakingScreen(),
-                    ));
+                    )).then((_) {
+                      if (mounted) {
+                        context.read<UserProvider>().fetchProfile(forceRefresh: true);
+                        context.read<SpeakingProvider>().fetchHistory();
+                      }
+                    });
                   }
                 },
               ),

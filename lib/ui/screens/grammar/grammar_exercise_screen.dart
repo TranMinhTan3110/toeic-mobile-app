@@ -8,6 +8,7 @@ import '../../widgets/common/custom_app_bar.dart';
 import '../../../data/models/grammar_model.dart';
 import '../../shared/practice_dialogs.dart';
 import '../../../data/models/listening_question.dart';
+import '../../../core/utils/practice_option_parser.dart';
 
 class GrammarExerciseScreen extends StatefulWidget {
   final GrammarTopic topic;
@@ -45,7 +46,8 @@ class _GrammarExerciseScreenState extends State<GrammarExerciseScreen> {
     final selectedOpt = _selectedOptions[_currentIndex];
     if (selectedOpt == null || (_isAnsweredMap[_currentIndex] ?? false)) return;
 
-    final isCorrect = selectedOpt == currentQuestion.correctAnswer;
+    final normalizedCorrectAnswer = PracticeOptionParser.normalizeCorrectKey(currentQuestion.correctAnswer, options: currentQuestion.options);
+    final isCorrect = selectedOpt == normalizedCorrectAnswer;
     setState(() {
       _isAnsweredMap[_currentIndex] = true;
       if (isCorrect) {
@@ -65,7 +67,8 @@ class _GrammarExerciseScreenState extends State<GrammarExerciseScreen> {
       // Recalculate correctCount based on all questions to be absolutely certain of final state accuracy
       int correct = 0;
       for (int i = 0; i < exercises.length; i++) {
-        if (_isAnsweredMap[i] == true && _selectedOptions[i] == exercises[i].correctAnswer) {
+        final normalizedCorrectAnswer = PracticeOptionParser.normalizeCorrectKey(exercises[i].correctAnswer, options: exercises[i].options);
+        if (_isAnsweredMap[i] == true && _selectedOptions[i] == normalizedCorrectAnswer) {
           correct++;
         }
       }
@@ -408,15 +411,8 @@ class _GrammarExerciseScreenState extends State<GrammarExerciseScreen> {
                           const SizedBox(height: 24),
 
                           // 4 options cards
-                          ...['A', 'B', 'C', 'D'].map((opt) {
-                            final optText = q.options.firstWhere(
-                              (element) => element.trim().startsWith(opt),
-                              orElse: () => '',
-                            );
-
-                            if (optText.isEmpty) return const SizedBox.shrink();
-
-                            return _buildOptionCard(opt, optText, q);
+                          ...PracticeOptionParser.toAnswerOptions(q.options).map((opt) {
+                            return _buildOptionCard(opt.key, opt.text, q);
                           }),
 
                           // Dynamic explanation display immediately when checked
@@ -483,7 +479,8 @@ class _GrammarExerciseScreenState extends State<GrammarExerciseScreen> {
     final currentSelected = _selectedOptions[_currentIndex];
     final currentIsAnswered = _isAnsweredMap[_currentIndex] ?? false;
     final isSelected = currentSelected == code;
-    final isCorrect = code == question.correctAnswer;
+    final normalizedCorrectAnswer = PracticeOptionParser.normalizeCorrectKey(question.correctAnswer, options: question.options);
+    final isCorrect = code == normalizedCorrectAnswer;
 
     Color cardBg = AppColors.surface;
     Color borderCol = AppColors.answerBorderDefault;
@@ -594,6 +591,10 @@ class _GrammarExerciseScreenState extends State<GrammarExerciseScreen> {
       grammarExplanation = expMap['grammar_explanation'] ?? '';
     } else if (question.explanation is String) {
       grammarExplanation = question.explanation as String;
+    }
+
+    if (grammarExplanation.isEmpty && question.explanationVi != null && question.explanationVi!.isNotEmpty) {
+      grammarExplanation = question.explanationVi!;
     }
 
     return Container(

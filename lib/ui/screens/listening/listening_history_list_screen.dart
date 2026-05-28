@@ -21,7 +21,7 @@ class ListeningHistoryListScreen extends StatelessWidget {
     final year = dt.year;
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year $hour:$minute';
+    return '$hour:$minute - $day/$month/$year';
   }
 
   @override

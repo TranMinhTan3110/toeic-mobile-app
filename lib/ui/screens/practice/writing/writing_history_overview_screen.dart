@@ -402,9 +402,129 @@ class _WritingHistoryReviewScreenState
               ),
             ),
           ),
+          _buildAiFeedbackSection(),
           const SizedBox(height: 360),
         ],
       ),
+    );
+  }
+
+  Widget _buildAiFeedbackSection() {
+    final aiFeedback = widget.item.aiFeedback;
+    if (aiFeedback == null || !widget.item.hasAiFeedback) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        const Text(
+          'Nhận xét chi tiết từ AI:',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Corrections Card (Phân tích lỗi sai)
+        if (aiFeedback.correctionsVi?.isNotEmpty == true) ...[
+          Container(
+            padding: const EdgeInsets.all(18),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.border_color_rounded,
+                      size: 16,
+                      color: Colors.orange,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Phân tích lỗi & Cách sửa',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  aiFeedback.correctionsVi!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Suggested Improvement Card (Bài viết cải tiến)
+        if (aiFeedback.suggestedImprovement?.isNotEmpty == true) ...[
+          Container(
+            padding: const EdgeInsets.all(18),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.green.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.green.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.offline_pin_rounded,
+                      size: 16,
+                      color: AppColors.green,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Bài viết đề xuất cải tiến',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.green,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  aiFeedback.suggestedImprovement!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AppColors.textPrimary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 

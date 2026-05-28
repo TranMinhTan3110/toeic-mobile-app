@@ -163,7 +163,12 @@ class WritingHistoryItem {
   }
 
   String get formattedDate {
-    return '${submittedAt.day.toString().padLeft(2, '0')}/${submittedAt.month.toString().padLeft(2, '0')}/${submittedAt.year}';
+    final day = submittedAt.day.toString().padLeft(2, '0');
+    final month = submittedAt.month.toString().padLeft(2, '0');
+    final year = submittedAt.year;
+    final hour = submittedAt.hour.toString().padLeft(2, '0');
+    final minute = submittedAt.minute.toString().padLeft(2, '0');
+    return '$hour:$minute - $day/$month/$year';
   }
 
   bool get hasAiFeedback {

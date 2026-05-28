@@ -78,8 +78,6 @@ class WritingHistoryDetailScreen extends StatelessWidget {
                 _buildBannerCard(),
                 const SizedBox(height: 16),
                 _buildScoreDetailsCard(),
-                const SizedBox(height: 16),
-                _buildAiFeedbackCard(),
               ],
             ),
           ),
@@ -155,6 +153,98 @@ class WritingHistoryDetailScreen extends StatelessWidget {
   }
 
   Widget _buildScoreDetailsCard() {
+    if (!item.hasAiFeedback) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const _AccuracyIndicator(percent: 0),
+            const SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'KẾT QUẢ ĐẠT ĐƯỢC',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textHint,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.green,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Đúng: 0/$_questionCount câu',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.stars_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tỷ lệ chính xác: 0%',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final double score = item.aiScore?.toDouble() ?? 0.0;
+    final scoreTen = score > 10 ? score / 10.0 : score;
+    final toeicScore = (scoreTen * 20).round();
+
+    final Map<String, double> criteria = {
+      if (item.aiFeedback?.grammarScore != null)
+        'Ngữ pháp': item.aiFeedback!.grammarScore!.toDouble(),
+      if (item.aiFeedback?.vocabularyScore != null)
+        'Từ vựng': item.aiFeedback!.vocabularyScore!.toDouble(),
+      if (item.aiFeedback?.cohesionScore != null)
+        'Bố cục & Liên kết': item.aiFeedback!.cohesionScore!.toDouble(),
+    };
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -168,65 +258,131 @@ class WritingHistoryDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _AccuracyIndicator(percent: 0),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'KẾT QUẢ ĐẠT ĐƯỢC',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textHint,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: AppColors.green,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Đúng: 0/$_questionCount câu',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.stars_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Tỷ lệ chính xác: 0%',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          const Text(
+            'BẢN ĐÁNH GIÁ CHUYÊN SÂU',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textHint,
+              letterSpacing: 1.2,
             ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              // Cột trái: Điểm trung bình & Ước lượng TOEIC
+              Column(
+                children: [
+                  SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: CircularProgressIndicator(
+                            value: scoreTen / 10.0,
+                            strokeWidth: 8,
+                            backgroundColor: AppColors.divider.withOpacity(0.5),
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              scoreTen.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                                height: 1.1,
+                              ),
+                            ),
+                            const Text(
+                              '/10',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'TOEIC: $toeicScore/200',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 24),
+              
+              // Cột phải: Thanh tiến trình các tiêu chí chấm điểm
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: criteria.entries.map((entry) {
+                    final key = entry.key;
+                    final val = entry.value;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                key,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              Text(
+                                '${val.toStringAsFixed(1)}/10',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: val / 10.0,
+                              minHeight: 6,
+                              backgroundColor: AppColors.divider.withOpacity(0.4),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                val >= 7.5 ? AppColors.green : (val >= 5.0 ? Colors.orange : Colors.red),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -234,47 +390,197 @@ class WritingHistoryDetailScreen extends StatelessWidget {
   }
 
   Widget _buildAiFeedbackCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.primarySurface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primaryLighter.withValues(alpha: 0.5),
+    if (!item.hasAiFeedback) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.primarySurface.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primaryLighter.withOpacity(0.5),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 16,
-                color: AppColors.primaryDark,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Nhận xét từ AI',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 16,
                   color: AppColors.primaryDark,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Nhận xét từ AI',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _feedbackSummary,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.6,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // AI General Feedback card
+        Container(
+          padding: const EdgeInsets.all(18),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.primarySurface.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.primaryLighter.withOpacity(0.5),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 16,
+                    color: AppColors.primaryDark,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Nhận xét từ AI',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                (item.aiFeedback?.suggestedImprovement?.isNotEmpty == true)
+                    ? 'Bài viết của bạn đã được giám khảo AI phân tích chi tiết.'
+                    : _feedbackSummary,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.6,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            _feedbackSummary,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.6,
-              color: AppColors.textPrimary,
+        ),
+        const SizedBox(height: 16),
+
+        // Corrections Card (Phân tích lỗi sai)
+        if (item.aiFeedback?.correctionsVi?.isNotEmpty == true) ...[
+          Container(
+            padding: const EdgeInsets.all(18),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.border_color_rounded,
+                      size: 16,
+                      color: Colors.orange,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Phân tích lỗi & Cách sửa',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  item.aiFeedback!.correctionsVi!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Suggested Improvement Card (Bài viết cải tiến)
+        if (item.aiFeedback?.suggestedImprovement?.isNotEmpty == true) ...[
+          Container(
+            padding: const EdgeInsets.all(18),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.green.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.green.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.offline_pin_rounded,
+                      size: 16,
+                      color: AppColors.green,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Bài viết đề xuất cải tiến',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.green,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  item.aiFeedback!.suggestedImprovement!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AppColors.textPrimary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 

@@ -63,7 +63,7 @@ class VocabularyProvider with ChangeNotifier {
   /// Tải metadata (topics + levels)
   Future<void> fetchMetadata({bool forceRefresh = false}) async {
     if (_topics.isNotEmpty && _levels.isNotEmpty && !forceRefresh) {
-      debugPrint('ℹ️ [VocabularyProvider] Metadata already loaded. Using cache.');
+      debugPrint('ℹ[VocabularyProvider] Metadata already loaded. Using cache.');
       return;
     }
 
@@ -88,7 +88,7 @@ class VocabularyProvider with ChangeNotifier {
 
     // Nếu không bắt buộc tải lại và đã có cache cho topic-level này thì dùng luôn
     if (!forceRefresh && _cacheWords.containsKey(cacheKey) && _cacheWords[cacheKey]!.isNotEmpty) {
-      debugPrint('ℹ️ [VocabularyProvider] Words for topic "$topic", level "$level" loaded from cache.');
+      debugPrint('ℹ[VocabularyProvider] Words for topic "$topic", level "$level" loaded from cache.');
       _words = _cacheWords[cacheKey]!;
       _lastTopic = topic;
       _lastLevel = level;
@@ -118,7 +118,7 @@ class VocabularyProvider with ChangeNotifier {
   /// Tải thông số Hub (số từ đã lưu, cần ôn, đã học, thành thạo)
   Future<void> fetchHubStats({bool forceRefresh = false}) async {
     if (_hubStats != null && !forceRefresh) {
-      debugPrint('ℹ️ [VocabularyProvider] Hub stats already loaded. Using cache.');
+      debugPrint(' [VocabularyProvider] Hub stats already loaded. Using cache.');
       return;
     }
 
@@ -139,7 +139,7 @@ class VocabularyProvider with ChangeNotifier {
   /// Tải danh sách từ đã lưu vào sổ tay
   Future<void> fetchStarredVocabularies({bool forceRefresh = false}) async {
     if (_starredWords.isNotEmpty && !forceRefresh) {
-      debugPrint('ℹ️ [VocabularyProvider] Starred words already loaded. Using cache.');
+      debugPrint(' [VocabularyProvider] Starred words already loaded. Using cache.');
       return;
     }
 

@@ -55,10 +55,6 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
 
                 // --- CARD 2: Kết quả điểm số ---
                 _buildScoreDetailsCard(),
-                const SizedBox(height: 16),
-
-                // Card nhận xét AI
-                _buildAiFeedbackCard(),
               ],
             ),
           ),
@@ -139,9 +135,8 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
   }
 
   Widget _buildScoreDetailsCard() {
-    double percent = item.totalQuestions > 0 
-        ? (item.correctCount / item.totalQuestions) * 100 
-        : 0;
+    final toeicScore = (item.score * 20).round();
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -155,105 +150,137 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AccuracyIndicator(percent: percent),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'KẾT QUẢ ĐẠT ĐƯỢC',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textHint,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.check_circle_rounded,
-                        color: AppColors.green, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Đúng: ${item.correctCount}/${item.totalQuestions} câu',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.stars_rounded,
-                        color: AppColors.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Tỷ lệ chính xác: ${percent.toInt()}%',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          const Text(
+            'BẢN ĐÁNH GIÁ CHUYÊN SÂU',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textHint,
+              letterSpacing: 1.2,
             ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              // Cột trái: Điểm trung bình & Ước lượng TOEIC
+              Column(
+                children: [
+                  SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: CircularProgressIndicator(
+                            value: item.score / 10.0,
+                            strokeWidth: 8,
+                            backgroundColor: AppColors.divider.withOpacity(0.5),
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              item.score.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                                height: 1.1,
+                              ),
+                            ),
+                            const Text(
+                              '/10',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'TOEIC: $toeicScore/200',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 24),
+              
+              // Cột phải: Thanh tiến trình các tiêu chí chấm điểm
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: item.criteria.entries.map((entry) {
+                    final key = entry.key;
+                    final val = entry.value;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                key,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              Text(
+                                '${val.toStringAsFixed(1)}/10',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: val / 10.0,
+                              minHeight: 6,
+                              backgroundColor: AppColors.divider.withOpacity(0.4),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                val >= 7.5 ? AppColors.green : (val >= 5.0 ? Colors.orange : Colors.red),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAiFeedbackCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.primarySurface.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLighter.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 16,
-                color: AppColors.primaryDark,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Nhận xét từ AI',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            item.feedbackSummary,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.6,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildBottomControls(BuildContext context, SpeakingPartInfo partInfo) {
     return Container(
@@ -343,39 +370,4 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
   }
 }
 
-class _AccuracyIndicator extends StatelessWidget {
-  final double percent;
-  const _AccuracyIndicator({required this.percent});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 80,
-      height: 80,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 76,
-            height: 76,
-            child: CircularProgressIndicator(
-              value: percent / 100,
-              strokeWidth: 7,
-              backgroundColor: AppColors.divider.withOpacity(0.5),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                percent >= 70 ? AppColors.green : Colors.orange,
-              ),
-            ),
-          ),
-          Text(
-            '${percent.toInt()}%',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Deleted unused _AccuracyIndicator widget

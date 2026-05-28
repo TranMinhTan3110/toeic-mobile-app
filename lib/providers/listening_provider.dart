@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../data/models/listening_question.dart';
 import '../data/repositories/listening_repository.dart';
 import '../data/models/listening_history_model.dart';
+import '../data/repositories/user_repository.dart';
 
 class ListeningProvider with ChangeNotifier {
   final ListeningRepository _repository = ListeningRepository();
@@ -206,6 +207,22 @@ class ListeningProvider with ChangeNotifier {
       );
       // Reload history
       fetchHistory();
+
+      // Ghi nhận EP cho Listening
+      if (id.isNotEmpty && correctCount > 0) {
+        try {
+          final userRepository = UserRepository();
+          await userRepository.recordActivity(
+            activityType: 'ListeningComplete',
+            referenceId: id,
+            correctAnswers: correctCount,
+            totalAnswers: totalCount,
+          );
+        } catch (epError) {
+          debugPrint('Lỗi ghi nhận EP cho Listening: $epError');
+        }
+      }
+
       return id;
     } catch (e) {
       debugPrint('Lỗi lưu lịch sử: $e');

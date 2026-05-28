@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/writing_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/writing_data.dart';
 import '../../../../data/repositories/writing_repository.dart';
@@ -26,6 +28,9 @@ class _PictureDescriptionScreenState extends State<PictureDescriptionScreen> {
     super.initState();
     _repository = WritingRepository();
     _loadTotalQuestions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WritingProvider>().fetchHistory();
+    });
   }
 
   Future<void> _loadTotalQuestions() async {
@@ -45,6 +50,15 @@ class _PictureDescriptionScreenState extends State<PictureDescriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final writingProvider = context.watch<WritingProvider>();
+    final partHistory = writingProvider.historyItems
+        .where((h) => h.taskType == 'write_sentence')
+        .toList();
+
+    final totalDone = partHistory.map((h) => h.answers.length > 0 ? h.answers.length : 1).fold<int>(0, (sum, val) => sum + val);
+    final totalCorrect = partHistory.where((h) => (h.aiScore ?? 0) >= 5).map((h) => h.answers.length > 0 ? h.answers.length : 1).fold<int>(0, (sum, val) => sum + val);
+    final completionRate = totalDone > 0 ? (totalCorrect / totalDone) : 0.0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(
@@ -77,7 +91,12 @@ class _PictureDescriptionScreenState extends State<PictureDescriptionScreen> {
           ListView(
             padding: const EdgeInsets.only(bottom: 170),
             children: [
-              _StatsHeader(part: part),
+              _StatsHeader(
+                part: part,
+                totalDone: totalDone,
+                totalCorrect: totalCorrect,
+                completionRate: completionRate,
+              ),
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 padding: const EdgeInsets.all(16),
@@ -149,8 +168,16 @@ class _PictureDescriptionScreenState extends State<PictureDescriptionScreen> {
 // ── Stats header ─────────────────────────────────────────────────────────────
 
 class _StatsHeader extends StatelessWidget {
-  const _StatsHeader({required this.part});
+  const _StatsHeader({
+    required this.part,
+    required this.totalDone,
+    required this.totalCorrect,
+    required this.completionRate,
+  });
   final WritingPartInfo part;
+  final int totalDone;
+  final int totalCorrect;
+  final double completionRate;
 
   @override
   Widget build(BuildContext context) {
@@ -184,9 +211,9 @@ class _StatsHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Row(label: 'Số câu đã làm', value: '0'),
+                _Row(label: 'Số câu đã làm', value: '$totalDone'),
                 const SizedBox(height: 4),
-                _Row(label: 'Trả lời đúng', value: '0'),
+                _Row(label: 'Trả lời đúng', value: '$totalCorrect'),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -203,7 +230,7 @@ class _StatsHeader extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: 0.0,
+                          value: completionRate.clamp(0.0, 1.0),
                           backgroundColor: AppColors.primaryLighter,
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColors.primary,
