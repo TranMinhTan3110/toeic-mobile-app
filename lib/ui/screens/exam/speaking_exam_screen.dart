@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
@@ -8,6 +10,8 @@ import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import '../../../data/models/speaking_question.dart';
 import '../../../data/models/speaking_evaluation_model.dart';
 import '../../../providers/speaking_provider.dart';
+import '../../../providers/exam_provider.dart';
+import 'speaking_exam_result_screen.dart';
 import '../../../core/services/tts_service.dart';
 import '../../shared/practice_dialogs.dart';
 
@@ -32,6 +36,8 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
   final AudioRecorder _audioRecorder = AudioRecorder();
   final PageController _pageController = PageController();
   String? _lastRecordingPath;
+
+  final List<Map<String, dynamic>> _answersList = [];
 
   List<SpeakingQuestion> _tasks = [];
   int _currentTaskIndex = 0;
@@ -197,23 +203,16 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
   }
 
   Future<void> _evaluateAndNext() async {
-    if (_lastRecordingPath == null || _currentTask == null) {
-      _moveToNext();
-      return;
+    if (_currentTask != null) {
+      _answersList.add({
+        'questionId': _currentTask!.id,
+        'subQuestionIndex': _currentTask!.questions.isNotEmpty
+            ? _currentSubQuestionIndex
+            : null,
+        'audioPath': _lastRecordingPath, // Có thể null nếu bỏ qua
+      });
     }
-
-    setState(() => _phase = _Phase.evaluating);
-
-    // Gửi bài lên chấm điểm (trong lúc thi, ta vẫn chấm điểm và lưu kết quả)
-    final evaluation = await context.read<SpeakingProvider>().evaluateAnswer(
-          _currentTask!.id,
-          _lastRecordingPath!,
-          subQuestionIndex: _currentTask!.questions.isNotEmpty
-              ? _currentSubQuestionIndex
-              : null,
-        );
-
-    // Không hiển thị kết quả chấm điểm ngay lúc làm bài thi
+    _lastRecordingPath = null; // Reset cho câu tiếp theo
     _moveToNext();
   }
 
@@ -236,7 +235,109 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
       } else {
         setState(() => _phase = _Phase.done);
         _overallTimer?.cancel();
-        _showCompletionDialog();
+        _submitExam(); // Tự động nộp bài khi hết 11 câu hỏi
+      }
+    }
+  }
+
+  bool _isSubmitting = false;
+
+  Future<void> _submitExam() async {
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    // Hiển thị loading overlay đè lên màn hình
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Hệ thống AI đang chấm bài thi Speaking của bạn. Quá trình này có thể mất 1-2 phút...',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final List<Map<String, dynamic>> tasksData = [];
+      for (var answer in _answersList) {
+        final String? path = answer['audioPath'];
+        String? base64Audio;
+        if (path != null && path.isNotEmpty) {
+          try {
+            final fileBytes = await File(path).readAsBytes();
+            base64Audio = base64Encode(fileBytes);
+          } catch (e) {
+            debugPrint('Lỗi đọc file ghi âm: $e');
+          }
+        }
+
+        tasksData.add({
+          'questionId': answer['questionId'],
+          'subQuestionIndex': answer['subQuestionIndex'],
+          'transcript': '',
+          'audioBase64': base64Audio,
+          'audioMimeType': base64Audio != null ? 'audio/m4a' : null,
+        });
+      }
+
+      final examProvider = context.read<ExamProvider>();
+      final resultHistory = await examProvider.submitSpeakingExam(
+        examSetId: widget.examId,
+        examTitle: widget.examTitle,
+        tasks: tasksData,
+      );
+
+      // Đóng loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Chuyển sang màn hình kết quả
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SpeakingExamResultScreen(history: resultHistory),
+          ),
+        );
+      }
+    } catch (e) {
+      // Đóng loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Hiển thị lỗi
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Lỗi nộp bài'),
+            content: Text('Đã xảy ra lỗi khi gửi bài thi lên hệ thống: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Đóng'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
   }
@@ -663,6 +764,15 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const Text(
+                    "Đang ghi âm...",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   ScaleTransition(
                     scale: _pulseAnim,
                     child: GestureDetector(
@@ -670,36 +780,27 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
                       child: Container(
                         width: 84,
                         height: 84,
-                        decoration: const BoxDecoration(
-                          color: Colors.orange,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orangeAccent,
+                              color: Colors.red.withOpacity(0.4),
                               blurRadius: 20,
                               spreadRadius: 2,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
                         child: const Icon(
-                          Icons.mic_rounded,
+                          Icons.stop_rounded,
                           color: Colors.white,
-                          size: 44,
+                          size: 42,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: _skip,
-                    child: const Text(
-                      'Bỏ qua / Kết thúc câu này',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
       ),
