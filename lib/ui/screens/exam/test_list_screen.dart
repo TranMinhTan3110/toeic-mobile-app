@@ -7,7 +7,8 @@ import 'see_more_screen.dart';
 import '../../widgets/common/custom_app_bar.dart';
 
 class TestListScreen extends StatelessWidget {
-  const TestListScreen({super.key});
+  const TestListScreen({super.key, this.onBack});
+  final VoidCallback? onBack;
 
   List<TestInfo> _generateMockTests(String prefix) {
     return List.generate(
@@ -48,10 +49,11 @@ class TestListScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Thi thử',
         centerTitle: true,
         showBackButton: true,
+        onBack: onBack,
       ),
       body: SingleChildScrollView(
         child: Padding(

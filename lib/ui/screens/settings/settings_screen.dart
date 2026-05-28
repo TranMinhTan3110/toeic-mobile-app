@@ -18,11 +18,13 @@ class SettingsScreen extends StatelessWidget {
     this.isLoggedIn = false,
     this.userName,
     this.avatarUrl,
+    this.onBack,
   });
 
   final bool isLoggedIn;
   final String? userName;
   final String? avatarUrl;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class SettingsScreen extends StatelessWidget {
     final String? resolvedAvatarUrl = profile?.avatarUrl;
 
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Cài đặt', centerTitle: true),
+      appBar: CustomAppBar(title: 'Cài đặt', centerTitle: true, onBack: onBack),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
