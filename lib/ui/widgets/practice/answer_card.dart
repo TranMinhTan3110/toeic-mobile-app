@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
-
 /// Model cho 1 đáp án.
 class AnswerOption {
   const AnswerOption({required this.key, required this.text});
@@ -37,6 +36,7 @@ class AnswerCard extends StatelessWidget {
     this.correctKey,
     this.onSelect,
     this.title = 'Chọn đáp án',
+    this.fontSize = 14.0,
   });
 
   final List<AnswerOption> options;
@@ -47,6 +47,7 @@ class AnswerCard extends StatelessWidget {
 
   final ValueChanged<String>? onSelect;
   final String title;
+  final double fontSize;
 
   AnswerState _stateOf(String key) {
     if (correctKey == null) {
@@ -109,6 +110,7 @@ class AnswerCard extends StatelessWidget {
               option: opt,
               state: _stateOf(opt.key),
               onTap: correctKey == null ? () => onSelect?.call(opt.key) : null,
+              fontSize: fontSize,
             ),
           ),
           const SizedBox(height: 8),
@@ -121,11 +123,12 @@ class AnswerCard extends StatelessWidget {
 // Single answer tile
 
 class _AnswerTile extends StatelessWidget {
-  const _AnswerTile({required this.option, required this.state, this.onTap});
+  const _AnswerTile({required this.option, required this.state, this.onTap, required this.fontSize});
 
   final AnswerOption option;
   final AnswerState state;
   final VoidCallback? onTap;
+  final double fontSize;
 
   Color get _bg {
     switch (state) {
@@ -209,12 +212,14 @@ class _AnswerTile extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  option.key,
+                  option.key.length == 1 ? option.key : option.key[0].toUpperCase(),
                   style: TextStyle(
                     color: _keyFg,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
                 ),
               ),
             ),
@@ -222,9 +227,9 @@ class _AnswerTile extends StatelessWidget {
             Expanded(
               child: Text(
                 option.text,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 14,
+                  fontSize: fontSize,
                   height: 1.4,
                 ),
               ),

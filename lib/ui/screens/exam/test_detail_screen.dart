@@ -3,6 +3,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/test_info.dart';
 import '../../widgets/buttons/start_exam_button.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import 'exam_taking_screen.dart';
+import 'speaking_exam_screen.dart';
+import 'writing_exam_screen.dart';
 
 class TestDetailScreen extends StatelessWidget {
   final TestInfo testData;
@@ -97,8 +100,30 @@ class TestDetailScreen extends StatelessWidget {
             // Nút bắt đầu
             StartExamButton(
               onPressed: () {
-                print("Bắt đầu làm bài: ${testData.title}");
-                // TODO: Thêm logic điều hướng sang màn hình làm bài
+                Widget destinationScreen;
+                if (testData.skill == 'speaking') {
+                  destinationScreen = SpeakingExamScreen(
+                    examId: testData.id,
+                    examTitle: testData.title,
+                  );
+                } else if (testData.skill == 'writing') {
+                  destinationScreen = WritingExamScreen(
+                    examId: testData.id,
+                    examTitle: testData.title,
+                  );
+                } else {
+                  destinationScreen = ExamTakingScreen(
+                    examId: testData.id,
+                    examTitle: testData.title,
+                  );
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => destinationScreen,
+                  ),
+                );
               },
             ),
 

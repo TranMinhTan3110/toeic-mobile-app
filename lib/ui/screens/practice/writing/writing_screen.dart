@@ -1,87 +1,115 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/common/custom_app_bar.dart';
+import '../../../widgets/writing/writing_history_section.dart';
+import '../../../../data/models/writing_data.dart';
+import '../../../../providers/writing_provider.dart';
 import '../../../widgets/practice/skill_card.dart';
 
 // Screens
 import 'picture_description_screen.dart';
 import 'respond_request_screen.dart';
 import 'essay_writing_screen.dart';
+import 'writing_history_screen.dart';
 
-class WritingScreen extends StatelessWidget {
+/// Screen danh sách 3 Part của phần Viết.
+class WritingScreen extends StatefulWidget {
   const WritingScreen({super.key});
+
+  @override
+  State<WritingScreen> createState() => _WritingScreenState();
+}
+
+class _WritingScreenState extends State<WritingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WritingProvider>().fetchHistory();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(title: 'Viết'),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      body: Consumer<WritingProvider>(
+        builder: (context, provider, child) {
+          final historyItems = provider.historyItems;
+          final totalSessions = historyItems.length;
+
+          final scoredItems = historyItems.where((h) => h.aiScore != null).toList();
+          final avgScore = scoredItems.isNotEmpty
+              ? scoredItems.map((item) => item.aiScore!.toDouble()).reduce((a, b) => a + b) / scoredItems.length
+              : 0.0;
+          final estimatedToeic = (avgScore * 20).round();
+
+          return ListView(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildOverallProgress(),
+              // ── Stats header ───────────────────────────────────────
+              _StatsCard(
+                totalSessions: totalSessions,
+                avgScore: avgScore,
+                estimatedToeic: estimatedToeic,
               ),
+              const Divider(color: AppColors.divider, height: 1),
+              const SizedBox(height: 8),
 
-              const SizedBox(height: 16),
+              // ── Part cards ─────────────────────────────────────────
+              ...WritingData.parts.map((part) {
+                Widget screen;
+                switch (part.partNumber) {
+                  case 1:
+                    screen = const PictureDescriptionScreen();
+                    break;
+                  case 2:
+                    screen = const RespondRequestScreen();
+                    break;
+                  case 3:
+                    screen = const EssayWritingScreen();
+                    break;
+                  default:
+                    screen = const PictureDescriptionScreen();
+                }
 
-              SkillCard(
-                partNumber: 1,
-                title: 'Mô tả tranh',
-                subtitle: '8 câu đã làm',
-                progress: 0.53,
-                isLocked: false,
-                onTap: () {
-                  Navigator.push(
+                final partHistory = historyItems
+                    .where((h) => (h.taskNumber ?? 0) == part.partNumber)
+                    .toList();
+                final maxScore = partHistory.isNotEmpty
+                    ? partHistory
+                        .where((h) => h.aiScore != null)
+                        .map((h) => h.aiScore!.toDouble())
+                        .fold(0.0, (prev, element) => element > prev ? element : prev)
+                    : 0.0;
+
+                final hasProgress = partHistory.isNotEmpty;
+                int qCount = 5;
+                if (part.partNumber == 2) qCount = 2;
+                if (part.partNumber == 3) qCount = 1;
+
+                final subtitleText = hasProgress
+                    ? 'Điểm cao nhất: ${maxScore.toStringAsFixed(1)}/10 (${(maxScore * 20).round()}/200 TOEIC)'
+                    : 'Số câu hỏi: $qCount câu';
+
+                return SkillCard(
+                  partNumber: part.partNumber,
+                  title: part.titleVi,
+                  subtitle: subtitleText,
+                  progress: hasProgress ? maxScore / 10.0 : null,
+                  onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const PictureDescriptionScreen(),
-                    ),
-                  );
-                },
-              ),
+                    MaterialPageRoute(builder: (_) => screen),
+                  ),
+                );
+              }),
 
-              SkillCard(
-                partNumber: 2,
-                title: 'Phản hồi yêu cầu',
-                subtitle: '4 câu đã làm',
-                progress: 0.8,
-                isLocked: false,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const RespondRequestScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              SkillCard(
-                partNumber: 3,
-                title: 'Viết luận',
-                subtitle: '0 câu đã làm',
-                progress: 0.0,
-                isLocked: false,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const EssayWritingScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // ====== GIỮ NGUYÊN HISTORY ======
+              // ── Divider & History ───────────────────────────────────
+              const SizedBox(height: 8),
+              const Divider(color: AppColors.divider, height: 1),
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Row(
                   children: [
                     Expanded(
@@ -102,57 +130,68 @@ class WritingScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 24),
-
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Lịch sử luyện tập',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
+                child: Row(
                   children: [
-                    _buildHistoryItem(
-                      date: '16/04/2026',
-                      part: 'Phần 1 - Mô tả tranh',
-                      score: '8/15 câu',
+                    const Expanded(
+                      child: Text(
+                        'Lịch sử luyện tập',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
-                    _buildHistoryItem(
-                      date: '15/04/2026',
-                      part: 'Phần 2 - Phản hồi yêu cầu',
-                      score: '4/5 câu',
-                    ),
-                    _buildHistoryItem(
-                      date: '14/04/2026',
-                      part: 'Phần 3 - Viết luận',
-                      score: '0/2 câu',
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WritingHistoryScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('Xem tất cả'),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: WritingHistorySection(),
+              ),
+
+              const SizedBox(height: 16),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
+}
 
-  // =========================
+// ── Stats card ───────────────────────────────────────────────────────────────
 
-  Widget _buildOverallProgress() {
+class _StatsCard extends StatelessWidget {
+  const _StatsCard({
+    required this.totalSessions,
+    required this.avgScore,
+    required this.estimatedToeic,
+  });
+
+  final int totalSessions;
+  final double avgScore;
+  final int estimatedToeic;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -164,132 +203,112 @@ class WritingScreen extends StatelessWidget {
             offset: Offset(0, 5),
           ),
         ],
+        border: Border.all(color: AppColors.primary.withOpacity(0.08)),
       ),
       child: Row(
         children: [
+          // Icon
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.primaryLighter,
-              shape: BoxShape.circle,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF9F43), Color(0xFFFF5252)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF9F43).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Icon(
-              Icons.draw_rounded,
-              size: 40,
-              color: AppColors.primary,
-            ),
+            child: const Icon(Icons.draw_rounded, size: 40, color: Colors.white),
           ),
           const SizedBox(width: 20),
+          // Stats
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Số câu đã làm',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Lượt luyện tập:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$totalSessions lượt',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  '12',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Điểm trung bình:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '${avgScore.toStringAsFixed(1)} / 10',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Ước lượng TOEIC:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$estimatedToeic / 200',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.green,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
-                _buildProgressBar(0.55),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressBar(double progress) {
-    return Row(
-      children: [
-        const Text(
-          'Hoàn thành',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: AppColors.primaryLighter,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.primary,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHistoryItem({
-    required String date,
-    required String part,
-    required String score,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider.withOpacity(0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.calendar_today_rounded,
-              size: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  part,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date,
-                  style: const TextStyle(
-                    color: AppColors.textHint,
-                    fontSize: 12,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: totalSessions > 0 ? avgScore / 10.0 : 0.0,
+                    minHeight: 8,
+                    backgroundColor: AppColors.primaryLighter.withOpacity(0.5),
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                   ),
                 ),
               ],
-            ),
-          ),
-          Text(
-            score,
-            style: const TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
             ),
           ),
         ],

@@ -7,28 +7,53 @@ import 'see_more_screen.dart';
 import '../../widgets/common/custom_app_bar.dart';
 
 class TestListScreen extends StatelessWidget {
-  const TestListScreen({super.key});
+  const TestListScreen({super.key, this.onBack});
+  final VoidCallback? onBack;
 
-  // Tạo mock data 8 bài test để set cứng
   List<TestInfo> _generateMockTests(String prefix) {
     return List.generate(
       8,
-      (index) => TestInfo(
-        title: 'Test ${10 - index} $prefix',
-      ), // Đếm ngược từ 10 xuống
+      (index) {
+        int testNumber = index + 1;
+        return TestInfo(
+          id: 'ets_2024_test_$testNumber',
+          title: 'Test $testNumber $prefix',
+          skill: 'listening',
+        );
+      },
     );
+  }
+
+  List<TestInfo> _generateSpeakingTests() {
+    return [
+      TestInfo(id: 'test_6', title: 'Test 1', duration: 20, questionCount: 11, skill: 'speaking'),
+      TestInfo(id: 'test_7', title: 'Test 2', duration: 20, questionCount: 11, skill: 'speaking'),
+      TestInfo(id: 'test_8', title: 'Test 3', duration: 20, questionCount: 11, skill: 'speaking'),
+      TestInfo(id: 'test_9', title: 'Test 4', duration: 20, questionCount: 11, skill: 'speaking'),
+      TestInfo(id: 'test_10', title: 'Test 5', duration: 20, questionCount: 11, skill: 'speaking'),
+    ];
+  }
+
+  List<TestInfo> _generateWritingTests() {
+    return [
+      TestInfo(id: 'test_6', title: 'Test 1', duration: 60, questionCount: 8, skill: 'writing'),
+      TestInfo(id: 'test_7', title: 'Test 2', duration: 60, questionCount: 8, skill: 'writing'),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final listReading = _generateMockTests('ETS 2023');
-    final listWriting = _generateMockTests('Writing 2023');
+    final listReading = _generateMockTests('ETS 2024');
+    final listSpeaking = _generateSpeakingTests();
+    final listWriting = _generateWritingTests();
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Thi thử',
-        centerTitle: true, // Ẩn nút back vì đây là màn hình chính
+        centerTitle: true,
+        showBackButton: true,
+        onBack: onBack,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -36,7 +61,7 @@ class TestListScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // CỤM 1
+              // CỤM 1: L&R
               _buildSectionHeader(
                 context,
                 'TOEIC Listening & Reading Fulltest',
@@ -46,8 +71,18 @@ class TestListScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // CỤM 2
-              _buildSectionHeader(context, 'TOEIC Writing & Speaking Fulltest'),
+              // CỤM 2: Speaking
+              _buildSectionHeader(
+                context,
+                'TOEIC Speaking Exam',
+              ),
+              const SizedBox(height: 16),
+              _buildTestGrid(context, listSpeaking),
+
+              const SizedBox(height: 32),
+
+              // CỤM 3: Writing
+              _buildSectionHeader(context, 'TOEIC Writing Exam'),
               const SizedBox(height: 16),
               _buildTestGrid(context, listWriting),
             ],

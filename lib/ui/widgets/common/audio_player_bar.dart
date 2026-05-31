@@ -12,6 +12,7 @@ class AudioPlayerBar extends StatelessWidget {
     required this.onPlayPause,
     this.onRewind,
     this.onForward,
+    this.onSeek,
   });
 
   final bool isPlaying;
@@ -21,6 +22,7 @@ class AudioPlayerBar extends StatelessWidget {
   final VoidCallback onPlayPause;
   final VoidCallback? onRewind;
   final VoidCallback? onForward;
+  final ValueChanged<double>? onSeek;
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +62,14 @@ class AudioPlayerBar extends StatelessWidget {
                 inactiveTrackColor: AppColors.primaryLighter,
                 thumbColor: AppColors.primary,
               ),
-              child: Slider(value: progress, onChanged: (_) {}),
+              child: Slider(
+                value: progress.clamp(0.0, 1.0),
+                onChanged: onSeek,
+              ),
             ),
           ),
           const SizedBox(width: 8),
-          Text(total,
+          Text(total == '0:00' ? '--:--' : total,
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 12)),
         ],

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/part_history_sheet.dart';
 import '../../../data/models/listening_data.dart';
+import '../../../providers/listening_provider.dart';
 import 'listening_practice_screen.dart';
 
 /// Màn hình chuẩn bị trước khi làm bài – dùng chung cho cả 4 part.
@@ -19,10 +21,60 @@ class ListeningPartDetailScreen extends StatefulWidget {
 class _ListeningPartDetailScreenState
     extends State<ListeningPartDetailScreen> {
   int _questionCount = 10;
+  int _maxQuestions = 0;
+  bool _isLoadingCount = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMaxQuestions();
+      context.read<ListeningProvider>().fetchHistory();
+    });
+  }
+
+  /// Bước 1: Lấy số câu bằng API count (nhanh, 1 Firestore read).
+  /// Bước 2: Đồng thời kick off preload data ở background (không await).
+  ///         → Khi user bấm "Bắt đầu", data đã có sẵn trong cache.
+  Future<void> _loadMaxQuestions() async {
+    try {
+      final provider = context.read<ListeningProvider>();
+
+      // Bước 1: Lấy count → hiển thị UI ngay (siêu nhanh)
+      final count = await provider.getCountByPart(widget.part.partNumber);
+
+      // Bước 2: Kick off preload không chặn UI
+      provider.preloadInBackground(widget.part.partNumber);
+
+      if (mounted) {
+        setState(() {
+          _maxQuestions = count;
+          _questionCount = count > 0 ? (count < 10 ? count : 10) : 0;
+          _isLoadingCount = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Lỗi tải số câu Part ${widget.part.partNumber}: $e');
+      if (mounted) {
+        setState(() {
+          _maxQuestions = 0;
+          _questionCount = 0;
+          _isLoadingCount = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final part = widget.part;
+    final listeningProvider = context.watch<ListeningProvider>();
+    final partHistory = listeningProvider.history.where((h) => h.part == part.partNumber).toList();
+
+    final totalDone = partHistory.map((h) => h.totalCount).fold<int>(0, (sum, val) => sum + val);
+    final totalCorrect = partHistory.map((h) => h.correctCount).fold<int>(0, (sum, val) => sum + val);
+    final completionRate = totalDone > 0 ? (totalCorrect / totalDone) : 0.0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(
@@ -53,7 +105,12 @@ class _ListeningPartDetailScreenState
             padding: const EdgeInsets.only(bottom: 170),
             children: [
               // ── Stats header ─────────────────────────────────
-              _StatsHeader(part: part),
+              _StatsHeader(
+                part: part,
+                totalDone: totalDone,
+                totalCorrect: totalCorrect,
+                completionRate: completionRate,
+              ),
 
               // ── Instruction card ──────────────────────────────
               Container(
@@ -101,6 +158,8 @@ class _ListeningPartDetailScreenState
             bottom: 0, left: 0, right: 0,
             child: _BottomControls(
               questionCount: _questionCount,
+              maxQuestions: _maxQuestions,
+              isLoading: _isLoadingCount,
               onCountChanged: (v) => setState(() => _questionCount = v),
               onStart: () => Navigator.push(
                 context,
@@ -122,8 +181,16 @@ class _ListeningPartDetailScreenState
 // ── Stats header ─────────────────────────────────────────────────────────────
 
 class _StatsHeader extends StatelessWidget {
-  const _StatsHeader({required this.part});
+  const _StatsHeader({
+    required this.part,
+    required this.totalDone,
+    required this.totalCorrect,
+    required this.completionRate,
+  });
   final ListeningPartInfo part;
+  final int totalDone;
+  final int totalCorrect;
+  final double completionRate;
 
   @override
   Widget build(BuildContext context) {
@@ -154,9 +221,9 @@ class _StatsHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Row(label: 'Số câu đã làm', value: '0'),
+                _Row(label: 'Số câu đã làm', value: '$totalDone'),
                 const SizedBox(height: 4),
-                _Row(label: 'Trả lời đúng', value: '0'),
+                _Row(label: 'Trả lời đúng', value: '$totalCorrect'),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -170,7 +237,7 @@ class _StatsHeader extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: 0.0,
+                          value: completionRate.clamp(0.0, 1.0),
                           backgroundColor: AppColors.primaryLighter,
                           valueColor: const AlwaysStoppedAnimation<Color>(
                               AppColors.primary),
@@ -216,11 +283,15 @@ class _Row extends StatelessWidget {
 class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.questionCount,
+    required this.maxQuestions,
+    required this.isLoading,
     required this.onCountChanged,
     required this.onStart,
   });
 
   final int questionCount;
+  final int maxQuestions;
+  final bool isLoading;
   final ValueChanged<int> onCountChanged;
   final VoidCallback onStart;
 
@@ -247,18 +318,30 @@ class _BottomControls extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.divider),
                 ),
-                child: DropdownButton<int>(
-                  value: questionCount,
-                  isDense: true,
-                  underline: const SizedBox(),
-                  items: [5, 10, 15, 20, 25]
-                      .map((v) => DropdownMenuItem(
-                          value: v, child: Text('$v')))
-                      .toList(),
-                  onChanged: (v) => onCountChanged(v!),
-                  style: const TextStyle(
-                      color: AppColors.textPrimary, fontSize: 14),
-                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        ),
+                      )
+                    : maxQuestions == 0
+                        ? const Text('Không có câu hỏi', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))
+                        : DropdownButton<int>(
+                            value: questionCount,
+                            isDense: true,
+                            underline: const SizedBox(),
+                            menuMaxHeight: 250, // Cố định chiều cao tối đa là 250px để danh sách không bị quá dài
+                            items: List.generate(maxQuestions, (index) => index + 1)
+                                .map((v) => DropdownMenuItem(
+                                    value: v, child: Text('$v')))
+                                .toList(),
+                            onChanged: (v) => onCountChanged(v!),
+                            style: const TextStyle(
+                                color: AppColors.textPrimary, fontSize: 14),
+                          ),
               ),
             ],
           ),
@@ -266,7 +349,7 @@ class _BottomControls extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: onStart,
+              onPressed: (isLoading || maxQuestions == 0) ? null : onStart,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.textOnPrimary,

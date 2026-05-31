@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_boxicons/flutter_boxicons.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/vocabulary_model.dart';
@@ -7,6 +9,8 @@ import '../../widgets/common/custom_app_bar.dart';
 import '../../../core/services/tts_service.dart';
 import '../../widgets/vocabulary/matching_card.dart';
 import '../../widgets/common/practice_result_view.dart';
+import '../../../providers/user_provider.dart';
+import '../../shared/practice_dialogs.dart';
 
 class VocabularyMatchingScreen extends StatefulWidget {
   final List<VocabularyModel> words;
@@ -37,6 +41,9 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   int _batchIndex = 0;
   bool _isFinished = false;
   bool _showContinueButton = false;
+  int  _epAwarded   = 0;
+  bool _epLoading   = false;
+  int  _attemptCount = 0;  // 0 = lần đầu, 1+ = luyện lại
 
   late AnimationController _shakeController;
 
@@ -52,7 +59,8 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   void _loadNextBatch() {
     final start = _batchIndex * 5;
     if (start >= _allWords.length) {
-      setState(() => _isFinished = true);
+      // Hoàn thành tất cả — cộng EP
+      _awardEpAndFinish();
       return;
     }
 
@@ -144,10 +152,26 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
   Widget build(BuildContext context) {
     if (_isFinished) return _buildResultScreen();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(title: 'Ghép cặp', centerTitle: true),
-      body: Column(
+    return PopScope(
+      canPop: _isFinished,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final exit = await showExitPracticeDialog(
+          context,
+          text: 'Tiến trình Ghép cặp từ vựng của bạn chưa hoàn thành. Bạn có chắc muốn thoát?',
+        );
+        if (exit && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CustomAppBar(
+          title: 'Ghép cặp',
+          centerTitle: true,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        body: Column(
         children: [
           _buildHeader(),
           
@@ -164,6 +188,7 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
           
           if (_showContinueButton) _buildContinueButton(),
         ],
+      ),
       ),
     );
   }
@@ -225,7 +250,7 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle, color: AppColors.success, size: 14),
+          const Icon(Boxicons.bx_check_circle, color: AppColors.success, size: 14),
           const SizedBox(width: 6),
           Text(
             '${word.word} (${word.wordType}): ${word.definitionVi}',
@@ -285,7 +310,7 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
             children: [
               Text('TIẾP TỤC', style: TextStyle(color: AppColors.textOnPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
               SizedBox(width: 8),
-              Icon(Icons.arrow_forward_rounded, color: AppColors.textOnPrimary),
+              Icon(Boxicons.bx_right_arrow_alt, color: AppColors.textOnPrimary),
             ],
           ),
         ),
@@ -293,27 +318,52 @@ class _VocabularyMatchingScreenState extends State<VocabularyMatchingScreen> wit
     );
   }
 
+  Future<void> _awardEpAndFinish() async {
+    setState(() {
+      _isFinished = true;
+      _epLoading  = true;
+    });
+    final effectiveCorrect = _attemptCount == 0 ? _totalMatched : (_totalMatched ~/ 2);
+    final result = await context.read<UserProvider>().recordActivity(
+      activityType  : 'VocabMatching',
+      correctAnswers: effectiveCorrect,
+      totalAnswers  : _allWords.length,
+    );
+    if (mounted) {
+      setState(() {
+        _epAwarded = result?.epAwarded ?? 0;
+        _epLoading = false;
+      });
+    }
+  }
+
   void _resetGame() {
     setState(() {
       _allWords.shuffle();
-      _batchIndex = 0;
-      _mistakes = 0;
+      _batchIndex   = 0;
+      _mistakes     = 0;
       _totalMatched = 0;
-      _isFinished = false;
+      _isFinished   = false;
       _showContinueButton = false;
-      _loadNextBatch();
+      _epAwarded    = 0;
+      _epLoading    = false;
+      _attemptCount++;
     });
+    _loadNextBatch();
   }
 
   Widget _buildResultScreen() {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: PracticeResultView(
-        score: _totalMatched,
-        total: _allWords.length,
-        mistakes: _mistakes,
-        onRetry: _resetGame,
-        onBack: () => Navigator.pop(context),
+        score    : _totalMatched,
+        total    : _allWords.length,
+        mistakes : _mistakes,
+        epAwarded: _epAwarded,
+        epLoading: _epLoading,
+        isRetry  : _attemptCount > 0,
+        onRetry  : _resetGame,
+        onBack   : () => Navigator.pop(context),
       ),
     );
   }
