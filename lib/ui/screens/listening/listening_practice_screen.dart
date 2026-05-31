@@ -33,10 +33,16 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   late AudioPlayer _audioPlayer;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  late PageController _pageController;
 
   int _currentIdx = 0;
-  String? _selectedKey;
-  String? _submittedKey;
+  
+  // Track selected/submitted keys per page index
+  final _selectedKeys = <int, String?>{};
+  final _submittedKeys = <int, String?>{};
+  final _subAnswersMap = <int, Map<int, String?>>{};
+  final _subSubmittedMap = <int, Map<int, String?>>{};
+
   bool _showExplanation = false;
   bool _isPlaying = false;
   double _audioProgress = 0.0;
@@ -45,10 +51,6 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   double _speed = 1.0;
   bool _autoPlay = true;
   bool _showTranscriptSetting = false;
-
-  // Part 3/4: sub-question answers
-  final _subAnswers = <int, String?>{};
-  final _subSubmitted = <int, String?>{};
   
   // Lưu tất cả câu trả lời của người dùng: QuestionId -> SelectedOption
   final _userAnswers = <String, String>{};
@@ -59,6 +61,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
+    _pageController = PageController(initialPage: _currentIdx);
 
     _audioPlayer.onDurationChanged.listen((d) {
       if (mounted) setState(() => _duration = d);
@@ -82,9 +85,14 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
 
     _audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
-        setState(() {
-          _isPlaying = false;
-          _audioProgress = 1.0;
+        _audioPlayer.seek(Duration.zero).then((_) {
+          if (mounted) {
+            setState(() {
+              _isPlaying = false;
+              _audioProgress = 0.0;
+              _position = Duration.zero;
+            });
+          }
         });
       }
     });
@@ -100,6 +108,7 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -168,22 +177,11 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         ? provider.questions.length
         : provider.groups.length;
 
-    _audioPlayer.stop();
-
     if (_currentIdx < total - 1) {
-      setState(() {
-        _currentIdx++;
-        _selectedKey = null;
-        _submittedKey = null;
-        _showExplanation = false;
-        _audioProgress = 0.0;
-        _position = Duration.zero;
-        _duration = Duration.zero;
-        _isPlaying = false;
-        _lastAudioUrl = null; 
-        _subAnswers.clear();
-        _subSubmitted.clear();
-      });
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       _finishPractice();
     }
@@ -192,6 +190,29 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
   void _finishPractice() async {
     final provider = context.read<ListeningProvider>();
     
+    // Auto-populate answers from unsubmitted selections
+    if (partNumber <= 2) {
+      for (int i = 0; i < provider.questions.length; i++) {
+        final q = provider.questions[i];
+        if (!_userAnswers.containsKey(q.id) && _selectedKeys[i] != null) {
+          _userAnswers[q.id] = _selectedKeys[i]!;
+        }
+      }
+    } else {
+      for (int i = 0; i < provider.groups.length; i++) {
+        final g = provider.groups[i];
+        final subAns = _subAnswersMap[i];
+        if (subAns != null) {
+          for (int subIdx = 0; subIdx < g.questions.length; subIdx++) {
+            final q = g.questions[subIdx];
+            if (!_userAnswers.containsKey(q.id) && subAns[subIdx] != null) {
+              _userAnswers[q.id] = subAns[subIdx]!;
+            }
+          }
+        }
+      }
+    }
+
     // Show loading dialog
     showDialog(
       context: context,
@@ -290,13 +311,13 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     return '$minutes:$seconds';
   }
 
-  void _submit() {
+  void _submitForIndex(int index) {
     setState(() {
-      _submittedKey = _selectedKey;
+      _submittedKeys[index] = _selectedKeys[index];
       final provider = context.read<ListeningProvider>();
-      final q = provider.questions[_currentIdx];
-      if (_selectedKey != null) {
-        _userAnswers[q.id] = _selectedKey!;
+      final q = provider.questions[index];
+      if (_selectedKeys[index] != null) {
+        _userAnswers[q.id] = _selectedKeys[index]!;
       }
     });
   }
@@ -381,7 +402,25 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
                 Expanded(
                   child: Stack(
                     children: [
-                      _buildContent(provider, total),
+                      PageView.builder(
+                        controller: _pageController,
+                        itemCount: total,
+                        onPageChanged: (index) {
+                          _audioPlayer.stop();
+                          setState(() {
+                            _currentIdx = index;
+                            _audioProgress = 0.0;
+                            _position = Duration.zero;
+                            _duration = Duration.zero;
+                            _isPlaying = false;
+                            _lastAudioUrl = null;
+                            _showExplanation = false;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          return _buildContentForIndex(provider, index);
+                        },
+                      ),
                       if (_showExplanation) _buildExplanationPanel(provider),
                     ],
                   ),
@@ -462,42 +501,58 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
     );
   }
 
-  Widget _buildContent(ListeningProvider provider, int total) {
+  Widget _buildContentForIndex(ListeningProvider provider, int index) {
+    final total = partNumber <= 2
+        ? provider.questions.length
+        : provider.groups.length;
+
+    final selectedKey = _selectedKeys[index];
+    final submittedKey = _submittedKeys[index];
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
         _QuestionStrip(
-          current: _currentIdx + 1,
+          current: index + 1,
           total: total,
           partNumber: partNumber,
         ),
-        if (partNumber == 1) _buildPart1(provider.questions[_currentIdx]),
-        if (partNumber == 2) _buildPart2(provider.questions[_currentIdx]),
+        if (partNumber == 1) _buildPart1ForIndex(provider.questions[index], index),
+        if (partNumber == 2) _buildPart2ForIndex(provider.questions[index], index),
         if (partNumber == 3)
-          _buildPart3or4(provider.groups[_currentIdx], withImage: true),
+          _buildPart3or4ForIndex(provider.groups[index], index, withImage: true),
         if (partNumber == 4)
-          _buildPart3or4(provider.groups[_currentIdx], withImage: false),
-        if (_submittedKey != null ||
+          _buildPart3or4ForIndex(provider.groups[index], index, withImage: false),
+        
+        if (submittedKey != null ||
             (partNumber >= 3 &&
-                _allSubSubmittedFor(
-                  provider.groups[_currentIdx].questions.length,
+                _allSubSubmittedForIndex(
+                  provider.groups[index].questions.length,
+                  index,
                 )))
-          _NextButton(onTap: _nextQuestion)
-        else if (_selectedKey != null && partNumber <= 2)
-          _SubmitButton(onTap: _submit),
+          _NextButton(
+            onTap: _nextQuestion,
+          )
+        else if (selectedKey != null && partNumber <= 2)
+          _SubmitButton(onTap: () => _submitForIndex(index)),
       ],
     );
   }
 
-  bool _allSubSubmittedFor(int questionCount) {
+  bool _allSubSubmittedForIndex(int questionCount, int index) {
     if (questionCount <= 0) return false;
+    final subSubmitted = _subSubmittedMap[index];
+    if (subSubmitted == null) return false;
     for (var i = 0; i < questionCount; i++) {
-      if (_subSubmitted[i] == null) return false;
+      if (subSubmitted[i] == null) return false;
     }
     return true;
   }
 
-  Widget _buildPart1(ListeningQuestion q) {
+  Widget _buildPart1ForIndex(ListeningQuestion q, int index) {
+    final selectedKey = _selectedKeys[index];
+    final submittedKey = _submittedKeys[index];
+
     return Column(
       children: [
         Container(
@@ -554,23 +609,30 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         ),
         AnswerCard(
           options: PracticeOptionParser.toAnswerOptions(q.options),
-          selectedKey: _selectedKey,
-          correctKey: _submittedKey != null
+          selectedKey: selectedKey,
+          correctKey: submittedKey != null
               ? PracticeOptionParser.normalizeCorrectKey(
                   q.correctAnswer,
                   options: q.options,
                 )
               : null,
-          onSelect: _submittedKey == null
-              ? (k) => setState(() => _selectedKey = k)
-              : null,
+          onSelect: (k) {
+            setState(() {
+              _selectedKeys[index] = k;
+              _submittedKeys[index] = null;
+              _userAnswers.remove(q.id);
+            });
+          },
           title: '',
         ),
       ],
     );
   }
 
-  Widget _buildPart2(ListeningQuestion q) {
+  Widget _buildPart2ForIndex(ListeningQuestion q, int index) {
+    final selectedKey = _selectedKeys[index];
+    final submittedKey = _submittedKeys[index];
+
     return Column(
       children: [
         Container(
@@ -621,23 +683,30 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
         ),
         AnswerCard(
           options: PracticeOptionParser.toAnswerOptions(q.options),
-          selectedKey: _selectedKey,
-          correctKey: _submittedKey != null
+          selectedKey: selectedKey,
+          correctKey: submittedKey != null
               ? PracticeOptionParser.normalizeCorrectKey(
                   q.correctAnswer,
                   options: q.options,
                 )
               : null,
-          onSelect: _submittedKey == null
-              ? (k) => setState(() => _selectedKey = k)
-              : null,
+          onSelect: (k) {
+            setState(() {
+              _selectedKeys[index] = k;
+              _submittedKeys[index] = null;
+              _userAnswers.remove(q.id);
+            });
+          },
           title: '',
         ),
       ],
     );
   }
 
-  Widget _buildPart3or4(ListeningGroup group, {required bool withImage}) {
+  Widget _buildPart3or4ForIndex(ListeningGroup group, int index, {required bool withImage}) {
+    final subAnswers = _subAnswersMap.putIfAbsent(index, () => {});
+    final subSubmitted = _subSubmittedMap.putIfAbsent(index, () => {});
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -677,21 +746,25 @@ class _ListeningPracticeScreenState extends State<ListeningPracticeScreen> {
             number: i + 1,
             questionText: q.questionText ?? '',
             options: PracticeOptionParser.toAnswerOptions(q.options),
-            selectedKey: _subAnswers[i],
-            submittedKey: _subSubmitted[i],
+            selectedKey: subAnswers[i],
+            submittedKey: subSubmitted[i],
             correctKey: PracticeOptionParser.normalizeCorrectKey(
               q.correctAnswer,
               options: q.options,
             ),
-            onSelect: _subSubmitted[i] == null
-                ? (k) => setState(() => _subAnswers[i] = k)
-                : null,
-            onSubmit: _subAnswers[i] != null && _subSubmitted[i] == null
+            onSelect: (k) {
+              setState(() {
+                subAnswers[i] = k;
+                subSubmitted[i] = null;
+                _userAnswers.remove(q.id);
+              });
+            },
+            onSubmit: subAnswers[i] != null && subSubmitted[i] == null
                 ? () {
                     setState(() {
-                      _subSubmitted[i] = _subAnswers[i];
-                      if (_subAnswers[i] != null) {
-                        _userAnswers[q.id] = _subAnswers[i]!;
+                      subSubmitted[i] = subAnswers[i];
+                      if (subAnswers[i] != null) {
+                        _userAnswers[q.id] = subAnswers[i]!;
                       }
                     });
                   }

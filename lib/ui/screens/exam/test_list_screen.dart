@@ -107,10 +107,11 @@ class _TestListScreenState extends State<TestListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Thi thử',
         centerTitle: true,
         showBackButton: true,
+        onBack: onBack,
       ),
       body: SingleChildScrollView(
         child: Padding(

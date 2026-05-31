@@ -180,10 +180,14 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _navIndex,
         children: [
           _buildHomeTabContent(),   // 0: Trang Chủ
-          const TestListScreen(),   // 1: Đề thi
+          TestListScreen(
+            onBack: () => setState(() => _navIndex = 0),
+          ),   // 1: Đề thi
           const LeaderboardScreen(),// 2: BXH
           const ProfileScreen(),    // 3: Hồ sơ
-          const SettingsScreen(),   // 4: Cài đặt
+          SettingsScreen(
+            onBack: () => setState(() => _navIndex = 0),
+          ),   // 4: Cài đặt
         ],
       ),
       bottomNavigationBar: HomeBottomNav(
