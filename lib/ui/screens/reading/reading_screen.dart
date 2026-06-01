@@ -3,11 +3,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/section_title.dart';
 import 'reading_detail_screen.dart';
+import 'reading_part5_screen.dart';
 import '../../../data/models/history_item_model.dart';
 import '../../widgets/history/reading_history_section.dart';
 import '../../widgets/reading/reading_section_card.dart';
-import 'part6_screen.dart';
-import 'part7_screen.dart';
+import 'reading_part6_screen.dart';
+import 'reading_part7_screen.dart';
 
 class ReadingScreen extends StatelessWidget {
   final List<HistoryItem> practiceHistory;
@@ -129,30 +130,37 @@ class ReadingScreen extends StatelessWidget {
       child: Column(
         children: [
           ReadingSectionCard(
+            badgeText: 'P5',
             title: 'Phần 5 - Điền Vào Câu',
             correctCount: '0/0',
             showLock: false,
             onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const ReadingDetailScreen(
-                  title: 'Phần 5 - Điền Vào Câu',
-                  contentEnglish: 'A word or phrase is missing in each of the sentences below. Four answer choices are given below each sentence. Select the best answer to complete the sentence. Then mark the letter (A), (B), (C) or (D) on your answer sheet.',
-                  contentVietnamese: 'Một từ hoặc một cụm từ bị thiếu trong mỗi câu nói dưới đây. Bốn lựa chọn đáp án được đưa ra dưới mỗi câu hỏi. Hãy chọn đáp án phù hợp để hoàn thành câu. Sau đó đánh dấu vào đáp án (A), (B), (C) hoặc (D) trên phiếu trả lời của bạn.',
-                ),
-              ));
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart5Screen()));
             },
+            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 24),
           ),
           const SizedBox(height: 12),
           ReadingSectionCard(
+            badgeText: 'P6',
             title: 'Phần 6 - Điền Vào Đoạn Văn',
             correctCount: '0/0',
             showLock: false,
             onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Part6Screen()));
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart6Screen()));
             },
+            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 24),
           ),
           const SizedBox(height: 12),
-          ReadingSectionCard(title: 'Phần 7 - Đọc Hiểu Đoạn Văn', correctCount: '0/0', showLock: false, onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Part7Screen())); }),
+          ReadingSectionCard(
+            badgeText: 'P7',
+            title: 'Phần 7 - Đọc Hiểu Đoạn Văn',
+            correctCount: '0/0',
+            showLock: false,
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReadingPart7Screen()));
+            },
+            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 24),
+          ),
         ],
       ),
     );

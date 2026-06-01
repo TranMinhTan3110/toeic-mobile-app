@@ -3,17 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'ui/screens/auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
-import 'package:toeicmobileapp/providers/user_provider.dart';
-import 'package:toeicmobileapp/providers/speaking_provider.dart';
-import 'package:toeicmobileapp/providers/listening_provider.dart';
+import 'package:toeicmobileapp/providers/reading_part5_provider.dart';
+import 'package:toeicmobileapp/providers/reading_part6_provider.dart';
+import 'package:toeicmobileapp/providers/reading_part7_provider.dart';
+import 'package:toeicmobileapp/providers/exam_provider.dart';
 import 'package:toeicmobileapp/providers/grammar_provider.dart';
+import 'package:toeicmobileapp/providers/listening_provider.dart';
+import 'package:toeicmobileapp/providers/speaking_provider.dart';
+import 'package:toeicmobileapp/providers/user_provider.dart';
 import 'package:toeicmobileapp/providers/writing_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:toeicmobileapp/providers/exam_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,31 +29,15 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => VocabularyProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-        // Inject UserProvider vào 3 provider để cập nhật EP real-time sau khi làm bài
-        ChangeNotifierProxyProvider<UserProvider, SpeakingProvider>(
-          create: (_) => SpeakingProvider(),
-          update: (_, userProvider, speakingProvider) {
-            speakingProvider!.setUserProvider(userProvider);
-            return speakingProvider;
-          },
-        ),
-        ChangeNotifierProxyProvider<UserProvider, ListeningProvider>(
-          create: (_) => ListeningProvider(),
-          update: (_, userProvider, listeningProvider) {
-            listeningProvider!.setUserProvider(userProvider);
-            return listeningProvider;
-          },
-        ),
-        ChangeNotifierProvider(create: (_) => GrammarProvider()),
-        ChangeNotifierProxyProvider<UserProvider, WritingProvider>(
-          create: (_) => WritingProvider(),
-          update: (_, userProvider, writingProvider) {
-            writingProvider!.setUserProvider(userProvider);
-            return writingProvider;
-          },
-        ),
+        ChangeNotifierProvider(create: (_) => ReadingPart5Provider()),
+        ChangeNotifierProvider(create: (_) => ReadingPart6Provider()),
+        ChangeNotifierProvider(create: (_) => ReadingPart7Provider()),
         ChangeNotifierProvider(create: (_) => ExamProvider()),
+        ChangeNotifierProvider(create: (_) => GrammarProvider()),
+        ChangeNotifierProvider(create: (_) => ListeningProvider()),
+        ChangeNotifierProvider(create: (_) => SpeakingProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => WritingProvider()),
       ],
       child: const MyApp(),
     ),
