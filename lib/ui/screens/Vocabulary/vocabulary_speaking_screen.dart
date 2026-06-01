@@ -46,6 +46,7 @@ class _VocabularySpeakingScreenState extends State<VocabularySpeakingScreen> wit
   String _pronunciationFeedback = '';
   List<Map<String, dynamic>> _phonemes = [];
   int _epAwarded = 0;
+  int _totalEpEarned = 0; // Tổng EP tích luỹ trong phiên học
   bool _epLoading = false;
   bool _epShownForCurrentWord = false;
 
@@ -328,11 +329,76 @@ class _VocabularySpeakingScreenState extends State<VocabularySpeakingScreen> wit
 
       if (mounted) {
         setState(() {
-          _epAwarded = ep?.epAwarded ?? 0;
+          final earned = ep?.epAwarded ?? 0;
+          _epAwarded = earned;
+          _totalEpEarned += earned; // Cộng dồn EP nhận được
           _epLoading = false;
         });
       }
     }
+  }
+
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text("🎉 Chúc Mừng!", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Bạn đã hoàn thành luyện nói tất cả từ vựng!", textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_library_rounded, color: AppColors.primary, size: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Tổng EP: +$_totalEpEarned EP",
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: SizedBox(
+              width: 140,
+              height: 46,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  "Tuyệt vời",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleNextWord() {
@@ -347,13 +413,7 @@ class _VocabularySpeakingScreenState extends State<VocabularySpeakingScreen> wit
         _recognizedText = '';
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎉 Chúc mừng! Bạn đã hoàn thành luyện nói tất cả từ vựng!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      Navigator.pop(context);
+      _showCompletionDialog();
     }
   }
 
@@ -968,7 +1028,7 @@ class _VocabularySpeakingScreenState extends State<VocabularySpeakingScreen> wit
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('⚡', style: TextStyle(fontSize: 22)),
+            const Icon(Icons.local_library_rounded, color: Colors.white, size: 26),
             const SizedBox(width: 8),
             Text(
               '+$_epAwarded EP',

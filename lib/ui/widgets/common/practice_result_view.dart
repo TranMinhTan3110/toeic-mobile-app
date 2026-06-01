@@ -206,7 +206,7 @@ class _PracticeResultViewState extends State<PracticeResultView>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('⚡', style: TextStyle(fontSize: 22)),
+                const Icon(Icons.local_library_rounded, color: Colors.white, size: 26),
                 const SizedBox(width: 8),
                 Text(
                   '+${widget.epAwarded} EP',

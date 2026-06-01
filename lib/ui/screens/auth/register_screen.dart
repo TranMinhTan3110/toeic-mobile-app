@@ -356,25 +356,11 @@ class _RegisterViewState extends State<RegisterView>
     setState(() => _isLoading = true);
 
     try {
-      final userCred = await _authService.registerWithEmailPassword(
+      await _authService.registerWithEmailPassword(
         email,
         password,
         displayName: name,
       );
-
-      // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng ký thành công',
-          text: 'Chúc mừng bạn đã gia nhập TOEIC Master! ',
-          onConfirm: () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          },
-        );
-      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'weak-password') {
@@ -399,21 +385,7 @@ class _RegisterViewState extends State<RegisterView>
 
   void _handleGoogleLogin() async {
     try {
-      final user = await _authService.signInWithGoogle();
-      if (user == null) return;
-
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng nhập thành công',
-          text: 'Chào mừng bạn đến với TOEIC Master! ',
-          onConfirm: () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          },
-        );
-      }
+      await _authService.signInWithGoogle();
     } catch (e) {
       if (mounted) {
         showPremiumErrorDialog(

@@ -325,13 +325,6 @@ class _LoginViewState extends State<LoginView>
 
     try {
       await _authService.signInWithEmailPassword(email, password);
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng nhập thành công',
-          text: 'Chào mừng bạn quay lại với TOEIC Master! 🎉',
-        );
-      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'user-not-found' ||
@@ -360,13 +353,6 @@ class _LoginViewState extends State<LoginView>
       if (user == null) {
         // User hủy bỏ đăng nhập
         return;
-      }
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng nhập thành công',
-          text: 'Chào mừng bạn đến với TOEIC Master! 🎉',
-        );
       }
     } catch (e) {
       if (mounted) {

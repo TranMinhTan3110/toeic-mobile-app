@@ -218,6 +218,23 @@ class SpeakingHistoryDetailScreen extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.local_library_rounded,
+                          color: Colors.orange, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '+${item.correctCount > 0 ? (item.correctCount * 5) + 5 : 0} EP',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(width: 24),
