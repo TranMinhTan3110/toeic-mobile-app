@@ -22,7 +22,6 @@ class ListeningHistoryDetailScreen extends StatefulWidget {
 class _ListeningHistoryDetailScreenState
     extends State<ListeningHistoryDetailScreen> {
   bool _isLoadingQuestions = false;
-  bool _showAnswers = false;
 
   @override
   void initState() {
@@ -136,47 +135,12 @@ class _ListeningHistoryDetailScreenState
 
               // --- CARD 2: Kết quả điểm số ---
               _buildScoreDetailsCard(item),
-
-              if (_showAnswers)
-                _buildAllQuestionsSection(sessionQuestions, questionGroups),
             ],
           ),
         ),
 
         // --- BUTTONS: CHI TIẾT & LÀM LẠI ---
         _buildBottomControls(partInfo, sessionQuestions, questionGroups),
-      ],
-    );
-  }
-
-  Widget _buildAllQuestionsSection(
-    List<ListeningQuestion> questions,
-    Map<String, ListeningGroup> questionGroups,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 24),
-        const Row(
-          children: [
-            Icon(Icons.assignment_turned_in_rounded,
-                color: AppColors.green, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Chi tiết đáp án & giải thích:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...questions.map((q) {
-          final group = questionGroups[q.id];
-          return _buildWrongQuestionCard(q, group);
-        }),
       ],
     );
   }
@@ -644,18 +608,21 @@ class _ListeningHistoryDetailScreenState
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
-                setState(() {
-                  _showAnswers = !_showAnswers;
-                });
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ListeningHistoryOverviewScreen(
+                      historyItem: widget.historyItem,
+                      sessionQuestions: sessionQuestions,
+                      questionGroups: questionGroups,
+                    ),
+                  ),
+                );
               },
-              icon: Icon(
-                _showAnswers ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              label: Text(
-                _showAnswers ? 'Ẩn đáp án' : 'Xem đáp án',
-                style: const TextStyle(
+              icon: const Icon(Icons.assignment_rounded, color: Colors.white, size: 20),
+              label: const Text(
+                'Chi tiết',
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
