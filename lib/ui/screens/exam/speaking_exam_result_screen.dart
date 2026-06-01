@@ -159,6 +159,32 @@ class SpeakingExamResultScreen extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
+          if (history.epAwarded > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.orangeAccent.withOpacity(0.5), width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_library_rounded, color: Colors.orangeAccent, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    '+${history.epAwarded} EP (Lần đầu hoàn thành)',
+                    style: const TextStyle(
+                      color: Colors.orangeAccent,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
 
           // Vòng tròn điểm TOEIC Speaking 0-200

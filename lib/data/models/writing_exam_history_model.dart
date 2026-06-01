@@ -9,6 +9,7 @@ class WritingExamHistoryModel {
   final int timeSpent;
   final DateTime date;
   final List<WritingExamTaskResultModel> taskResults;
+  final int epAwarded;
 
   WritingExamHistoryModel({
     required this.id,
@@ -21,6 +22,7 @@ class WritingExamHistoryModel {
     required this.timeSpent,
     required this.date,
     required this.taskResults,
+    this.epAwarded = 0,
   });
 
   factory WritingExamHistoryModel.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class WritingExamHistoryModel {
           ? DateTime.parse(json['date'].toString())
           : DateTime.now(),
       taskResults: tasksList,
+      epAwarded: json['epAwarded'] ?? json['ep_awarded'] ?? 0,
     );
   }
 
@@ -56,6 +59,7 @@ class WritingExamHistoryModel {
         'timeSpent': timeSpent,
         'date': date.toIso8601String(),
         'taskResults': taskResults.map((e) => e.toJson()).toList(),
+        'epAwarded': epAwarded,
       };
 }
 

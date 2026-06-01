@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 
 import '../../../data/models/speaking_question.dart';
@@ -36,6 +39,10 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
   final AudioRecorder _audioRecorder = AudioRecorder();
   final PageController _pageController = PageController();
   String? _lastRecordingPath;
+
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _sttEnabled = false;
+  String _recognizedText = '';
 
   final List<Map<String, dynamic>> _answersList = [];
 
@@ -85,6 +92,8 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
     );
     _progressAnim = Tween<double>(begin: 0, end: 0).animate(_progressCtrl);
 
+    _initSTT();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SpeakingProvider>().fetchExamQuestions(widget.examId).then((_) {
         if (mounted) {
@@ -101,6 +110,17 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
         }
       });
     });
+  }
+
+  Future<void> _initSTT() async {
+    try {
+      _sttEnabled = await _speech.initialize(
+        onStatus: (status) => debugPrint('STT Status: $status'),
+        onError: (error) => debugPrint('STT Error: $error'),
+      );
+    } catch (e) {
+      debugPrint('STT Init failed: $e');
+    }
   }
 
   void _startOverallTimer() {
@@ -165,9 +185,12 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
   Future<void> _startRecordingLogic() async {
     try {
       if (await _audioRecorder.hasPermission()) {
-        final directory = await getTemporaryDirectory();
-        final path =
-            '${directory.path}/speaking_exam_${widget.examId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        String path = '';
+        if (!kIsWeb) {
+          final directory = await getTemporaryDirectory();
+          path =
+              '${directory.path}/speaking_exam_${widget.examId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        }
         const config = RecordConfig();
         await _audioRecorder.start(config, path: path);
         _lastRecordingPath = path;
@@ -186,12 +209,27 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
     if (!mounted) return;
     setState(() {
       _phase = _Phase.recording;
+      _recognizedText = '';
       if (_currentTask!.questions.isNotEmpty) {
         _secondsLeft = _currentTask!.answerTimes[_currentSubQuestionIndex];
       } else {
         _secondsLeft = _currentTask!.recordSeconds;
       }
     });
+
+    if (_sttEnabled) {
+      _speech.listen(
+        onResult: (result) {
+          if (mounted) {
+            setState(() {
+              _recognizedText = result.recognizedWords;
+            });
+          }
+        },
+        localeId: 'en_US',
+      );
+    }
+
     _startCountdown(_onRecordingTimeUp);
   }
 
@@ -199,6 +237,7 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
     final path = await _audioRecorder.stop();
     if (path != null) _lastRecordingPath = path;
     _pulseCtrl.stop();
+    await _speech.stop();
     _evaluateAndNext();
   }
 
@@ -210,9 +249,11 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
             ? _currentSubQuestionIndex
             : null,
         'audioPath': _lastRecordingPath, // Có thể null nếu bỏ qua
+        'transcript': _recognizedText,
       });
     }
     _lastRecordingPath = null; // Reset cho câu tiếp theo
+    _recognizedText = '';
     _moveToNext();
   }
 
@@ -278,7 +319,16 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
         String? base64Audio;
         if (path != null && path.isNotEmpty) {
           try {
-            final fileBytes = await File(path).readAsBytes();
+            List<int> fileBytes;
+            if (kIsWeb) {
+              final response = await Dio().get<List<int>>(
+                path,
+                options: Options(responseType: ResponseType.bytes),
+              );
+              fileBytes = response.data!;
+            } else {
+              fileBytes = await File(path).readAsBytes();
+            }
             base64Audio = base64Encode(fileBytes);
           } catch (e) {
             debugPrint('Lỗi đọc file ghi âm: $e');
@@ -288,9 +338,9 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
         tasksData.add({
           'questionId': answer['questionId'],
           'subQuestionIndex': answer['subQuestionIndex'],
-          'transcript': '',
+          'transcript': answer['transcript'] ?? '',
           'audioBase64': base64Audio,
-          'audioMimeType': base64Audio != null ? 'audio/m4a' : null,
+          'audioMimeType': base64Audio != null ? (kIsWeb ? 'audio/webm' : 'audio/m4a') : null,
         });
       }
 

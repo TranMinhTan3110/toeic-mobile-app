@@ -66,11 +66,24 @@ class SpeakingRepository {
         'transcript': transcript,
       };
 
-      if (!kIsWeb && audioPath.isNotEmpty) {
-        dataMap['audio'] = await MultipartFile.fromFile(
-          audioPath,
-          filename: 'recording.m4a',
-        );
+      if (audioPath.isNotEmpty) {
+        if (kIsWeb) {
+          final response = await Dio().get<List<int>>(
+            audioPath,
+            options: Options(responseType: ResponseType.bytes),
+          );
+          if (response.data != null) {
+            dataMap['audio'] = MultipartFile.fromBytes(
+              response.data!,
+              filename: 'recording.webm',
+            );
+          }
+        } else {
+          dataMap['audio'] = await MultipartFile.fromFile(
+            audioPath,
+            filename: 'recording.m4a',
+          );
+        }
       }
 
       final formData = FormData.fromMap(dataMap);

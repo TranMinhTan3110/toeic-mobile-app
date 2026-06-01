@@ -8,6 +8,7 @@ class SpeakingExamHistoryModel {
   final int totalTasks;
   final DateTime date;
   final List<SpeakingExamTaskResultModel> taskResults;
+  final int epAwarded;
 
   SpeakingExamHistoryModel({
     required this.id,
@@ -19,6 +20,7 @@ class SpeakingExamHistoryModel {
     required this.totalTasks,
     required this.date,
     required this.taskResults,
+    this.epAwarded = 0,
   });
 
   factory SpeakingExamHistoryModel.fromJson(Map<String, dynamic> json) {
@@ -39,6 +41,7 @@ class SpeakingExamHistoryModel {
           ? DateTime.parse(json['date'].toString())
           : DateTime.now(),
       taskResults: tasksList,
+      epAwarded: json['epAwarded'] ?? json['ep_awarded'] ?? 0,
     );
   }
 
@@ -52,6 +55,7 @@ class SpeakingExamHistoryModel {
         'totalTasks': totalTasks,
         'date': date.toIso8601String(),
         'taskResults': taskResults.map((e) => e.toJson()).toList(),
+        'epAwarded': epAwarded,
       };
 }
 
