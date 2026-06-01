@@ -11,7 +11,8 @@ import 'see_more_screen.dart';
 import '../../widgets/common/custom_app_bar.dart';
 
 class TestListScreen extends StatefulWidget {
-  const TestListScreen({super.key});
+  final VoidCallback? onBack;
+  const TestListScreen({super.key, this.onBack});
 
   @override
   State<TestListScreen> createState() => _TestListScreenState();
@@ -111,7 +112,7 @@ class _TestListScreenState extends State<TestListScreen> {
         title: 'Thi thử',
         centerTitle: true,
         showBackButton: true,
-        onBack: onBack,
+        onBack: widget.onBack,
       ),
       body: SingleChildScrollView(
         child: Padding(
