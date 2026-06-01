@@ -124,6 +124,8 @@ class _TestListScreenState extends State<TestListScreen> {
               _buildSectionHeader(
                 context,
                 'TOEIC Listening & Reading Fulltest',
+                listReading,
+                examProvider,
               ),
               const SizedBox(height: 16),
               _buildTestGrid(context, listReading, examProvider),
@@ -134,6 +136,8 @@ class _TestListScreenState extends State<TestListScreen> {
               _buildSectionHeader(
                 context,
                 'TOEIC Speaking Exam',
+                listSpeaking,
+                examProvider,
               ),
               const SizedBox(height: 16),
               _buildTestGrid(context, listSpeaking, examProvider),
@@ -141,7 +145,12 @@ class _TestListScreenState extends State<TestListScreen> {
               const SizedBox(height: 32),
 
               // CỤM 3: Writing
-              _buildSectionHeader(context, 'TOEIC Writing Exam'),
+              _buildSectionHeader(
+                context,
+                'TOEIC Writing Exam',
+                listWriting,
+                examProvider,
+              ),
               const SizedBox(height: 16),
               _buildTestGrid(context, listWriting, examProvider),
             ],
@@ -151,7 +160,12 @@ class _TestListScreenState extends State<TestListScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    List<TestInfo> allTests,
+    ExamProvider examProvider,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -170,7 +184,11 @@ class _TestListScreenState extends State<TestListScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SeeMoreScreen(title: title),
+                builder: (context) => SeeMoreScreen(
+                  title: title,
+                  tests: allTests,
+                  examProvider: examProvider,
+                ),
               ),
             );
           },
@@ -187,10 +205,12 @@ class _TestListScreenState extends State<TestListScreen> {
   }
 
   Widget _buildTestGrid(BuildContext context, List<TestInfo> tests, ExamProvider examProvider) {
+    // Chỉ hiện tối đa 4 item, phần còn lại xem qua "Xem thêm"
+    final visibleTests = tests.take(4).toList();
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: tests.length,
+      itemCount: visibleTests.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         crossAxisSpacing: 10,
@@ -198,7 +218,7 @@ class _TestListScreenState extends State<TestListScreen> {
         childAspectRatio: 0.58,
       ),
       itemBuilder: (context, index) {
-        final test = tests[index];
+        final test = visibleTests[index];
         double? score;
 
         if (test.skill == 'speaking') {
