@@ -31,6 +31,7 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
   late int _selectedCount;
   List<int> _questionOptions = [];
 
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +68,7 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
       options.add(1);
     } else {
       // Bước nhảy 2: 2, 4, 6... đến tổng số câu luyện tập
-      for (int i = 2; i <= total; i += 2) {
+      for (int i = 1; i <= total; i += 1) {
         options.add(i);
       }
       if (!options.contains(total)) {
@@ -258,6 +259,7 @@ class _SpeakingPrepScreenState extends State<SpeakingPrepScreen> {
                       part: widget.part,
                       questionCount: _selectedCount,
                       examMode: false,
+                      randomize: true,
                     ),
                   ),
                 );

@@ -24,12 +24,14 @@ class SpeakingDoingScreen extends StatefulWidget {
   final SpeakingPartInfo part;
   final int questionCount;
   final bool examMode;
+  final bool randomize;
 
   const SpeakingDoingScreen({
     super.key,
     required this.part,
     this.questionCount = 5,
     this.examMode = false,
+    this.randomize = false,
   });
 
   @override
@@ -107,10 +109,13 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           .then((_) {
         if (mounted) {
           setState(() {
-            final all = provider.getQuestionsForPart(
+            var all = provider.getQuestionsForPart(
                   widget.part.partNumber,
                   practiceMode: practiceMode,
-                );
+                ).toList();
+            if (widget.randomize) {
+              all.shuffle();
+            }
             _tasks = all.take(widget.questionCount).toList();
             _isInitialized = true;
 
