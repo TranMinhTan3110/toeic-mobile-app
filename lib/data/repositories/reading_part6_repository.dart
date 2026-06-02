@@ -10,9 +10,7 @@ class ReadingPart6Repository {
   Future<Options> _getAuthOptions() async {
     final token = await _authService.getIdToken();
     return Options(
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
   }
 
@@ -21,20 +19,36 @@ class ReadingPart6Repository {
       Response response;
       final options = await _getAuthOptions();
       try {
-        response = await _dio.get('${AppConstants.baseUrl}/reading/part6/questions', options: options);
+        response = await _dio.get(
+          '${AppConstants.baseUrl}/reading/part6/questions',
+          options: options,
+        );
       } catch (e) {
         try {
-          response = await _dio.get('${AppConstants.baseUrl}/reading/part/6', options: options);
+          response = await _dio.get(
+            '${AppConstants.baseUrl}/reading/part/6',
+            options: options,
+          );
         } catch (e2) {
           try {
-            response = await _dio.get('${AppConstants.baseUrl}/reading/questions/6', options: options);
+            response = await _dio.get(
+              '${AppConstants.baseUrl}/reading/questions/6',
+              options: options,
+            );
           } catch (e3) {
-            response = await _dio.get('${AppConstants.baseUrl}/reading/6/questions', options: options);
+            response = await _dio.get(
+              '${AppConstants.baseUrl}/reading/6/questions',
+              options: options,
+            );
           }
         }
       }
 
       final res = response.data;
+      // debug: print full response
+      // ignore: avoid_print
+      print('ReadingPart6Repository.getQuestions response.data: $res');
+
       // ignore: avoid_print
       print('ReadingPart6Repository.getQuestions: ${res.runtimeType}');
 
@@ -49,24 +63,121 @@ class ReadingPart6Repository {
         } else if (res['items'] is List) {
           list = res['items'];
         } else {
-          final firstList = res.values.firstWhere((v) => v is List, orElse: () => null);
+          final firstList = res.values.firstWhere(
+            (v) => v is List,
+            orElse: () => null,
+          );
           if (firstList is List) list = firstList;
         }
       }
 
-      return list.map((e) => ReadingPart6Question.fromJson(e as Map<String, dynamic>)).toList();
+      // API may return grouped passages where each item has a 'passageText' and 'questions' list.
+      final expanded = <Map<String, dynamic>>[];
+      for (var e in list) {
+        if (e is Map && (e['questions'] is List)) {
+          final passageText =
+              (e['passage'] ??
+                      e['passageText'] ??
+                      e['text'] ??
+                      e['script'] ??
+                      '')
+                  .toString();
+          for (var q in (e['questions'] as List)) {
+            if (q is Map) {
+              final merged = Map<String, dynamic>.from(q);
+              // ensure passage key exists for model mapping
+              if (!merged.containsKey('passage') && passageText.isNotEmpty)
+                merged['passage'] = passageText;
+              // propagate group-level passage translation into each question if present
+              final pt =
+                  (e['passageTranslation'] ??
+                  e['passageTranslationVi'] ??
+                  e['passage_translation'] ??
+                  e['passage_translation_vi'] ??
+                  e['passageTranslation'] ??
+                  e['passageTranslationVi']);
+              if (pt != null && pt.toString().isNotEmpty) {
+                if (!merged.containsKey('passageTranslation'))
+                  merged['passageTranslation'] = pt;
+                if (!merged.containsKey('passage_translation'))
+                  merged['passage_translation'] = pt;
+                if (!merged.containsKey('passage_translation_vi'))
+                  merged['passage_translation_vi'] = pt;
+              }
+              expanded.add(merged);
+            }
+          }
+        } else if (e is Map && (e['items'] is List || e['questions'] is List)) {
+          // fallback: similar structure
+          final inner = (e['questions'] ?? e['items']) as List;
+          final passageText = (e['passage'] ?? e['passageText'] ?? '')
+              .toString();
+          for (var q in inner) {
+            if (q is Map) {
+              final merged = Map<String, dynamic>.from(q);
+              if (!merged.containsKey('passage') && passageText.isNotEmpty)
+                merged['passage'] = passageText;
+              final pt =
+                  (e['passageTranslation'] ??
+                  e['passageTranslationVi'] ??
+                  e['passage_translation'] ??
+                  e['passage_translation_vi'] ??
+                  e['passageTranslation'] ??
+                  e['passageTranslationVi']);
+              if (pt != null && pt.toString().isNotEmpty) {
+                if (!merged.containsKey('passageTranslation'))
+                  merged['passageTranslation'] = pt;
+                if (!merged.containsKey('passage_translation'))
+                  merged['passage_translation'] = pt;
+                if (!merged.containsKey('passage_translation_vi'))
+                  merged['passage_translation_vi'] = pt;
+              }
+              expanded.add(merged);
+            }
+          }
+        } else if (e is Map &&
+            (e['questionText'] != null || e['optionA'] != null)) {
+          expanded.add(Map<String, dynamic>.from(e));
+        } else if (e is Map) {
+          expanded.add(Map<String, dynamic>.from(e));
+        }
+      }
+
+      // debug: print expanded count and some sample questionText values
+      // ignore: avoid_print
+      print(
+        'ReadingPart6Repository.getQuestions: expanded items=${expanded.length}',
+      );
+      for (var i = 0; i < expanded.length && i < 10; i++) {
+        final m = expanded[i];
+        // print the raw questionText (or fallbacks)
+        // ignore: avoid_print
+        print(
+          'ReadingPart6Repository.expanded[$i].questionText: ${m['questionText'] ?? m['question'] ?? m['prompt'] ?? m['stem']}',
+        );
+        // ignore: avoid_print
+        print('ReadingPart6Repository.expanded[$i]: $m');
+      }
+
+      return expanded
+          .map((e) => ReadingPart6Question.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       // ignore: avoid_print
       print('ReadingPart6Repository.getQuestions failed: $e');
       if (e is DioError) {
         // ignore: avoid_print
-        print('DioError response: ${e.response?.statusCode} ${e.response?.data}');
+        print(
+          'DioError response: ${e.response?.statusCode} ${e.response?.data}',
+        );
       }
       return <ReadingPart6Question>[];
     }
   }
 
-  Future<ReadingPart6SubmitResult> submitAnswers(Map<String, int?> answers) async {
+  Future<ReadingPart6SubmitResult> submitAnswers(
+    Map<String, int?> answers,
+  ) async {
     try {
       String idxToLetter(int? idx) {
         if (idx == null) return '';
@@ -77,26 +188,43 @@ class ReadingPart6Repository {
 
       final payload = {
         'answers': answers.entries
-            .map((e) => {
-                  'questionId': e.key,
-                  'selectedIndex': e.value,
-                  'answer': idxToLetter(e.value),
-                })
-            .toList()
+            .map(
+              (e) => {
+                'questionId': e.key,
+                'selectedIndex': e.value,
+                'answer': idxToLetter(e.value),
+              },
+            )
+            .toList(),
       };
 
       Response response;
       try {
-        response = await _dio.post('${AppConstants.baseUrl}/reading/part6/submit', data: payload);
+        response = await _dio.post(
+          '${AppConstants.baseUrl}/reading/part6/submit',
+          data: payload,
+        );
       } on DioError catch (d) {
         if (d.response?.statusCode == 400) {
-          final mapPayload = {'answers': Map.fromEntries(answers.entries.map((e) => MapEntry(e.key, idxToLetter(e.value))))};
+          final mapPayload = {
+            'answers': Map.fromEntries(
+              answers.entries.map((e) => MapEntry(e.key, idxToLetter(e.value))),
+            ),
+          };
           try {
-            response = await _dio.post('${AppConstants.baseUrl}/reading/part6/submit', data: mapPayload);
+            response = await _dio.post(
+              '${AppConstants.baseUrl}/reading/part6/submit',
+              data: mapPayload,
+            );
           } on DioError catch (d2) {
             if (d2.response?.statusCode == 400) {
-              final altList = answers.entries.map((e) => {'id': e.key, 'answer': idxToLetter(e.value)}).toList();
-              response = await _dio.post('${AppConstants.baseUrl}/reading/part6/submit', data: {'answers': altList});
+              final altList = answers.entries
+                  .map((e) => {'id': e.key, 'answer': idxToLetter(e.value)})
+                  .toList();
+              response = await _dio.post(
+                '${AppConstants.baseUrl}/reading/part6/submit',
+                data: {'answers': altList},
+              );
             } else {
               rethrow;
             }
@@ -109,20 +237,28 @@ class ReadingPart6Repository {
       final res = response.data;
       if (res is Map<String, dynamic>) {
         if (res['data'] is Map) {
-          return ReadingPart6SubmitResult.fromJson(Map<String, dynamic>.from(res['data']));
+          return ReadingPart6SubmitResult.fromJson(
+            Map<String, dynamic>.from(res['data']),
+          );
         }
-        return ReadingPart6SubmitResult.fromJson(Map<String, dynamic>.from(res));
+        return ReadingPart6SubmitResult.fromJson(
+          Map<String, dynamic>.from(res),
+        );
       }
       throw Exception('Unexpected submit response format');
     } on DioError catch (d) {
       final resp = d.response?.data;
       String serverMsg = '';
       try {
-        serverMsg = resp is Map && resp['message'] != null ? resp['message'].toString() : resp?.toString() ?? '';
+        serverMsg = resp is Map && resp['message'] != null
+            ? resp['message'].toString()
+            : resp?.toString() ?? '';
       } catch (_) {
         serverMsg = resp?.toString() ?? '';
       }
-      throw Exception('Lỗi khi gửi đáp án Part6: ${d.message} ${serverMsg.isNotEmpty ? '- server: $serverMsg' : ''}');
+      throw Exception(
+        'Lỗi khi gửi đáp án Part6: ${d.message} ${serverMsg.isNotEmpty ? '- server: $serverMsg' : ''}',
+      );
     } catch (e) {
       throw Exception('Lỗi khi gửi đáp án Part6: $e');
     }
@@ -132,19 +268,28 @@ class ReadingPart6Repository {
     try {
       final options = await _getAuthOptions();
       try {
-        final response = await _dio.get('${AppConstants.baseUrl}/reading/part6/count', options: options);
+        final response = await _dio.get(
+          '${AppConstants.baseUrl}/reading/part6/count',
+          options: options,
+        );
         final data = response.data as Map<String, dynamic>;
         return (data['count'] as num?)?.toInt() ?? 0;
       } catch (_) {}
 
       try {
-        final response = await _dio.get('${AppConstants.baseUrl}/reading/count/6', options: options);
+        final response = await _dio.get(
+          '${AppConstants.baseUrl}/reading/count/6',
+          options: options,
+        );
         final data = response.data as Map<String, dynamic>;
         return (data['count'] as num?)?.toInt() ?? 0;
       } catch (_) {}
 
       try {
-        final response = await _dio.get('${AppConstants.baseUrl}/reading/count?part=6', options: options);
+        final response = await _dio.get(
+          '${AppConstants.baseUrl}/reading/count?part=6',
+          options: options,
+        );
         final data = response.data as Map<String, dynamic>;
         return (data['count'] as num?)?.toInt() ?? 0;
       } catch (_) {}
@@ -159,21 +304,31 @@ class ReadingPart6Repository {
   Future<List<ReadingPart6HistoryModel>> getHistory() async {
     try {
       final options = await _getAuthOptions();
-      final response = await _dio.get('${AppConstants.baseUrl}/reading/part6/history', options: options);
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/reading/part6/history',
+        options: options,
+      );
       final raw = response.data;
       List<dynamic> dataList = [];
       if (raw is List) {
         dataList = raw;
       } else if (raw is Map) {
-        if (raw['data'] is List) dataList = raw['data'];
-        else if (raw['items'] is List) dataList = raw['items'];
+        if (raw['data'] is List)
+          dataList = raw['data'];
+        else if (raw['items'] is List)
+          dataList = raw['items'];
         else {
-          final found = raw.values.firstWhere((v) => v is List, orElse: () => null);
+          final found = raw.values.firstWhere(
+            (v) => v is List,
+            orElse: () => null,
+          );
           if (found is List) dataList = found;
         }
       }
 
-      return dataList.map((json) => ReadingPart6HistoryModel.fromJson(json)).toList();
+      return dataList
+          .map((json) => ReadingPart6HistoryModel.fromJson(json))
+          .toList();
     } catch (e) {
       throw Exception('Lỗi khi tải lịch sử luyện tập Reading Part 6: $e');
     }
@@ -188,17 +343,20 @@ class ReadingPart6Repository {
   }) async {
     try {
       final options = await _getAuthOptions();
-      final response = await _dio.post('${AppConstants.baseUrl}/reading/part6/history', data: {
-        'correctCount': correctCount,
-        'totalCount': totalCount,
-        'percent': percent,
-        'incorrectQuestionIds': incorrectQuestionIds,
-        'selectedAnswers': selectedAnswers,
-      }, options: options);
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/reading/part6/history',
+        data: {
+          'correctCount': correctCount,
+          'totalCount': totalCount,
+          'percent': percent,
+          'incorrectQuestionIds': incorrectQuestionIds,
+          'selectedAnswers': selectedAnswers,
+        },
+        options: options,
+      );
       return response.data['id'] ?? '';
     } catch (e) {
       throw Exception('Lỗi khi lưu lịch sử luyện tập Reading Part 6: $e');
     }
   }
 }
-

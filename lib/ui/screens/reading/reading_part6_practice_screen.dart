@@ -9,9 +9,9 @@ import '../../../core/utils/practice_option_parser.dart';
 import 'reading_part6_history_detail_screen.dart';
 
 class ReadingPart6PracticeScreen extends StatefulWidget {
-  final int questionCount;
+  final int passageCount;
 
-  const ReadingPart6PracticeScreen({super.key, required this.questionCount});
+  const ReadingPart6PracticeScreen({super.key, required this.passageCount});
 
   @override
   State<ReadingPart6PracticeScreen> createState() => _ReadingPart6PracticeScreenState();
@@ -28,7 +28,7 @@ class _ReadingPart6PracticeScreenState extends State<ReadingPart6PracticeScreen>
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIdx);
-    WidgetsBinding.instance.addPostFrameCallback((_) { context.read<ReadingPart6Provider>().fetchQuestionsByCount(widget.questionCount); });
+    WidgetsBinding.instance.addPostFrameCallback((_) { context.read<ReadingPart6Provider>().fetchQuestionsByPassageCount(widget.passageCount); });
   }
 
   @override
@@ -97,7 +97,7 @@ class _ReadingPart6PracticeScreenState extends State<ReadingPart6PracticeScreen>
           return const Center(child: CircularProgressIndicator(color: AppColors.primary));
         }
         if (provider.errorMessage != null) {
-          return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('Lỗi: ${provider.errorMessage}', style: const TextStyle(color: Colors.red)), const SizedBox(height: 16), ElevatedButton(onPressed: () => provider.fetchQuestionsByCount(widget.questionCount), child: const Text('Thử lại'))]));
+          return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('Lỗi: ${provider.errorMessage}', style: const TextStyle(color: Colors.red)), const SizedBox(height: 16), ElevatedButton(onPressed: () => provider.fetchQuestionsByPassageCount(widget.passageCount), child: const Text('Thử lại'))]));
         }
 
         final questions = provider.questions;
@@ -124,19 +124,33 @@ class _ReadingPart6PracticeScreenState extends State<ReadingPart6PracticeScreen>
             }
           }
 
+          // debug: print current question details
+          // ignore: avoid_print
+          print('ReadingPart6PracticeScreen: totalQuestions=${questions.length} currentIndex=$index');
+          // ignore: avoid_print
+          print('currentPassage.passageText: ${question.passage}');
+          // ignore: avoid_print
+          print('currentQuestion.questionText: ${question.questionText}');
+          // ignore: avoid_print
+          print('currentQuestion.optionA: ${question.options.isNotEmpty ? question.options[0] : ''}');
+
           return SingleChildScrollView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 100), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Câu ${index + 1}/${questions.length}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary))]),
             const SizedBox(height: 12),
             ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: (index + 1) / questions.length, backgroundColor: AppColors.primaryLighter, valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary), minHeight: 6)),
             const SizedBox(height: 20),
-            // Passage
-            Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Đoạn văn', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              const SizedBox(height: 8),
-              Text(question.passage, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.6)),
-              const SizedBox(height: 12),
-              Text(question.prompt, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.6)),
-            ])),
+            // Passage (separate card)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2))]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Đoạn văn', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(height: 8),
+                Text(question.passage, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.6)),
+              ]),
+            ),
+            const SizedBox(height: 12),
             const SizedBox(height: 16),
             // Options
             AnswerCardWrapper(options: question.options, selectedKey: selectedKey, correctKey: isSubmitted ? _correctKeyToShow : null, onSelect: (k) => _selectOption(index, k)),

@@ -8,6 +8,7 @@ class ReadingPart6Question {
   final String? explanation;
   final String? explanationVi;
   final String? translation;
+  final String? passageTranslationVi;
   final String? grammarExplanation;
   final String? grammarPoint;
   final Map<String, String>? optionExplanations;
@@ -21,6 +22,7 @@ class ReadingPart6Question {
     this.explanation,
     this.explanationVi,
     this.translation,
+    this.passageTranslationVi,
     this.grammarExplanation,
     this.grammarPoint,
     this.optionExplanations,
@@ -28,9 +30,53 @@ class ReadingPart6Question {
   });
 
   factory ReadingPart6Question.fromJson(Map<String, dynamic> json) {
+    // debug: log incoming JSON for tracing questionText issues
+    // ignore: avoid_print
+    print('Part6 fromJson raw json: $json');
+
     final id = json['id']?.toString() ?? '';
-    final passage = (json['passage'] ?? json['script'] ?? json['context'] ?? json['paragraph'] ?? '').toString();
-    final prompt = (json['questionText'] ?? json['question'] ?? json['prompt'] ?? json['stem'] ?? '').toString();
+    final passage =
+        (json['passage'] ??
+                json['script'] ??
+                json['context'] ??
+                json['paragraph'] ??
+                '')
+            .toString();
+
+    String? _pickTextCandidate(Map<String, dynamic> j, List<String> keys) {
+      String? candidate;
+      for (var k in keys) {
+        final v = j[k];
+        if (v == null) continue;
+        final s = v.toString().trim();
+        if (s.isEmpty) continue;
+        // ignore pure numeric values (likely question numbers)
+        if (RegExp(r'^\d+$').hasMatch(s)) continue;
+        candidate = s;
+        break;
+      }
+      return candidate;
+    }
+
+    final prompt =
+        _pickTextCandidate(json, [
+          'questionText',
+          'question',
+          'question_text',
+          'prompt',
+          'stem',
+          'text',
+          'title',
+          'content',
+          'body',
+        ]) ??
+        '';
+
+    // debug: print where prompt came from and note if numeric-only candidate was skipped
+    // ignore: avoid_print
+    print(
+      'ReadingPart6Question.fromJson: id=$id rawQuestionText=${json['questionText']} fallback_question=${json['question']} computed_prompt="$prompt"',
+    );
 
     List<String> options = [];
     if (json['options'] is List) {
@@ -40,7 +86,12 @@ class ReadingPart6Question {
       final b = json['optionB'] ?? json['B'] ?? json['b'];
       final c = json['optionC'] ?? json['C'] ?? json['c'];
       final d = json['optionD'] ?? json['D'] ?? json['d'];
-      options = [a, b, c, d].where((e) => e != null).map((e) => e.toString()).toList();
+      options = [
+        a,
+        b,
+        c,
+        d,
+      ].where((e) => e != null).map((e) => e.toString()).toList();
     }
 
     String correctAnswer = '';
@@ -62,23 +113,46 @@ class ReadingPart6Question {
     String? explanation;
     String? explanationVi;
     String? translation;
+    String? passageTranslationVi;
     String? grammarExplanation;
     String? grammarPoint;
     Map<String, String>? optionExplanations;
-    final rawExp = json['explanation'] ?? json['explain'] ?? json['solution'] ?? json['answerExplanation'];
+    final rawExp =
+        json['explanation'] ??
+        json['explain'] ??
+        json['solution'] ??
+        json['answerExplanation'];
     if (rawExp != null) {
       if (rawExp is String) {
         explanation = rawExp;
       } else if (rawExp is Map) {
-        explanation = (rawExp['en'] ?? rawExp['text'] ?? rawExp['explanation'] ?? rawExp['answer'])?.toString();
-        explanationVi = (rawExp['vi'] ?? rawExp['vn'] ?? rawExp['vi_text'])?.toString();
-        grammarExplanation = (rawExp['grammar'] ?? rawExp['grammar_explanation'] ?? rawExp['grammarExplanation'])?.toString();
-        grammarPoint = (rawExp['grammarPoint'] ?? rawExp['grammar_point'] ?? rawExp['grammar'])?.toString();
-        final rawOptExp = rawExp['optionExplanations'] ?? rawExp['option_explanations'] ?? rawExp['option_explain'];
+        explanation =
+            (rawExp['en'] ??
+                    rawExp['text'] ??
+                    rawExp['explanation'] ??
+                    rawExp['answer'])
+                ?.toString();
+        explanationVi = (rawExp['vi'] ?? rawExp['vn'] ?? rawExp['vi_text'])
+            ?.toString();
+        grammarExplanation =
+            (rawExp['grammar'] ??
+                    rawExp['grammar_explanation'] ??
+                    rawExp['grammarExplanation'])
+                ?.toString();
+        grammarPoint =
+            (rawExp['grammarPoint'] ??
+                    rawExp['grammar_point'] ??
+                    rawExp['grammar'])
+                ?.toString();
+        final rawOptExp =
+            rawExp['optionExplanations'] ??
+            rawExp['option_explanations'] ??
+            rawExp['option_explain'];
         if (rawOptExp is Map) {
           optionExplanations = {};
           rawOptExp.forEach((k, v) {
-            if (k != null && v != null) optionExplanations![k.toString()] = v.toString();
+            if (k != null && v != null)
+              optionExplanations![k.toString()] = v.toString();
           });
         }
       } else {
@@ -86,35 +160,84 @@ class ReadingPart6Question {
       }
     }
 
-    explanationVi ??= (json['explanationVi'] ?? json['explanation_vi'] ?? json['explain_vi'] ?? json['translation'] ?? json['translate'] ?? json['meaning'] ?? json['vi'])?.toString();
-    translation ??= (json['translation'] ?? json['translate'] ?? json['translation_en'] ?? json['translate_en'])?.toString();
-    grammarExplanation ??= (json['grammarExplanation'] ?? json['grammar_explanation'] ?? json['grammar'])?.toString();
-    grammarPoint ??= (json['grammarPoint'] ?? json['grammar_point'] ?? json['grammar'])?.toString();
+    explanationVi ??=
+        (json['explanationVi'] ??
+                json['explanation_vi'] ??
+                json['explain_vi'] ??
+                json['translation'] ??
+                json['translate'] ??
+                json['meaning'] ??
+                json['vi'])
+            ?.toString();
+    translation ??=
+        (json['translation'] ??
+                json['translate'] ??
+                json['translation_en'] ??
+                json['translate_en'])
+            ?.toString();
+    passageTranslationVi ??=
+        (json['passage_translation_vi'] ??
+                json['passageTranslation'] ??
+                json['passageTranslationVi'] ??
+                json['passage_translate'] ??
+                json['passage_translation'])
+            ?.toString();
+    grammarExplanation ??=
+        (json['grammarExplanation'] ??
+                json['grammar_explanation'] ??
+                json['grammar'])
+            ?.toString();
+    grammarPoint ??=
+        (json['grammarPoint'] ?? json['grammar_point'] ?? json['grammar'])
+            ?.toString();
 
     if (optionExplanations == null) {
-      final ro = json['optionExplanations'] ?? json['option_explanations'] ?? json['option_explain'];
+      final ro =
+          json['optionExplanations'] ??
+          json['option_explanations'] ??
+          json['option_explain'];
       if (ro is Map) {
         optionExplanations = {};
         ro.forEach((k, v) {
-          if (k != null && v != null) optionExplanations![k.toString()] = v.toString();
+          if (k != null && v != null)
+            optionExplanations![k.toString()] = v.toString();
         });
       }
     }
 
-    return ReadingPart6Question(
+    final instance = ReadingPart6Question(
       id: id,
       passage: passage,
       prompt: prompt,
       options: options,
       explanation: explanation,
       explanationVi: explanationVi,
+      passageTranslationVi: passageTranslationVi,
       translation: translation,
       grammarExplanation: grammarExplanation,
       grammarPoint: grammarPoint,
       optionExplanations: optionExplanations,
       correctAnswer: correctAnswer,
     );
+
+    // debug: print parsed values
+    // ignore: avoid_print
+    print(
+      'Parsed question: id=${instance.id} questionText="${instance.questionText}" prompt="${instance.prompt}" options=${instance.options.length}',
+    );
+
+    if (instance.questionText.isEmpty) {
+      // ignore: avoid_print
+      print(
+        'Warning: parsed questionText is empty for id=${instance.id}. Raw json keys: ${json.keys.toList()}',
+      );
+    }
+
+    return instance;
   }
+
+  // Provide compatibility getter for JSON key `questionText`
+  String get questionText => prompt;
 }
 
 class ReadingPart6Passage {
@@ -129,11 +252,18 @@ class ReadingPart6SubmitResult {
   final int total;
   final List<QuestionResult> details;
 
-  ReadingPart6SubmitResult({required this.correct, required this.total, required this.details});
+  ReadingPart6SubmitResult({
+    required this.correct,
+    required this.total,
+    required this.details,
+  });
 
   factory ReadingPart6SubmitResult.fromJson(Map<String, dynamic> json) {
-    final detailsRaw = json['results'] ?? json['details'] ?? json['items'] ?? [];
-    final details = (detailsRaw as List).map((d) => QuestionResult.fromJson(d as Map<String, dynamic>)).toList();
+    final detailsRaw =
+        json['results'] ?? json['details'] ?? json['items'] ?? [];
+    final details = (detailsRaw as List)
+        .map((d) => QuestionResult.fromJson(d as Map<String, dynamic>))
+        .toList();
     final total = json['totalQuestions'] ?? json['total'] ?? 0;
     final correct = json['correctCount'] ?? json['correct'] ?? 0;
     return ReadingPart6SubmitResult(
@@ -150,12 +280,19 @@ class QuestionResult {
   final String? correctAnswer;
   final bool isCorrect;
 
-  QuestionResult({required this.questionId, this.selectedOption, this.correctAnswer, required this.isCorrect});
+  QuestionResult({
+    required this.questionId,
+    this.selectedOption,
+    this.correctAnswer,
+    required this.isCorrect,
+  });
 
   factory QuestionResult.fromJson(Map<String, dynamic> json) {
     return QuestionResult(
-      questionId: json['questionId']?.toString() ?? json['id']?.toString() ?? '',
-      selectedOption: json['selectedOption'] ?? json['selected'] ?? json['selectedAnswer'],
+      questionId:
+          json['questionId']?.toString() ?? json['id']?.toString() ?? '',
+      selectedOption:
+          json['selectedOption'] ?? json['selected'] ?? json['selectedAnswer'],
       correctAnswer: json['correctAnswer'] ?? json['correct'] ?? json['answer'],
       isCorrect: json['isCorrect'] ?? json['corrected'] ?? false,
     );
@@ -203,8 +340,10 @@ class ReadingPart6HistoryModel {
         final letters = ['A', 'B', 'C', 'D'];
         if (val is num) {
           final idx = val.toInt();
-          if (idx >= 0 && idx < letters.length) selectedAnswers[k.toString()] = letters[idx];
-          else selectedAnswers[k.toString()] = val.toString();
+          if (idx >= 0 && idx < letters.length)
+            selectedAnswers[k.toString()] = letters[idx];
+          else
+            selectedAnswers[k.toString()] = val.toString();
         } else if (val is String) {
           final t = val.trim();
           final asInt = int.tryParse(t);
@@ -227,7 +366,9 @@ class ReadingPart6HistoryModel {
       correctCount: json['correctCount'] ?? 0,
       totalCount: json['totalCount'] ?? 0,
       percent: (json['percent'] as num?)?.toDouble() ?? 0.0,
-      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+      date: json['date'] != null
+          ? DateTime.parse(json['date'])
+          : DateTime.now(),
       incorrectQuestionIds: incorrectQuestionIds,
       selectedAnswers: selectedAnswers,
     );
@@ -263,4 +404,3 @@ extension ReadingPart6HistoryModelX on ReadingPart6HistoryModel {
 extension ReadingPart6HistoryListX on List<ReadingPart6HistoryModel> {
   List<HistoryItem> toHistoryItems() => map((h) => h.toHistoryItem()).toList();
 }
-

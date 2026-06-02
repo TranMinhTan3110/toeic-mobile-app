@@ -59,6 +59,25 @@ class ReadingPart7Provider with ChangeNotifier {
     }
   }
 
+  /// Returns number of distinct passages available in the data source.
+  Future<int> getPassageCount() async {
+    try {
+      if (_questionsCache == null) {
+        await ensurePartLoaded();
+      }
+      final pool = _questionsCache ?? [];
+      final keys = <String>{};
+      for (var q in pool) {
+        final k = (q.passage ?? '').trim();
+        if (k.isNotEmpty) keys.add(k);
+      }
+      return keys.length;
+    } catch (e) {
+      debugPrint('Lỗi getPassageCount Part7: $e');
+      return 0;
+    }
+  }
+
   void preloadInBackground() {
     if (_questionsCache != null) return;
     _repo.getQuestions().then((list) {
@@ -104,6 +123,51 @@ class ReadingPart7Provider with ChangeNotifier {
       }
       pool.shuffle();
       _questions = pool.take(requestedCount).toList();
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối API: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// New: fetch questions by number of passages.
+  Future<void> fetchQuestionsByPassageCount(int passageCount) async {
+    final hasCachedData = _questionsCache != null;
+
+    if (!hasCachedData) {
+      _isLoading = true;
+      _errorMessage = null;
+      _questions = [];
+      notifyListeners();
+    }
+
+    try {
+      List<ReadingPart7Question> pool;
+      if (_questionsCache != null) {
+        pool = List<ReadingPart7Question>.from(_questionsCache!);
+      } else {
+        pool = await _repo.getQuestions();
+        _questionsCache = pool;
+        _countCache = pool.length;
+      }
+
+      final Map<String, List<ReadingPart7Question>> groups = {};
+      for (var q in pool) {
+        final key = (q.passage ?? '').trim();
+        if (key.isEmpty) continue; // ignore items without passage text
+        groups.putIfAbsent(key, () => []).add(q);
+      }
+
+      final keys = groups.keys.toList();
+      keys.shuffle();
+      final takeKeys = keys.take(passageCount.clamp(0, keys.length)).toList();
+
+      final List<ReadingPart7Question> selected = [];
+      for (var k in takeKeys) {
+        selected.addAll(groups[k]!);
+      }
+      _questions = selected;
     } catch (e) {
       _errorMessage = 'Lỗi kết nối API: $e';
     } finally {
@@ -200,4 +264,4 @@ class ReadingPart7Provider with ChangeNotifier {
     _countCache = null;
   }
 }
-*** End Patch
+

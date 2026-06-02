@@ -15,8 +15,8 @@ class ReadingPart6Screen extends StatefulWidget {
 }
 
 class _ReadingPart6ScreenState extends State<ReadingPart6Screen> {
-  int _questionCount = 10;
-  int _maxQuestions = 0;
+  int _passageCount = 1;
+  int _maxPassages = 0;
   bool _isLoadingCount = true;
 
   @override
@@ -31,12 +31,12 @@ class _ReadingPart6ScreenState extends State<ReadingPart6Screen> {
   Future<void> _loadMaxQuestions() async {
     try {
       final provider = context.read<ReadingPart6Provider>();
-      final count = await provider.getCountByPart();
+      final count = await provider.getPassageCount();
       provider.preloadInBackground();
       if (mounted) {
         setState(() {
-          _maxQuestions = count;
-          _questionCount = count > 0 ? (count < 10 ? count : 10) : 5;
+          _maxPassages = count;
+          _passageCount = count > 0 ? 1 : 1;
           _isLoadingCount = false;
         });
       }
@@ -44,8 +44,8 @@ class _ReadingPart6ScreenState extends State<ReadingPart6Screen> {
       debugPrint('Lỗi tải số câu Part 6: $e');
       if (mounted) {
         setState(() {
-          _maxQuestions = 0;
-          _questionCount = 5;
+          _maxPassages = 0;
+          _passageCount = 1;
           _isLoadingCount = false;
         });
       }
@@ -113,7 +113,7 @@ class _ReadingPart6ScreenState extends State<ReadingPart6Screen> {
               ])),
             ],
           ),
-          Positioned(bottom: 0, left: 0, right: 0, child: _BottomControls(questionCount: _questionCount, maxQuestions: _maxQuestions, isLoading: _isLoadingCount, onCountChanged: (v) => setState(() => _questionCount = v), onStart: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReadingPart6PracticeScreen(questionCount: _questionCount))))),
+          Positioned(bottom: 0, left: 0, right: 0, child: _BottomControls(passageCount: _passageCount, maxPassages: _maxPassages, isLoading: _isLoadingCount, onCountChanged: (v) => setState(() => _passageCount = v), onStart: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReadingPart6PracticeScreen(passageCount: _passageCount))))),
         ],
       ),
     );
@@ -131,35 +131,35 @@ class _Row extends StatelessWidget {
 }
 
 class _BottomControls extends StatelessWidget {
-  const _BottomControls({required this.questionCount, required this.maxQuestions, required this.isLoading, required this.onCountChanged, required this.onStart});
+  const _BottomControls({required this.passageCount, required this.maxPassages, required this.isLoading, required this.onCountChanged, required this.onStart});
 
-  final int questionCount;
-  final int maxQuestions;
+  final int passageCount;
+  final int maxPassages;
   final bool isLoading;
   final ValueChanged<int> onCountChanged;
   final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {
+    // If there are no passages and we're not loading, hide the controls entirely
+    if (!isLoading && maxPassages <= 0) return const SizedBox.shrink();
+
     return Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), decoration: const BoxDecoration(color: Colors.transparent), child: SafeArea(top: false, child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+
       Row(children: [
-        const Text('Số câu hỏ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+        const Text('Số đoạn', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
         const SizedBox(width: 12),
         SizedBox(width: 72, child: Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppColors.divider)), padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), child: Builder(builder: (ctx) {
           final items = <DropdownMenuItem<int>>[];
-          if (maxQuestions > 0) {
-            if (maxQuestions >= 5) items.add(const DropdownMenuItem(value: 5, child: Text('5')));
-            if (maxQuestions >= 10) items.add(const DropdownMenuItem(value: 10, child: Text('10')));
-            if (maxQuestions >= 15) items.add(const DropdownMenuItem(value: 15, child: Text('15')));
-            if (maxQuestions >= 20) items.add(const DropdownMenuItem(value: 20, child: Text('20')));
-            if (maxQuestions >= 25) items.add(const DropdownMenuItem(value: 25, child: Text('25')));
-            if (maxQuestions >= 30) items.add(const DropdownMenuItem(value: 30, child: Text('Tất cả')));
+          if (maxPassages > 0) {
+            final limit = maxPassages.clamp(1, 30);
+            for (var i = 1; i <= limit; i++) items.add(DropdownMenuItem(value: i, child: Text('$i')));
+            if (maxPassages > 30) items.add(DropdownMenuItem(value: maxPassages, child: const Text('Tất cả')));
           } else {
-            items.add(const DropdownMenuItem(value: 5, child: Text('5')));
-            items.add(const DropdownMenuItem(value: 10, child: Text('10')));
+            for (var i = 1; i <= 5; i++) items.add(DropdownMenuItem(value: i, child: Text('$i')));
           }
-          final hasValue = items.any((it) => it.value == questionCount);
-          final int? displayValue = hasValue ? questionCount : null;
+          final hasValue = items.any((it) => it.value == passageCount);
+          final int? displayValue = hasValue ? passageCount : null;
           return DropdownButton<int>(value: displayValue, hint: const Text('0', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)), isExpanded: true, underline: const SizedBox.shrink(), borderRadius: BorderRadius.circular(6), dropdownColor: AppColors.surface, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12), items: items, onChanged: (v) { if (v != null) onCountChanged(v); });
         }))),
       ]),

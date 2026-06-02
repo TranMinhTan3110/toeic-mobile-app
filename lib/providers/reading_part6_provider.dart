@@ -61,6 +61,27 @@ class ReadingPart6Provider with ChangeNotifier {
     }
   }
 
+  /// Returns number of distinct passages available in the data source.
+  Future<int> getPassageCount() async {
+    try {
+      if (_questionsCache == null) {
+        await ensurePartLoaded();
+      }
+      final pool = _questionsCache ?? [];
+      final keys = <String>{};
+      for (var q in pool) {
+        keys.add((q.passage ?? '').trim());
+      }
+      // debug
+      // ignore: avoid_print
+      print('ReadingPart6Provider.getPassageCount: passages=${keys.length}');
+      return keys.length;
+    } catch (e) {
+      debugPrint('Lỗi getPassageCount Part6: $e');
+      return 0;
+    }
+  }
+
   void preloadInBackground() {
     if (_questionsCache != null) return;
     _repo.getQuestions().then((list) {
@@ -78,6 +99,9 @@ class ReadingPart6Provider with ChangeNotifier {
       final list = await _repo.getQuestions();
       _questionsCache = list;
       _countCache = list.length;
+      // debug
+      // ignore: avoid_print
+      print('ReadingPart6Provider.ensurePartLoaded: questionsCache=${_questionsCache?.length}');
       notifyListeners();
     } catch (e) {
       debugPrint('[ensurePartLoaded Reading Part 6] $e');
@@ -106,6 +130,66 @@ class ReadingPart6Provider with ChangeNotifier {
       }
       pool.shuffle();
       _questions = pool.take(requestedCount).toList();
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối API: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// New: fetch questions by number of passages.
+  /// Groups cached questions by their `passage` text and selects [passageCount]
+  /// passages (random order) then flattens their questions into `_questions`.
+  Future<void> fetchQuestionsByPassageCount(int passageCount) async {
+    final hasCachedData = _questionsCache != null;
+
+    if (!hasCachedData) {
+      _isLoading = true;
+      _errorMessage = null;
+      _questions = [];
+      notifyListeners();
+    }
+
+    try {
+      List<ReadingPart6Question> pool;
+      if (_questionsCache != null) {
+        pool = List<ReadingPart6Question>.from(_questionsCache!);
+      } else {
+        pool = await _repo.getQuestions();
+        _questionsCache = pool;
+        _countCache = pool.length;
+      }
+
+      // group by passage text
+      final Map<String, List<ReadingPart6Question>> groups = {};
+      for (var q in pool) {
+        final key = (q.passage ?? '').trim();
+        groups.putIfAbsent(key, () => []).add(q);
+      }
+
+      final keys = groups.keys.toList();
+      keys.shuffle();
+      final takeKeys = keys.take(passageCount.clamp(0, keys.length)).toList();
+
+      final List<ReadingPart6Question> selected = [];
+      for (var k in takeKeys) {
+        selected.addAll(groups[k]!);
+      }
+      _questions = selected;
+      // debug: print loaded questions and sample questionText
+      // ignore: avoid_print
+      print('ReadingPart6Provider.fetchQuestionsByPassageCount: selected_questions=${_questions.length}');
+      if (_questions.isNotEmpty) {
+        // ignore: avoid_print
+        print('ReadingPart6Provider.firstQuestion.questionText: ${_questions.first.questionText}');
+        // list details for debugging
+        for (var i = 0; i < _questions.length && i < 20; i++) {
+          final q = _questions[i];
+          // ignore: avoid_print
+          print('ReadingPart6Provider.question[$i]: id=${q.id} questionText="${q.questionText}" prompt="${q.prompt}" options=${q.options.length}');
+        }
+      }
     } catch (e) {
       _errorMessage = 'Lỗi kết nối API: $e';
     } finally {

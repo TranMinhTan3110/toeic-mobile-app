@@ -285,7 +285,7 @@ class _BottomControls extends StatelessWidget {
             Row(
               children: [
                 const Text(
-                  'Số câu hỏ',
+                  'Số câu hỏi',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

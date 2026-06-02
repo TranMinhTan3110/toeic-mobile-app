@@ -7,6 +7,9 @@ import '../../../providers/speaking_provider.dart';
 import '../../../providers/listening_provider.dart';
 import '../../../providers/writing_provider.dart';
 import '../../../providers/vocabulary_provider.dart';
+import '../../../providers/reading_part5_provider.dart';
+import '../../../providers/reading_part6_provider.dart';
+import '../../../providers/reading_part7_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/skill_card.dart';
@@ -402,8 +405,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   if (e.label == 'Đọc Hiểu') {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => ReadingScreen(practiceHistory: _practiceHistory),
-                    ));
+                      builder: (_) => const ReadingScreen(),
+                    )).then((_) {
+                      if (mounted) {
+                        context.read<UserProvider>().fetchProfile(forceRefresh: true);
+                        context.read<ReadingPart5Provider>().fetchHistory();
+                        context.read<ReadingPart6Provider>().fetchHistory();
+                        context.read<ReadingPart7Provider>().fetchHistory();
+                      }
+                    });
                   } else if (e.label == 'Nghe Hiểu') {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const ListeningScreen(),

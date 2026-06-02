@@ -1,3 +1,5 @@
+import 'listening_data.dart';
+
 // Models for Reading Part 7
 
 class ReadingPart7Question {
@@ -8,6 +10,7 @@ class ReadingPart7Question {
   final String? explanation;
   final String? explanationVi;
   final String? translation;
+  final String? passageTranslationVi;
   final String? grammarExplanation;
   final String? grammarPoint;
   final Map<String, String>? optionExplanations;
@@ -21,6 +24,7 @@ class ReadingPart7Question {
     this.explanation,
     this.explanationVi,
     this.translation,
+    this.passageTranslationVi,
     this.grammarExplanation,
     this.grammarPoint,
     this.optionExplanations,
@@ -29,8 +33,21 @@ class ReadingPart7Question {
 
   factory ReadingPart7Question.fromJson(Map<String, dynamic> json) {
     final id = json['id']?.toString() ?? '';
-    final passage = (json['passage'] ?? json['script'] ?? json['context'] ?? json['paragraph'] ?? json['passageText'] ?? '').toString();
-    final prompt = (json['questionText'] ?? json['question'] ?? json['prompt'] ?? json['stem'] ?? '').toString();
+    final passage =
+        (json['passage'] ??
+                json['script'] ??
+                json['context'] ??
+                json['paragraph'] ??
+                json['passageText'] ??
+                '')
+            .toString();
+    final prompt =
+        (json['questionText'] ??
+                json['question'] ??
+                json['prompt'] ??
+                json['stem'] ??
+                '')
+            .toString();
 
     List<String> options = [];
     if (json['options'] is List) {
@@ -40,7 +57,12 @@ class ReadingPart7Question {
       final b = json['optionB'] ?? json['B'] ?? json['b'];
       final c = json['optionC'] ?? json['C'] ?? json['c'];
       final d = json['optionD'] ?? json['D'] ?? json['d'];
-      options = [a, b, c, d].where((e) => e != null).map((e) => e.toString()).toList();
+      options = [
+        a,
+        b,
+        c,
+        d,
+      ].where((e) => e != null).map((e) => e.toString()).toList();
     }
 
     String correctAnswer = '';
@@ -62,23 +84,46 @@ class ReadingPart7Question {
     String? explanation;
     String? explanationVi;
     String? translation;
+    String? passageTranslationVi;
     String? grammarExplanation;
     String? grammarPoint;
     Map<String, String>? optionExplanations;
-    final rawExp = json['explanation'] ?? json['explain'] ?? json['solution'] ?? json['answerExplanation'];
+    final rawExp =
+        json['explanation'] ??
+        json['explain'] ??
+        json['solution'] ??
+        json['answerExplanation'];
     if (rawExp != null) {
       if (rawExp is String) {
         explanation = rawExp;
       } else if (rawExp is Map) {
-        explanation = (rawExp['en'] ?? rawExp['text'] ?? rawExp['explanation'] ?? rawExp['answer'])?.toString();
-        explanationVi = (rawExp['vi'] ?? rawExp['vn'] ?? rawExp['vi_text'])?.toString();
-        grammarExplanation = (rawExp['grammar'] ?? rawExp['grammar_explanation'] ?? rawExp['grammarExplanation'])?.toString();
-        grammarPoint = (rawExp['grammarPoint'] ?? rawExp['grammar_point'] ?? rawExp['grammar'])?.toString();
-        final rawOptExp = rawExp['optionExplanations'] ?? rawExp['option_explanations'] ?? rawExp['option_explain'];
+        explanation =
+            (rawExp['en'] ??
+                    rawExp['text'] ??
+                    rawExp['explanation'] ??
+                    rawExp['answer'])
+                ?.toString();
+        explanationVi = (rawExp['vi'] ?? rawExp['vn'] ?? rawExp['vi_text'])
+            ?.toString();
+        grammarExplanation =
+            (rawExp['grammar'] ??
+                    rawExp['grammar_explanation'] ??
+                    rawExp['grammarExplanation'])
+                ?.toString();
+        grammarPoint =
+            (rawExp['grammarPoint'] ??
+                    rawExp['grammar_point'] ??
+                    rawExp['grammar'])
+                ?.toString();
+        final rawOptExp =
+            rawExp['optionExplanations'] ??
+            rawExp['option_explanations'] ??
+            rawExp['option_explain'];
         if (rawOptExp is Map) {
           optionExplanations = {};
           rawOptExp.forEach((k, v) {
-            if (k != null && v != null) optionExplanations![k.toString()] = v.toString();
+            if (k != null && v != null)
+              optionExplanations![k.toString()] = v.toString();
           });
         }
       } else {
@@ -86,17 +131,47 @@ class ReadingPart7Question {
       }
     }
 
-    explanationVi ??= (json['explanationVi'] ?? json['explanation_vi'] ?? json['explain_vi'] ?? json['translation'] ?? json['translate'] ?? json['meaning'] ?? json['vi'])?.toString();
-    translation ??= (json['translation'] ?? json['translate'] ?? json['translation_en'] ?? json['translate_en'])?.toString();
-    grammarExplanation ??= (json['grammarExplanation'] ?? json['grammar_explanation'] ?? json['grammar'])?.toString();
-    grammarPoint ??= (json['grammarPoint'] ?? json['grammar_point'] ?? json['grammar'])?.toString();
+    explanationVi ??=
+        (json['explanationVi'] ??
+                json['explanation_vi'] ??
+                json['explain_vi'] ??
+                json['translation'] ??
+                json['translate'] ??
+                json['meaning'] ??
+                json['vi'])
+            ?.toString();
+    translation ??=
+        (json['translation'] ??
+                json['translate'] ??
+                json['translation_en'] ??
+                json['translate_en'])
+            ?.toString();
+    passageTranslationVi ??=
+        (json['passage_translation_vi'] ??
+                json['passageTranslation'] ??
+                json['passageTranslationVi'] ??
+                json['passage_translate'] ??
+                json['passage_translation'])
+            ?.toString();
+    grammarExplanation ??=
+        (json['grammarExplanation'] ??
+                json['grammar_explanation'] ??
+                json['grammar'])
+            ?.toString();
+    grammarPoint ??=
+        (json['grammarPoint'] ?? json['grammar_point'] ?? json['grammar'])
+            ?.toString();
 
     if (optionExplanations == null) {
-      final ro = json['optionExplanations'] ?? json['option_explanations'] ?? json['option_explain'];
+      final ro =
+          json['optionExplanations'] ??
+          json['option_explanations'] ??
+          json['option_explain'];
       if (ro is Map) {
         optionExplanations = {};
         ro.forEach((k, v) {
-          if (k != null && v != null) optionExplanations![k.toString()] = v.toString();
+          if (k != null && v != null)
+            optionExplanations![k.toString()] = v.toString();
         });
       }
     }
@@ -108,6 +183,7 @@ class ReadingPart7Question {
       options: options,
       explanation: explanation,
       explanationVi: explanationVi,
+      passageTranslationVi: passageTranslationVi,
       translation: translation,
       grammarExplanation: grammarExplanation,
       grammarPoint: grammarPoint,
@@ -123,12 +199,19 @@ class QuestionResult7 {
   final String? correctAnswer;
   final bool isCorrect;
 
-  QuestionResult7({required this.questionId, this.selectedOption, this.correctAnswer, required this.isCorrect});
+  QuestionResult7({
+    required this.questionId,
+    this.selectedOption,
+    this.correctAnswer,
+    required this.isCorrect,
+  });
 
   factory QuestionResult7.fromJson(Map<String, dynamic> json) {
     return QuestionResult7(
-      questionId: json['questionId']?.toString() ?? json['id']?.toString() ?? '',
-      selectedOption: json['selectedOption'] ?? json['selected'] ?? json['selectedAnswer'],
+      questionId:
+          json['questionId']?.toString() ?? json['id']?.toString() ?? '',
+      selectedOption:
+          json['selectedOption'] ?? json['selected'] ?? json['selectedAnswer'],
       correctAnswer: json['correctAnswer'] ?? json['correct'] ?? json['answer'],
       isCorrect: json['isCorrect'] ?? json['corrected'] ?? false,
     );
@@ -140,14 +223,25 @@ class ReadingPart7SubmitResult {
   final int total;
   final List<QuestionResult7> details;
 
-  ReadingPart7SubmitResult({required this.correct, required this.total, required this.details});
+  ReadingPart7SubmitResult({
+    required this.correct,
+    required this.total,
+    required this.details,
+  });
 
   factory ReadingPart7SubmitResult.fromJson(Map<String, dynamic> json) {
-    final detailsRaw = json['results'] ?? json['details'] ?? json['items'] ?? [];
-    final details = (detailsRaw as List).map((d) => QuestionResult7.fromJson(d as Map<String, dynamic>)).toList();
+    final detailsRaw =
+        json['results'] ?? json['details'] ?? json['items'] ?? [];
+    final details = (detailsRaw as List)
+        .map((d) => QuestionResult7.fromJson(d as Map<String, dynamic>))
+        .toList();
     final total = json['totalQuestions'] ?? json['total'] ?? 0;
     final correct = json['correctCount'] ?? json['correct'] ?? 0;
-    return ReadingPart7SubmitResult(correct: (correct as num?)?.toInt() ?? 0, total: (total as num?)?.toInt() ?? 0, details: details);
+    return ReadingPart7SubmitResult(
+      correct: (correct as num?)?.toInt() ?? 0,
+      total: (total as num?)?.toInt() ?? 0,
+      details: details,
+    );
   }
 }
 
@@ -192,8 +286,10 @@ class ReadingPart7HistoryModel {
         final letters = ['A', 'B', 'C', 'D'];
         if (val is num) {
           final idx = val.toInt();
-          if (idx >= 0 && idx < letters.length) selectedAnswers[k.toString()] = letters[idx];
-          else selectedAnswers[k.toString()] = val.toString();
+          if (idx >= 0 && idx < letters.length)
+            selectedAnswers[k.toString()] = letters[idx];
+          else
+            selectedAnswers[k.toString()] = val.toString();
         } else if (val is String) {
           final t = val.trim();
           final asInt = int.tryParse(t);
@@ -216,7 +312,9 @@ class ReadingPart7HistoryModel {
       correctCount: (json['correctCount'] as num?)?.toInt() ?? 0,
       totalCount: (json['totalCount'] as num?)?.toInt() ?? 0,
       percent: (json['percent'] as num?)?.toDouble() ?? 0.0,
-      date: json['date'] != null ? DateTime.parse(json['date'].toString()) : DateTime.now(),
+      date: json['date'] != null
+          ? DateTime.parse(json['date'].toString())
+          : DateTime.now(),
       incorrectQuestionIds: incorrectQuestionIds,
       selectedAnswers: selectedAnswers,
     );
@@ -241,14 +339,45 @@ class ReadingPart7Passage {
   final String passage;
   final List<ReadingPart7Question> questions;
 
-  ReadingPart7Passage({required this.id, required this.passage, required this.questions});
+  ReadingPart7Passage({
+    required this.id,
+    required this.passage,
+    required this.questions,
+  });
 
   factory ReadingPart7Passage.fromJson(Map<String, dynamic> json) {
     final id = json['id']?.toString() ?? json['passageId']?.toString() ?? '';
-    final passage = (json['passageText'] ?? json['passage'] ?? json['text'] ?? '').toString();
+    final passage =
+        (json['passageText'] ?? json['passage'] ?? json['text'] ?? '')
+            .toString();
     List<dynamic> qraw = [];
-    if (json['questions'] is List) qraw = json['questions'];
-    else if (json['items'] is List) qraw = json['items'];
-    return ReadingPart7Passage(id: id, passage: passage, questions: qraw.map((e) => ReadingPart7Question.fromJson(e as Map<String, dynamic>)).toList());
+    if (json['questions'] is List)
+      qraw = json['questions'];
+    else if (json['items'] is List)
+      qraw = json['items'];
+    return ReadingPart7Passage(
+      id: id,
+      passage: passage,
+      questions: qraw
+          .map((e) => ReadingPart7Question.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
+}
+
+// Extension helpers for history conversion to HistoryItem used by PartHistorySheet
+extension ReadingPart7HistoryModelX on ReadingPart7HistoryModel {
+  HistoryItem toHistoryItem() {
+    return HistoryItem(
+      title: 'Reading Part 7 - ${date.day}/${date.month}/${date.year}',
+      percent: percent,
+      correct: correctCount,
+      total: totalCount,
+      date: date,
+    );
+  }
+}
+
+extension ReadingPart7HistoryListX on List<ReadingPart7HistoryModel> {
+  List<HistoryItem> toHistoryItems() => map((h) => h.toHistoryItem()).toList();
 }
