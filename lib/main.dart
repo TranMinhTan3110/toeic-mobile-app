@@ -6,11 +6,12 @@ import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
 import 'package:toeicmobileapp/providers/reading_part5_provider.dart';
 import 'package:toeicmobileapp/providers/reading_part6_provider.dart';
 import 'package:toeicmobileapp/providers/reading_part7_provider.dart';
-import 'package:toeicmobileapp/providers/speaking_provider.dart';
-import 'package:toeicmobileapp/providers/listening_provider.dart';
-import 'package:toeicmobileapp/providers/writing_provider.dart';
-import 'package:toeicmobileapp/providers/user_provider.dart';
 import 'package:toeicmobileapp/providers/exam_provider.dart';
+import 'package:toeicmobileapp/providers/grammar_provider.dart';
+import 'package:toeicmobileapp/providers/listening_provider.dart';
+import 'package:toeicmobileapp/providers/speaking_provider.dart';
+import 'package:toeicmobileapp/providers/user_provider.dart';
+import 'package:toeicmobileapp/providers/writing_provider.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -33,8 +34,11 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ReadingPart5Provider()),
         ChangeNotifierProvider(create: (_) => ReadingPart6Provider()),
         ChangeNotifierProvider(create: (_) => ReadingPart7Provider()),
-        ChangeNotifierProvider(create: (_) => SpeakingProvider()),
+        ChangeNotifierProvider(create: (_) => ExamProvider()),
+        ChangeNotifierProvider(create: (_) => GrammarProvider()),
         ChangeNotifierProvider(create: (_) => ListeningProvider()),
+        ChangeNotifierProvider(create: (_) => SpeakingProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => WritingProvider()),
       ],
       child: const MyApp(),
