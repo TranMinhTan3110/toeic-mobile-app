@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../core/constants/app_constants.dart';
 import '../models/reading_part7_model.dart';
@@ -5,27 +6,37 @@ import '../models/reading_part7_model.dart';
 class ReadingPart7Repository {
   final Dio _dio = Dio();
 
-  Future<List<ReadingPart7Passage>> getPassages() async {
+  Future<List<ReadingPart7Question>> getQuestions() async {
     try {
       final response = await _dio.get('${AppConstants.baseUrl}/reading/part7/questions');
       final res = response.data;
 
-      List<dynamic> list = [];
+      List<dynamic> items = [];
       if (res is List) {
-        list = res;
+        items = res;
       } else if (res is Map) {
-        if (res['data'] is List) list = res['data'];
-        else if (res['passages'] is List) list = res['passages'];
-        else if (res['items'] is List) list = res['items'];
+        if (res['data'] is List) items = res['data'];
+        else if (res['questions'] is List) items = res['questions'];
+        else if (res['passages'] is List) {
+          // flatten passages -> questions
+          final passages = (res['passages'] as List).map((p) => ReadingPart7Passage.fromJson(p as Map<String, dynamic>)).toList();
+          return passages.expand((p) => p.questions).toList();
+        } else if (res['items'] is List) items = res['items'];
         else {
           final firstList = res.values.firstWhere((v) => v is List, orElse: () => null);
-          if (firstList is List) list = firstList;
+          if (firstList is List) items = firstList;
         }
       }
 
-      return list.map((e) => ReadingPart7Passage.fromJson(e as Map<String, dynamic>)).toList();
+      // If items contain passages, detect and flatten
+      if (items.isNotEmpty && items.first is Map && (items.first as Map).containsKey('questions')) {
+        final passages = items.map((e) => ReadingPart7Passage.fromJson(e as Map<String, dynamic>)).toList();
+        return passages.expand((p) => p.questions).toList();
+      }
+
+      return items.map((e) => ReadingPart7Question.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      throw Exception('Lỗi khi tải Part7: $e');
+      return [];
     }
   }
 
@@ -38,28 +49,20 @@ class ReadingPart7Repository {
         return letters[idx];
       }
 
-      final payload = {
-        'answers': answers.entries
-            .map((e) => {
-                  'questionId': e.key,
-                  'selectedIndex': e.value,
-                  'answer': idxToLetter(e.value),
-                })
-            .toList()
-      };
+      // Try multiple payload formats to be resilient to different backends
+      final payloadList = answers.entries.map((e) => {'questionId': e.key, 'answer': idxToLetter(e.value), 'selectedIndex': e.value}).toList();
+      final payloadMap = Map.fromEntries(answers.entries.map((e) => MapEntry(e.key, idxToLetter(e.value))));
 
       Response response;
       try {
-        response = await _dio.post('${AppConstants.baseUrl}/reading/part7/submit', data: payload);
+        response = await _dio.post('${AppConstants.baseUrl}/reading/part7/submit', data: {'answers': payloadList});
       } on DioError catch (d) {
         if (d.response?.statusCode == 400) {
-          final mapPayload = {'answers': Map.fromEntries(answers.entries.map((e) => MapEntry(e.key, idxToLetter(e.value))))};
           try {
-            response = await _dio.post('${AppConstants.baseUrl}/reading/part7/submit', data: mapPayload);
+            response = await _dio.post('${AppConstants.baseUrl}/reading/part7/submit', data: {'answers': payloadMap});
           } on DioError catch (d2) {
             if (d2.response?.statusCode == 400) {
-              final altList = answers.entries.map((e) => {'id': e.key, 'answer': idxToLetter(e.value)}).toList();
-              response = await _dio.post('${AppConstants.baseUrl}/reading/part7/submit', data: {'answers': altList});
+              response = await _dio.post('${AppConstants.baseUrl}/reading/part7/submit', data: jsonEncode({'answers': payloadMap}));
             } else {
               rethrow;
             }
@@ -71,23 +74,50 @@ class ReadingPart7Repository {
 
       final res = response.data;
       if (res is Map<String, dynamic>) {
-        if (res['data'] is Map) {
-          return ReadingPart7SubmitResult.fromJson(Map<String, dynamic>.from(res['data']));
-        }
+        if (res['data'] is Map) return ReadingPart7SubmitResult.fromJson(Map<String, dynamic>.from(res['data']));
         return ReadingPart7SubmitResult.fromJson(Map<String, dynamic>.from(res));
       }
-      throw Exception('Unexpected submit response format');
-    } on DioError catch (d) {
-      final resp = d.response?.data;
-      String serverMsg = '';
-      try {
-        serverMsg = resp is Map && resp['message'] != null ? resp['message'].toString() : resp?.toString() ?? '';
-      } catch (_) {
-        serverMsg = resp?.toString() ?? '';
-      }
-      throw Exception('Lỗi khi gửi đáp án Part7: ${d.message} ${serverMsg.isNotEmpty ? '- server: $serverMsg' : ''}');
+      return ReadingPart7SubmitResult(correct: 0, total: answers.length, details: []);
     } catch (e) {
-      throw Exception('Lỗi khi gửi đáp án Part7: $e');
+      return ReadingPart7SubmitResult(correct: 0, total: answers.length, details: []);
     }
+  }
+
+  Future<int> getCountByPart() async {
+    try {
+      final res = await _dio.get('${AppConstants.baseUrl}/reading/part7/count');
+      final data = res.data;
+      if (data is Map && data['count'] != null) return (data['count'] as num).toInt();
+      if (data is num) return data.toInt();
+    } catch (_) {}
+    return 0;
+  }
+
+  Future<List<ReadingPart7HistoryModel>> getHistory() async {
+    try {
+      final res = await _dio.get('${AppConstants.baseUrl}/reading/part7/history');
+      final data = res.data;
+      List items = [];
+      if (data is List) items = data;
+      else if (data is Map && data['data'] is List) items = data['data'];
+      return items.map((e) => ReadingPart7HistoryModel.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<String> saveHistory({required int correctCount, required int totalCount, required double percent, required List<String> incorrectQuestionIds, required Map<String, String> selectedAnswers}) async {
+    final payload = {
+      'correctCount': correctCount,
+      'totalCount': totalCount,
+      'percent': percent,
+      'incorrectQuestionIds': incorrectQuestionIds,
+      'selectedAnswers': selectedAnswers,
+    };
+    try {
+      final res = await _dio.post('${AppConstants.baseUrl}/reading/part7/history', data: jsonEncode(payload));
+      if (res.data is Map && res.data['id'] != null) return res.data['id'].toString();
+    } catch (_) {}
+    return '';
   }
 }
