@@ -27,7 +27,9 @@ class UserProvider with ChangeNotifier {
 
   Future<void> fetchProfile({bool forceRefresh = false}) async {
     if (_profile != null && !forceRefresh) {
-      debugPrint('ℹ️ [UserProvider] Profile already loaded. Using cached profile.');
+      debugPrint(
+        'ℹ️ [UserProvider] Profile already loaded. Using cached profile.',
+      );
       return;
     }
 
@@ -38,7 +40,9 @@ class UserProvider with ChangeNotifier {
     try {
       debugPrint('🔄 [UserProvider] Fetching profile from API...');
       _profile = await _userRepository.getProfile();
-      debugPrint('✅ [UserProvider] Profile loaded: ${_profile?.displayName} | EP: ${_profile?.experiencePoints}');
+      debugPrint(
+        '✅ [UserProvider] Profile loaded: ${_profile?.displayName} | EP: ${_profile?.experiencePoints}',
+      );
     } catch (e) {
       _profileError = e.toString();
       debugPrint('❌ [UserProvider] Error fetching user profile: $e');
@@ -49,19 +53,40 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> updateProfile({
-    required int targetScore,
-    required String currentLevel,
-    required List<String> preferredSkills,
+    int? targetScore,
+    String? currentLevel,
+    List<String>? preferredSkills,
+    String? displayName,
+    String? avatarUrl,
+    String? phoneNumber,
+    String? gender,
+    String? birthDate,
   }) async {
     _isLoadingProfile = true;
     _profileError = null;
     notifyListeners();
 
     try {
-      _profile = await _userRepository.updateProfile(
+      final updatedProfile = await _userRepository.updateProfile(
         targetScore: targetScore,
         currentLevel: currentLevel,
         preferredSkills: preferredSkills,
+        displayName: displayName,
+        avatarUrl: avatarUrl,
+        phoneNumber: phoneNumber,
+        gender: gender,
+        birthDate: birthDate,
+      );
+      _profile = _mergeProfileUpdate(
+        updatedProfile,
+        targetScore: targetScore,
+        currentLevel: currentLevel,
+        preferredSkills: preferredSkills,
+        displayName: displayName,
+        avatarUrl: avatarUrl,
+        phoneNumber: phoneNumber,
+        gender: gender,
+        birthDate: birthDate,
       );
     } catch (e) {
       _profileError = e.toString();
@@ -75,7 +100,9 @@ class UserProvider with ChangeNotifier {
 
   Future<void> fetchLeaderboard({bool forceRefresh = false}) async {
     if (_leaderboard.isNotEmpty && !forceRefresh) {
-      debugPrint('ℹ️ [UserProvider] Leaderboard already loaded. Using cached leaderboard.');
+      debugPrint(
+        'ℹ️ [UserProvider] Leaderboard already loaded. Using cached leaderboard.',
+      );
       return;
     }
 
@@ -86,7 +113,9 @@ class UserProvider with ChangeNotifier {
     try {
       debugPrint('🔄 [UserProvider] Fetching leaderboard from API...');
       _leaderboard = await _userRepository.getWeeklyLeaderboard();
-      debugPrint('✅ [UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.');
+      debugPrint(
+        '✅ [UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.',
+      );
     } catch (e) {
       _leaderboardError = e.toString();
       debugPrint('Error fetching leaderboard: $e');
@@ -107,7 +136,9 @@ class UserProvider with ChangeNotifier {
     );
 
     // Cập nhật điểm của mình trên Bảng xếp hạng nếu có mặt
-    final index = _leaderboard.indexWhere((entry) => entry.uid == _profile!.uid);
+    final index = _leaderboard.indexWhere(
+      (entry) => entry.uid == _profile!.uid,
+    );
     if (index != -1) {
       final oldEntry = _leaderboard[index];
       _leaderboard[index] = LeaderboardEntryModel(
@@ -145,6 +176,32 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  UserProfileModel _mergeProfileUpdate(
+    UserProfileModel updatedProfile, {
+    int? targetScore,
+    String? currentLevel,
+    List<String>? preferredSkills,
+    String? displayName,
+    String? avatarUrl,
+    String? phoneNumber,
+    String? gender,
+    String? birthDate,
+  }) {
+    final current = _profile;
+    if (current == null) return updatedProfile;
+
+    return current.copyWith(
+      targetScore: targetScore ?? updatedProfile.targetScore,
+      currentLevel: currentLevel ?? updatedProfile.currentLevel,
+      preferredSkills: preferredSkills ?? updatedProfile.preferredSkills,
+      displayName: displayName ?? updatedProfile.displayName,
+      avatarUrl: avatarUrl ?? updatedProfile.avatarUrl,
+      phoneNumber: phoneNumber ?? updatedProfile.phoneNumber,
+      gender: gender ?? updatedProfile.gender,
+      birthDate: birthDate ?? updatedProfile.birthDate,
+    );
+  }
+
   /// Ghi nhận hoạt động học và cộng EP — gọi sau khi hoàn thành Quiz/Matching/AI Writing
   Future<EngagementResultModel?> recordActivity({
     required String activityType,
@@ -155,11 +212,11 @@ class UserProvider with ChangeNotifier {
   }) async {
     try {
       final result = await _userRepository.recordActivity(
-        activityType   : activityType,
-        referenceId    : referenceId,
-        correctAnswers : correctAnswers,
-        totalAnswers   : totalAnswers,
-        newlyMastered  : newlyMastered,
+        activityType: activityType,
+        referenceId: referenceId,
+        correctAnswers: correctAnswers,
+        totalAnswers: totalAnswers,
+        newlyMastered: newlyMastered,
       );
       if (result != null) {
         updateLocalEpAndStreak(result);

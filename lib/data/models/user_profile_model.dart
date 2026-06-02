@@ -14,6 +14,9 @@ class UserProfileModel {
   final int bestStreakDays;
   final int totalStudyMinutes;
   final DateTime createdAt;
+  final String? phoneNumber;
+  final String? gender;
+  final String? birthDate;
 
   UserProfileModel({
     required this.uid,
@@ -31,6 +34,9 @@ class UserProfileModel {
     required this.bestStreakDays,
     required this.totalStudyMinutes,
     required this.createdAt,
+    this.phoneNumber,
+    this.gender,
+    this.birthDate,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +58,9 @@ class UserProfileModel {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
+      phoneNumber: json['phoneNumber'],
+      gender: json['gender'],
+      birthDate: json['birthDate'],
     );
   }
 
@@ -72,6 +81,9 @@ class UserProfileModel {
       'bestStreakDays': bestStreakDays,
       'totalStudyMinutes': totalStudyMinutes,
       'createdAt': createdAt.toIso8601String(),
+      'phoneNumber': phoneNumber,
+      'gender': gender,
+      'birthDate': birthDate,
     };
   }
 
@@ -91,6 +103,9 @@ class UserProfileModel {
     int? bestStreakDays,
     int? totalStudyMinutes,
     DateTime? createdAt,
+    String? phoneNumber,
+    String? gender,
+    String? birthDate,
   }) {
     return UserProfileModel(
       uid: uid ?? this.uid,
@@ -108,6 +123,9 @@ class UserProfileModel {
       bestStreakDays: bestStreakDays ?? this.bestStreakDays,
       totalStudyMinutes: totalStudyMinutes ?? this.totalStudyMinutes,
       createdAt: createdAt ?? this.createdAt,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      gender: gender ?? this.gender,
+      birthDate: birthDate ?? this.birthDate,
     );
   }
 }
