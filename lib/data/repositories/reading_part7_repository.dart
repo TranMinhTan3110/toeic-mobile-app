@@ -216,22 +216,34 @@ class ReadingPart7Repository {
 
   Future<List<ReadingPart7HistoryModel>> getHistory() async {
     try {
-      final res = await _dio.get(
+      final options = await _getAuthOptions();
+      final response = await _dio.get(
         '${AppConstants.baseUrl}/reading/part7/history',
+        options: options,
       );
-      final data = res.data;
-      List items = [];
-      if (data is List)
-        items = data;
-      else if (data is Map && data['data'] is List)
-        items = data['data'];
-      return items
-          .map(
-            (e) => ReadingPart7HistoryModel.fromJson(e as Map<String, dynamic>),
-          )
+      final raw = response.data;
+      List<dynamic> dataList = [];
+      if (raw is List) {
+        dataList = raw;
+      } else if (raw is Map) {
+        if (raw['data'] is List)
+          dataList = raw['data'];
+        else if (raw['items'] is List)
+          dataList = raw['items'];
+        else {
+          final found = raw.values.firstWhere(
+            (v) => v is List,
+            orElse: () => null,
+          );
+          if (found is List) dataList = found;
+        }
+      }
+
+      return dataList
+          .map((json) => ReadingPart7HistoryModel.fromJson(json))
           .toList();
     } catch (e) {
-      return [];
+      throw Exception('Lỗi khi tải lịch sử luyện tập Reading Part 7: $e');
     }
   }
 

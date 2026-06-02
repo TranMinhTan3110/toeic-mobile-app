@@ -150,8 +150,12 @@ class ReadingPart5Provider with ChangeNotifier {
 
     try {
       _history = await _repo.getHistory();
+      // ignore: avoid_print
+      print('ReadingPart5Provider.fetchHistory: loaded ${_history.length} items');
     } catch (e) {
       _historyErrorMessage = 'Lỗi tải lịch sử: $e';
+      // ignore: avoid_print
+      print('ReadingPart5Provider.fetchHistory error: $e');
     } finally {
       _isHistoryLoading = false;
       notifyListeners();
@@ -175,6 +179,9 @@ class ReadingPart5Provider with ChangeNotifier {
         selectedAnswers: selectedAnswers,
       );
 
+      // ignore: avoid_print
+      print('ReadingPart5Provider.savePracticeHistory: saved with id=$id');
+
       // Thêm vào danh sách lịch sử local
       final newHistory = ReadingPart5HistoryModel(
         id: id,
@@ -190,10 +197,16 @@ class ReadingPart5Provider with ChangeNotifier {
       _history.insert(0, newHistory);
       notifyListeners();
 
+      // ignore: avoid_print
+      print('ReadingPart5Provider.savePracticeHistory: local history now has ${_history.length} items');
+
       return id;
     } catch (e) {
       // If saving to backend fails, still keep a local history record so UX reflects user's session.
       _errorMessage = 'Lỗi lưu lịch sử (server): $e';
+      // ignore: avoid_print
+      print('ReadingPart5Provider.savePracticeHistory error: $e');
+
       final newHistory = ReadingPart5HistoryModel(
         id: '',
         userId: '',

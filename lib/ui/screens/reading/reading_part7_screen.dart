@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../providers/reading_part7_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import 'reading_part7_practice_screen.dart';
+import 'reading_part7_history_detail_screen.dart';
 import '../../widgets/practice/part_history_sheet.dart';
 import '../../../data/models/reading_part7_model.dart';
 
@@ -71,6 +72,19 @@ class _ReadingPart7ScreenState extends State<ReadingPart7Screen> {
               partNumber: 7,
               partTitle: 'Reading Part 7',
               items: provider.history.toHistoryItems(),
+              onItemTap: (index) {
+                if (index >= 0 && index < provider.history.length) {
+                  final historyItem = provider.history[index];
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReadingPart7HistoryDetailScreen(
+                        historyItem: historyItem,
+                      ),
+                    ),
+                  );
+                }
+              },
             ),
             tooltip: 'Lịch sử',
           ),

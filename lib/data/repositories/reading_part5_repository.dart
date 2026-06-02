@@ -173,21 +173,48 @@ class ReadingPart5Repository {
         options: options,
       );
       final raw = response.data;
+
+      // Debug log
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory raw type: ${raw.runtimeType}, value: $raw');
+
       List<dynamic> dataList = [];
       if (raw is List) {
         dataList = raw;
       } else if (raw is Map) {
-        if (raw['data'] is List) dataList = raw['data'];
-        else if (raw['items'] is List) dataList = raw['items'];
-        else {
-          // try to find first list value
-          final found = raw.values.firstWhere((v) => v is List, orElse: () => null);
+        // Try common keys first
+        if (raw['data'] is List) {
+          dataList = raw['data'];
+        } else if (raw['items'] is List) {
+          dataList = raw['items'];
+        } else if (raw['history'] is List) {
+          dataList = raw['history'];
+        } else if (raw['result'] is List) {
+          dataList = raw['result'];
+        } else {
+          // Try to find first list value
+          final found = raw.values.firstWhere(
+            (v) => v is List,
+            orElse: () => null,
+          );
           if (found is List) dataList = found;
         }
       }
 
-      return dataList.map((json) => ReadingPart5HistoryModel.fromJson(json)).toList();
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory dataList length: ${dataList.length}');
+
+      final result = dataList
+          .map((json) => ReadingPart5HistoryModel.fromJson(json))
+          .toList();
+
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory result length: ${result.length}');
+
+      return result;
     } catch (e) {
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory error: $e');
       throw Exception('Lỗi khi tải lịch sử luyện tập Reading Part 5: $e');
     }
   }
@@ -212,8 +239,35 @@ class ReadingPart5Repository {
         },
         options: options,
       );
-      return response.data['id'] ?? '';
+
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory response type: ${response.data.runtimeType}');
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory response data: ${response.data}');
+
+      final res = response.data;
+      // Handle nested response { data: { id: '...' } }
+      if (res is Map<String, dynamic>) {
+        if (res['data'] is Map && res['data']['id'] != null) {
+          final id = res['data']['id'].toString();
+          // ignore: avoid_print
+          print('ReadingPart5Repository.saveHistory: id from nested data: $id');
+          return id;
+        }
+        if (res['id'] != null) {
+          final id = res['id'].toString();
+          // ignore: avoid_print
+          print('ReadingPart5Repository.saveHistory: id from top-level: $id');
+          return id;
+        }
+      }
+
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory: no id found, returning empty string');
+      return '';
     } catch (e) {
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory error: $e');
       throw Exception('Lỗi khi lưu lịch sử luyện tập Reading Part 5: $e');
     }
   }

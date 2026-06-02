@@ -7,6 +7,9 @@ import 'reading_detail_screen.dart';
 import 'reading_part5_screen.dart';
 import 'reading_part6_screen.dart';
 import 'reading_part7_screen.dart';
+import 'reading_part5_history_detail_screen.dart';
+import 'reading_part6_history_detail_screen.dart';
+import 'reading_part7_history_detail_screen.dart';
 import '../../../providers/reading_part5_provider.dart';
 import '../../../providers/reading_part6_provider.dart';
 import '../../../providers/reading_part7_provider.dart';
@@ -496,7 +499,25 @@ class _ReadingScreenState extends State<ReadingScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            // Có thể thêm navigation đến chi tiết lịch sử nếu cần
+            // Navigate to the appropriate detail screen based on part number
+            Widget detailScreen;
+            switch (part) {
+              case 5:
+                detailScreen = ReadingPart5HistoryDetailScreen(historyItem: historyItem);
+                break;
+              case 6:
+                detailScreen = ReadingPart6HistoryDetailScreen(historyItem: historyItem);
+                break;
+              case 7:
+                detailScreen = ReadingPart7HistoryDetailScreen(historyItem: historyItem);
+                break;
+              default:
+                return; // Do nothing if part is unknown
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => detailScreen),
+            );
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
