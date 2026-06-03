@@ -51,6 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<SpeakingProvider>().fetchHistory();
         context.read<ListeningProvider>().fetchHistory();
         context.read<WritingProvider>().fetchHistory();
+        context.read<ReadingPart5Provider>().fetchHistory();
+        context.read<ReadingPart6Provider>().fetchHistory();
+        context.read<ReadingPart7Provider>().fetchHistory();
         context.read<ExamProvider>().fetchSpeakingExamHistory();
         context.read<ExamProvider>().fetchWritingExamHistory();
         // Load thông số từ vựng cần ôn ở sổ tay
@@ -204,6 +207,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final speakingProvider = context.watch<SpeakingProvider>();
     final listeningProvider = context.watch<ListeningProvider>();
     final writingProvider = context.watch<WritingProvider>();
+    final readingPart5Provider = context.watch<ReadingPart5Provider>();
+    final readingPart6Provider = context.watch<ReadingPart6Provider>();
+    final readingPart7Provider = context.watch<ReadingPart7Provider>();
     final vocabProvider = context.watch<VocabularyProvider>();
     final examProvider = context.watch<ExamProvider>();
 
@@ -290,6 +296,48 @@ class _HomeScreenState extends State<HomeScreen> {
           type: 'Luyện tập',
           icon: Icons.headphones_rounded,
           color: AppColors.primary,
+        ),
+      );
+    }
+
+    // 4. Map Reading Part 5 history
+    for (final item in readingPart5Provider.history) {
+      mergedHistory.add(
+        HistoryItem(
+          title: 'Phần 5 - Điền Vào Câu',
+          date: item.date,
+          percent: item.percent,
+          type: 'Luyện tập',
+          icon: Icons.menu_book_rounded,
+          color: AppColors.green,
+        ),
+      );
+    }
+
+    // 5. Map Reading Part 6 history
+    for (final item in readingPart6Provider.history) {
+      mergedHistory.add(
+        HistoryItem(
+          title: 'Phần 6 - Điền Vào Đoạn Văn',
+          date: item.date,
+          percent: item.percent,
+          type: 'Luyện tập',
+          icon: Icons.menu_book_rounded,
+          color: AppColors.green,
+        ),
+      );
+    }
+
+    // 6. Map Reading Part 7 history
+    for (final item in readingPart7Provider.history) {
+      mergedHistory.add(
+        HistoryItem(
+          title: 'Phần 7 - Đọc Hiểu Đoạn Văn',
+          date: item.date,
+          percent: item.percent,
+          type: 'Luyện tập',
+          icon: Icons.menu_book_rounded,
+          color: AppColors.green,
         ),
       );
     }
