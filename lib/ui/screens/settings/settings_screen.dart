@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
+import 'package:toeicmobileapp/core/services/study_reminder_service.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/providers/grammar_provider.dart';
 import 'package:toeicmobileapp/providers/listening_provider.dart';
@@ -99,15 +100,7 @@ class SettingsScreen extends StatelessWidget {
                     iconBackground: AppColors.greenBg,
                     onTap: () {},
                   ),
-                  SettingTile(
-                    icon: Boxicons.bx_bell,
-                    title: 'Nhắc nhở học tập',
-                    trailingText: 'Tắt',
-                    trailingTextColor: AppColors.textSecondary,
-                    iconColor: AppColors.warning,
-                    iconBackground: AppColors.primarySurface,
-                    onTap: () => _showStudyReminderDialog(context),
-                  ),
+                  const _StudyReminderTile(),
                   SettingTile(
                     icon: Boxicons.bx_download,
                     title: 'Quản lý tải xuống',
@@ -206,224 +199,6 @@ class SettingsScreen extends StatelessWidget {
       grammarProvider.clearCache();
       listeningProvider.clearCache();
     }
-  }
-
-  Future<void> _showStudyReminderDialog(BuildContext context) async {
-    var enabled = false;
-    var selectedTime = '19:00';
-    final selectedDays = <String>{'T2', 'T4', 'T6'};
-    const timeOptions = ['07:00', '12:00', '19:00', '21:00'];
-    const dayOptions = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-
-    await showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.32),
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.14),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: AppColors.primarySurface,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Boxicons.bx_bell,
-                            color: AppColors.primary,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Nhắc nhở học tập',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: 3),
-                              Text(
-                                'Chọn thời điểm TOEIC Master nhắc bạn học.',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12,
-                                  height: 1.25,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Bật nhắc nhở',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          Switch(
-                            value: enabled,
-                            activeThumbColor: AppColors.primary,
-                            activeTrackColor: AppColors.primaryLight,
-                            inactiveThumbColor: Colors.white,
-                            inactiveTrackColor: AppColors.divider,
-                            onChanged: (value) {
-                              setDialogState(() => enabled = value);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const _ReminderSectionTitle(title: 'Giờ nhắc'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: timeOptions.map((time) {
-                        final selected = selectedTime == time;
-                        return _ReminderChoiceChip(
-                          label: time,
-                          selected: selected,
-                          onTap: () {
-                            setDialogState(() => selectedTime = time);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    const _ReminderSectionTitle(title: 'Ngày học'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: dayOptions.map((day) {
-                        final selected = selectedDays.contains(day);
-                        return _ReminderChoiceChip(
-                          label: day,
-                          selected: selected,
-                          minWidth: 46,
-                          onTap: () {
-                            setDialogState(() {
-                              if (selected) {
-                                selectedDays.remove(day);
-                              } else {
-                                selectedDays.add(day);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textSecondary,
-                              side: const BorderSide(color: AppColors.border),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: const Text(
-                              'Hủy',
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(dialogContext).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    enabled
-                                        ? 'Đã lưu nhắc nhở lúc $selectedTime.'
-                                        : 'Đã tắt nhắc nhở học tập.',
-                                  ),
-                                  backgroundColor: enabled
-                                      ? AppColors.success
-                                      : AppColors.textSecondary,
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'Lưu',
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   Future<void> _showSupportDialog(
@@ -597,60 +372,235 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-class _ReminderSectionTitle extends StatelessWidget {
-  const _ReminderSectionTitle({required this.title});
+class _StudyReminderTile extends StatefulWidget {
+  const _StudyReminderTile();
 
-  final String title;
+  @override
+  State<_StudyReminderTile> createState() => _StudyReminderTileState();
+}
+
+class _StudyReminderTileState extends State<_StudyReminderTile> {
+  StudyReminderSettings _settings = const StudyReminderSettings(
+    enabled: false,
+    hour: 19,
+    minute: 0,
+  );
+  bool _loading = true;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: AppColors.textPrimary,
-        fontSize: 13,
-        fontWeight: FontWeight.w800,
+    final subtitle = _settings.enabled
+        ? 'Hằng ngày lúc ${_settings.formattedTime}'
+        : 'Chưa bật nhắc nhở';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _loading || _saving ? null : _pickTime,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppColors.divider, width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Boxicons.bx_bell,
+                  color: AppColors.warning,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Nhắc nhở học tập',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _TimePill(
+                time: _settings.formattedTime,
+                enabled: !_loading && !_saving,
+                onTap: _pickTime,
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                value: _settings.enabled,
+                activeThumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primaryLight,
+                inactiveThumbColor: Colors.white,
+                inactiveTrackColor: AppColors.divider,
+                onChanged: _loading || _saving ? null : _toggleReminder,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+
+  Future<void> _loadSettings() async {
+    final settings = await StudyReminderService.instance.getSettings();
+    if (!mounted) return;
+    setState(() {
+      _settings = settings;
+      _loading = false;
+    });
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _settings.hour, minute: _settings.minute),
+      helpText: 'Chọn giờ nhắc học',
+      cancelText: 'Hủy',
+      confirmText: 'Chọn',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+              surface: AppColors.surface,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked == null) return;
+    await _saveReminder(
+      enabled: _settings.enabled,
+      hour: picked.hour,
+      minute: picked.minute,
+    );
+  }
+
+  Future<void> _toggleReminder(bool enabled) async {
+    await _saveReminder(
+      enabled: enabled,
+      hour: _settings.hour,
+      minute: _settings.minute,
+    );
+  }
+
+  Future<void> _saveReminder({
+    required bool enabled,
+    required int hour,
+    required int minute,
+  }) async {
+    setState(() => _saving = true);
+
+    final saved = await StudyReminderService.instance.setDailyReminder(
+      enabled: enabled,
+      hour: hour,
+      minute: minute,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      if (saved) {
+        _settings = StudyReminderSettings(
+          enabled: enabled,
+          hour: hour,
+          minute: minute,
+        );
+      }
+      _saving = false;
+    });
+
+    if (!saved) {
+      _showReminderMessage(
+        'Không thể bật thông báo. Hãy cấp quyền thông báo trên thiết bị.',
+        AppColors.error,
+      );
+      return;
+    }
+
+    _showReminderMessage(
+      enabled
+          ? 'Đã bật nhắc nhở lúc ${_settings.formattedTime}.'
+          : 'Đã tắt nhắc nhở học tập.',
+      enabled ? AppColors.success : AppColors.textSecondary,
+    );
+  }
+
+  void _showReminderMessage(String message, Color color) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
+  }
 }
 
-class _ReminderChoiceChip extends StatelessWidget {
-  const _ReminderChoiceChip({
-    required this.label,
-    required this.selected,
+class _TimePill extends StatelessWidget {
+  const _TimePill({
+    required this.time,
+    required this.enabled,
     required this.onTap,
-    this.minWidth = 68,
   });
 
-  final String label;
-  final bool selected;
+  final String time;
+  final bool enabled;
   final VoidCallback onTap;
-  final double minWidth;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(13),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        constraints: BoxConstraints(minWidth: minWidth),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.primarySurface,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+    return Material(
+      color: AppColors.primarySurface,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 62),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
           ),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? Colors.white : AppColors.textPrimary,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
+          child: Text(
+            time,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textLink,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),
