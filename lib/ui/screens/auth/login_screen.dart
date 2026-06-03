@@ -6,6 +6,7 @@ import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/utils/validators.dart';
 import 'package:toeicmobileapp/ui/widgets/auth/login_form.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -196,6 +197,34 @@ class _LoginViewState extends State<LoginView>
                             if (valid) {
                               _handleLogin();
                             }
+                          },
+                          onForgotPassword: () {
+                            Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder: (_, animation, _) =>
+                                    const ForgotPasswordScreen(),
+                                transitionsBuilder:
+                                    (_, animation, _, child) {
+                                      return SlideTransition(
+                                        position:
+                                            Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.easeOutCubic,
+                                              ),
+                                            ),
+                                        child: child,
+                                      );
+                                    },
+                                transitionDuration: const Duration(
+                                  milliseconds: 400,
+                                ),
+                              ),
+                            );
                           },
                           emailValidator: (v) => Validators.email(v),
                           passwordValidator: (v) => Validators.password(v),

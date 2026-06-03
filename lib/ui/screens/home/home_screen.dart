@@ -8,6 +8,9 @@ import '../../../providers/listening_provider.dart';
 import '../../../providers/writing_provider.dart';
 import '../../../providers/vocabulary_provider.dart';
 import '../../../providers/exam_provider.dart';
+import '../../../providers/reading_part5_provider.dart';
+import '../../../providers/reading_part6_provider.dart';
+import '../../../providers/reading_part7_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/skill_card.dart';
@@ -179,15 +182,15 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _navIndex,
         children: [
-          _buildHomeTabContent(),   // 0: Trang Chủ
+          _buildHomeTabContent(), // 0: Trang Chủ
           TestListScreen(
             onBack: () => setState(() => _navIndex = 0),
-          ),   // 1: Đề thi
-          const LeaderboardScreen(),// 2: BXH
-          const ProfileScreen(),    // 3: Hồ sơ
+          ), // 1: Đề thi
+          const LeaderboardScreen(), // 2: BXH
+          const ProfileScreen(), // 3: Hồ sơ
           SettingsScreen(
             onBack: () => setState(() => _navIndex = 0),
-          ),   // 4: Cài đặt
+          ), // 4: Cài đặt
         ],
       ),
       bottomNavigationBar: HomeBottomNav(
@@ -212,21 +215,29 @@ class _HomeScreenState extends State<HomeScreen> {
     for (final item in speakingProvider.historyItems) {
       DateTime parsedDate;
       try {
-        final cleanDate = item.date.contains('-') ? item.date.split('-')[1].trim() : item.date.trim();
+        final cleanDate = item.date.contains('-')
+            ? item.date.split('-')[1].trim()
+            : item.date.trim();
         final parts = cleanDate.split('/');
-        parsedDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+        parsedDate = DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
       } catch (_) {
         parsedDate = DateTime.now();
       }
 
-      mergedHistory.add(HistoryItem(
-        title: item.partTitle,
-        date: parsedDate,
-        percent: item.score * 10.0,
-        type: 'Luyện tập',
-        icon: Icons.mic_rounded,
-        color: AppColors.blue,
-      ));
+      mergedHistory.add(
+        HistoryItem(
+          title: item.partTitle,
+          date: parsedDate,
+          percent: item.score * 10.0,
+          type: 'Luyện tập',
+          icon: Icons.mic_rounded,
+          color: AppColors.blue,
+        ),
+      );
     }
 
     // 2. Map Writing history
@@ -235,14 +246,18 @@ class _HomeScreenState extends State<HomeScreen> {
       final label = item.taskTypeLabel == '-' ? 'Writing' : item.taskTypeLabel;
       final title = partNumber > 0 ? 'Phần $partNumber - $label' : label;
 
-      mergedHistory.add(HistoryItem(
-        title: title,
-        date: item.submittedAt,
-        percent: item.aiScore != null ? (item.aiScore!.toDouble() * 10.0) : 0.0,
-        type: 'Luyện tập',
-        icon: Icons.draw_rounded,
-        color: AppColors.purple,
-      ));
+      mergedHistory.add(
+        HistoryItem(
+          title: title,
+          date: item.submittedAt,
+          percent: item.aiScore != null
+              ? (item.aiScore!.toDouble() * 10.0)
+              : 0.0,
+          type: 'Luyện tập',
+          icon: Icons.draw_rounded,
+          color: AppColors.purple,
+        ),
+      );
     }
 
     // 3. Map Listening history
@@ -265,14 +280,18 @@ class _HomeScreenState extends State<HomeScreen> {
           partTitle = 'Phần ${item.part}';
       }
 
-      mergedHistory.add(HistoryItem(
-        title: partTitle,
-        date: item.date,
-        percent: item.totalCount > 0 ? (item.correctCount * 100.0 / item.totalCount) : 0.0,
-        type: 'Luyện tập',
-        icon: Icons.headphones_rounded,
-        color: AppColors.primary,
-      ));
+      mergedHistory.add(
+        HistoryItem(
+          title: partTitle,
+          date: item.date,
+          percent: item.totalCount > 0
+              ? (item.correctCount * 100.0 / item.totalCount)
+              : 0.0,
+          type: 'Luyện tập',
+          icon: Icons.headphones_rounded,
+          color: AppColors.primary,
+        ),
+      );
     }
 
     final List<HistoryItem> finalPracticeHistory;
@@ -287,26 +306,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 1. Map Speaking Exam History
     for (final item in examProvider.speakingExamHistories) {
-      mergedExamHistory.add(HistoryItem(
-        title: item.examTitle,
-        date: item.date,
-        percent: (item.toeicScore / 200.0) * 100.0,
-        type: 'Thi',
-        icon: Icons.mic_rounded,
-        color: AppColors.blue,
-      ));
+      mergedExamHistory.add(
+        HistoryItem(
+          title: item.examTitle,
+          date: item.date,
+          percent: (item.toeicScore / 200.0) * 100.0,
+          type: 'Thi',
+          icon: Icons.mic_rounded,
+          color: AppColors.blue,
+        ),
+      );
     }
 
     // 2. Map Writing Exam History
     for (final item in examProvider.writingExamHistories) {
-      mergedExamHistory.add(HistoryItem(
-        title: item.examTitle,
-        date: item.date,
-        percent: (item.toeicScore / 200.0) * 100.0,
-        type: 'Thi',
-        icon: Icons.draw_rounded,
-        color: AppColors.purple,
-      ));
+      mergedExamHistory.add(
+        HistoryItem(
+          title: item.examTitle,
+          date: item.date,
+          percent: (item.toeicScore / 200.0) * 100.0,
+          type: 'Thi',
+          icon: Icons.draw_rounded,
+          color: AppColors.purple,
+        ),
+      );
     }
 
     final List<HistoryItem> finalExamHistory;
@@ -333,7 +356,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Icon Lửa Streak
                 Row(
                   children: [
-                    const Icon(Boxicons.bxs_flame, color: Colors.white, size: 20),
+                    const Icon(
+                      Boxicons.bxs_flame,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '$streak',
@@ -349,7 +376,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Icon Điểm EP
                 Row(
                   children: [
-                    const Icon(Boxicons.bxs_star, color: Colors.white, size: 18),
+                    const Icon(
+                      Boxicons.bxs_star,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '$ep EP',
@@ -383,14 +414,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 // ── Sổ tay ───────────────────────────────────
                 NotebookSection(
                   vocabularyCount: vocabDueCount,
-                  questionCount: 0,          // TODO: lấy từ DB
+                  questionCount: 0, // TODO: lấy từ DB
                   onVocabReview: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const VocabularyHubScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const VocabularyHubScreen(),
+                      ),
                     ).then((_) {
                       if (mounted) {
-                        context.read<VocabularyProvider>().fetchHubStats(forceRefresh: true);
+                        context.read<VocabularyProvider>().fetchHubStats(
+                          forceRefresh: true,
+                        );
                       }
                     });
                   },
@@ -414,50 +449,98 @@ class _HomeScreenState extends State<HomeScreen> {
           const SectionTitle(title: 'luyện tập 4 kỹ năng toiec'),
           const SizedBox(height: 14),
           Row(
-                children: _practiceItems
-                .map((e) => Expanded(
-              child: SkillCard(
-                label: e.label, icon: e.icon,
-                iconColor: e.color, iconBg: e.bg,
-                progress  : e.progress,
-                onTap: () {
-                  if (e.label == 'Đọc Hiểu') {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => ReadingScreen(practiceHistory: _practiceHistory),
-                    ));
-                  } else if (e.label == 'Nghe Hiểu') {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const ListeningScreen(),
-                    )).then((_) {
-                      if (mounted) {
-                        context.read<UserProvider>().fetchProfile(forceRefresh: true);
-                        context.read<ListeningProvider>().fetchHistory();
-                      }
-                    });
-                  } else if (e.label == 'Viết') {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const WritingScreen(),
-                    )).then((_) {
-                      if (mounted) {
-                        context.read<UserProvider>().fetchProfile(forceRefresh: true);
-                        context.read<WritingProvider>().fetchHistory();
-                        context.read<ExamProvider>().fetchWritingExamHistory();
-                      }
-                    });
-                  } else if (e.label == 'Luyện Nói') {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => const SpeakingScreen(),
-                    )).then((_) {
-                      if (mounted) {
-                        context.read<UserProvider>().fetchProfile(forceRefresh: true);
-                        context.read<SpeakingProvider>().fetchHistory();
-                        context.read<ExamProvider>().fetchSpeakingExamHistory();
-                      }
-                    });
-                  }
-                },
-              ),
-            ))
+            children: _practiceItems
+                .map(
+                  (e) => Expanded(
+                    child: SkillCard(
+                      label: e.label,
+                      icon: e.icon,
+                      iconColor: e.color,
+                      iconBg: e.bg,
+                      progress: e.progress,
+                      onTap: () {
+                        if (e.label == 'Đọc Hiểu') {
+                          Navigator.of(context)
+                              .push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ReadingScreen(),
+                                ),
+                              )
+                              .then((_) {
+                                if (mounted) {
+                                  context.read<UserProvider>().fetchProfile(
+                                    forceRefresh: true,
+                                  );
+                                  context
+                                      .read<ReadingPart5Provider>()
+                                      .fetchHistory();
+                                  context
+                                      .read<ReadingPart6Provider>()
+                                      .fetchHistory();
+                                  context
+                                      .read<ReadingPart7Provider>()
+                                      .fetchHistory();
+                                }
+                              });
+                        } else if (e.label == 'Nghe Hiểu') {
+                          Navigator.of(context)
+                              .push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ListeningScreen(),
+                                ),
+                              )
+                              .then((_) {
+                                if (mounted) {
+                                  context.read<UserProvider>().fetchProfile(
+                                    forceRefresh: true,
+                                  );
+                                  context
+                                      .read<ListeningProvider>()
+                                      .fetchHistory();
+                                }
+                              });
+                        } else if (e.label == 'Viết') {
+                          Navigator.of(context)
+                              .push(
+                                MaterialPageRoute(
+                                  builder: (_) => const WritingScreen(),
+                                ),
+                              )
+                              .then((_) {
+                                if (mounted) {
+                                  context.read<UserProvider>().fetchProfile(
+                                    forceRefresh: true,
+                                  );
+                                  context
+                                      .read<WritingProvider>()
+                                      .fetchHistory();
+                                  context
+                                      .read<ExamProvider>()
+                                      .fetchWritingExamHistory();
+                                }
+                              });
+                        } else if (e.label == 'Luyện Nói') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SpeakingScreen(),
+                            ),
+                          ).then((_) {
+                            if (mounted) {
+                              context.read<UserProvider>().fetchProfile(
+                                forceRefresh: true,
+                              );
+                              context.read<SpeakingProvider>().fetchHistory();
+                              context
+                                  .read<ExamProvider>()
+                                  .fetchSpeakingExamHistory();
+                            }
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -493,8 +576,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ).then((_) {
                             if (mounted) {
-                              context.read<ExamProvider>().fetchSpeakingExamHistory();
-                              context.read<ExamProvider>().fetchWritingExamHistory();
+                              context
+                                  .read<ExamProvider>()
+                                  .fetchSpeakingExamHistory();
+                              context
+                                  .read<ExamProvider>()
+                                  .fetchWritingExamHistory();
                             }
                           });
                         } else if (e.label == 'Từ Vựng') {

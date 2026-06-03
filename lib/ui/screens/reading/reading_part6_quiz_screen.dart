@@ -68,7 +68,10 @@ class _ReadingPart6QuizScreenState extends State<ReadingPart6QuizScreen> {
       final answers = <String, int?>{widget.passage.questions[qIndex].id: sel};
       try {
         final res = await provider.submitAnswers(answers);
-        final found = res.details.firstWhere((d) => d.questionId == widget.passage.questions[qIndex].id, orElse: () => QuestionResult6(questionId: widget.passage.questions[qIndex].id, selectedOption: sel != null ? String.fromCharCode(65 + (sel as int)) : null, correctAnswer: null, isCorrect: false));
+        final found = res.details.firstWhere(
+          (d) => d.questionId == widget.passage.questions[qIndex].id,
+          orElse: () => QuestionResult(questionId: widget.passage.questions[qIndex].id, selectedOption: sel != null ? String.fromCharCode(65 + (sel as int)) : null, correctAnswer: null, isCorrect: false),
+        );
         int? correctIdx;
         if (found.correctAnswer != null && (found.correctAnswer as String).isNotEmpty) {
           final letter = (found.correctAnswer as String).toUpperCase();

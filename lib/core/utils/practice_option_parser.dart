@@ -71,4 +71,27 @@ class PracticeOptionParser {
 
     return trimmed.toUpperCase();
   }
+
+  /// Robust comparison: given a selected key like 'A' and the raw correct answer
+  /// from backend (may be 'A', 'A.', '1', or full option text), determine
+  /// whether the selection is correct. Falls back to comparing option text.
+  static bool isSelectionCorrect(String selectedKey, String rawCorrect, List<String> options) {
+    if (selectedKey.isEmpty) return false;
+    final sel = selectedKey.trim().toUpperCase();
+    final correctKey = normalizeCorrectKey(rawCorrect, options: options);
+    if (correctKey.isNotEmpty && correctKey.length == 1 && 'ABCD'.contains(correctKey)) {
+      return sel == correctKey;
+    }
+
+    // If correct key couldn't be resolved to a letter, try matching by text
+    final selIndex = sel.codeUnitAt(0) - 65; // A -> 0
+    if (selIndex >= 0 && selIndex < options.length) {
+      final selectedText = displayText(options[selIndex]).toLowerCase();
+      final correctTrim = rawCorrect.trim().toLowerCase();
+      if (selectedText == correctTrim) return true;
+      if (selectedText.contains(correctTrim) || correctTrim.contains(selectedText)) return true;
+    }
+
+    return false;
+  }
 }

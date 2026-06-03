@@ -1,13 +1,40 @@
 import 'package:dio/dio.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/auth_service.dart';
 import '../models/reading_part5_model.dart';
 
 class ReadingPart5Repository {
   final Dio _dio = Dio();
+  final AuthService _authService = AuthService();
+
+  Future<Options> _getAuthOptions() async {
+    final token = await _authService.getIdToken();
+    return Options(
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+  }
 
   Future<List<ReadingPart5Question>> getQuestions() async {
     try {
-      final response = await _dio.get('${AppConstants.baseUrl}/reading/part5/questions');
+      // Try multiple common endpoint shapes to be resilient to backend changes
+      Response response;
+      try {
+        response = await _dio.get('${AppConstants.baseUrl}/reading/part5/questions');
+      } catch (e) {
+        try {
+          response = await _dio.get('${AppConstants.baseUrl}/reading/part/5');
+        } catch (e2) {
+          try {
+            response = await _dio.get('${AppConstants.baseUrl}/reading/questions/5');
+          } catch (e3) {
+            // Last resort: try plural base reading endpoint
+            response = await _dio.get('${AppConstants.baseUrl}/reading/5/questions');
+          }
+        }
+      }
+
       final res = response.data;
       // Debug log
       // print the raw response for easier debugging
@@ -33,7 +60,12 @@ class ReadingPart5Repository {
 
       return list.map((e) => ReadingPart5Question.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      throw Exception('Lỗi khi tải câu hỏi Part5: $e');
+      // If any endpoint returns a 4xx/5xx, avoid throwing during preload —
+      // return an empty list so the app can continue and show fallback UI.
+      // Log the error for debugging.
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getQuestions failed: $e');
+      return <ReadingPart5Question>[];
     }
   }
 
@@ -101,6 +133,142 @@ class ReadingPart5Repository {
       throw Exception('Lỗi khi gửi đáp án Part5: ${d.message} ${serverMsg.isNotEmpty ? '- server: $serverMsg' : ''}');
     } catch (e) {
       throw Exception('Lỗi khi gửi đáp án Part5: $e');
+    }
+  }
+
+  Future<int> getCountByPart() async {
+    try {
+      // Try several possible count endpoints used by backend
+      try {
+        final response = await _dio.get('${AppConstants.baseUrl}/reading/part5/count');
+        final data = response.data as Map<String, dynamic>;
+        return (data['count'] as num?)?.toInt() ?? 0;
+      } catch (_) {}
+
+      try {
+        final response = await _dio.get('${AppConstants.baseUrl}/reading/count/5');
+        final data = response.data as Map<String, dynamic>;
+        return (data['count'] as num?)?.toInt() ?? 0;
+      } catch (_) {}
+
+      try {
+        final response = await _dio.get('${AppConstants.baseUrl}/reading/count?part=5');
+        final data = response.data as Map<String, dynamic>;
+        return (data['count'] as num?)?.toInt() ?? 0;
+      } catch (_) {}
+
+      // Fallback: fetch full questions and return length
+      final list = await getQuestions();
+      return list.length;
+    } catch (e) {
+      throw Exception('Lỗi khi tải số câu part 5: $e');
+    }
+  }
+
+  Future<List<ReadingPart5HistoryModel>> getHistory() async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/reading/part5/history',
+        options: options,
+      );
+      final raw = response.data;
+
+      // Debug log
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory raw type: ${raw.runtimeType}, value: $raw');
+
+      List<dynamic> dataList = [];
+      if (raw is List) {
+        dataList = raw;
+      } else if (raw is Map) {
+        // Try common keys first
+        if (raw['data'] is List) {
+          dataList = raw['data'];
+        } else if (raw['items'] is List) {
+          dataList = raw['items'];
+        } else if (raw['history'] is List) {
+          dataList = raw['history'];
+        } else if (raw['result'] is List) {
+          dataList = raw['result'];
+        } else {
+          // Try to find first list value
+          final found = raw.values.firstWhere(
+            (v) => v is List,
+            orElse: () => null,
+          );
+          if (found is List) dataList = found;
+        }
+      }
+
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory dataList length: ${dataList.length}');
+
+      final result = dataList
+          .map((json) => ReadingPart5HistoryModel.fromJson(json))
+          .toList();
+
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory result length: ${result.length}');
+
+      return result;
+    } catch (e) {
+      // ignore: avoid_print
+      print('ReadingPart5Repository.getHistory error: $e');
+      throw Exception('Lỗi khi tải lịch sử luyện tập Reading Part 5: $e');
+    }
+  }
+
+  Future<String> saveHistory({
+    required int correctCount,
+    required int totalCount,
+    required double percent,
+    required List<String> incorrectQuestionIds,
+    required Map<String, String> selectedAnswers,
+  }) async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/reading/part5/history',
+        data: {
+          'correctCount': correctCount,
+          'totalCount': totalCount,
+          'percent': percent,
+          'incorrectQuestionIds': incorrectQuestionIds,
+          'selectedAnswers': selectedAnswers,
+        },
+        options: options,
+      );
+
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory response type: ${response.data.runtimeType}');
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory response data: ${response.data}');
+
+      final res = response.data;
+      // Handle nested response { data: { id: '...' } }
+      if (res is Map<String, dynamic>) {
+        if (res['data'] is Map && res['data']['id'] != null) {
+          final id = res['data']['id'].toString();
+          // ignore: avoid_print
+          print('ReadingPart5Repository.saveHistory: id from nested data: $id');
+          return id;
+        }
+        if (res['id'] != null) {
+          final id = res['id'].toString();
+          // ignore: avoid_print
+          print('ReadingPart5Repository.saveHistory: id from top-level: $id');
+          return id;
+        }
+      }
+
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory: no id found, returning empty string');
+      return '';
+    } catch (e) {
+      // ignore: avoid_print
+      print('ReadingPart5Repository.saveHistory error: $e');
+      throw Exception('Lỗi khi lưu lịch sử luyện tập Reading Part 5: $e');
     }
   }
 }

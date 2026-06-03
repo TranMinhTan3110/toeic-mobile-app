@@ -35,7 +35,7 @@ class _ReadingPart7MultiQuizScreenState extends State<ReadingPart7MultiQuizScree
     for (var i = _current; i < widget.passages.length; i++) {
       final passage = widget.passages[i];
       final result = await Navigator.of(context).push<Map>(MaterialPageRoute(
-        builder: (_) => ReadingPart7QuizScreen(passage: passage, startIndex: 0, returnResultMap: true),
+        builder: (_) => ReadingPart7QuizScreen(passage: passage, startIndex: 0, showResultOnFinish: false, returnResultMap: true),
       ));
 
       if (result == null || !result.containsKey('score') || !result.containsKey('total')) {
@@ -90,3 +90,4 @@ class _ReadingPart7MultiQuizScreenState extends State<ReadingPart7MultiQuizScree
     );
   }
 }
+

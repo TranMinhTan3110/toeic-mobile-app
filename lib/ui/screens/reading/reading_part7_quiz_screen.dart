@@ -10,11 +10,16 @@ import '../../widgets/common/practice_result_view.dart';
 class ReadingPart7QuizScreen extends StatefulWidget {
   final ReadingPart7Passage passage;
   final int startIndex;
-  /// When true, return result map via Navigator.pop instead of showing
-  /// the built-in result view. Used by multi-passages flow.
+  final bool showResultOnFinish;
   final bool returnResultMap;
 
-  const ReadingPart7QuizScreen({super.key, required this.passage, this.startIndex = 0, this.returnResultMap = false});
+  const ReadingPart7QuizScreen({
+    super.key,
+    required this.passage,
+    this.startIndex = 0,
+    this.showResultOnFinish = true,
+    this.returnResultMap = false,
+  });
 
   @override
   State<ReadingPart7QuizScreen> createState() => _ReadingPart7QuizScreenState();
@@ -60,7 +65,10 @@ class _ReadingPart7QuizScreenState extends State<ReadingPart7QuizScreen> {
       final answers = <String, int?>{widget.passage.questions[qIndex].id: sel};
       try {
         final res = await provider.submitAnswers(answers);
-        final found = res.details.firstWhere((d) => d.questionId == widget.passage.questions[qIndex].id, orElse: () => QuestionResult7(questionId: widget.passage.questions[qIndex].id, selectedOption: sel != null ? String.fromCharCode(65 + (sel as int)) : null, correctAnswer: null, isCorrect: false));
+        final found = res.details.firstWhere(
+          (d) => d.questionId == widget.passage.questions[qIndex].id,
+          orElse: () => QuestionResult7(questionId: widget.passage.questions[qIndex].id, selectedOption: sel != null ? String.fromCharCode(65 + (sel as int)) : null, correctAnswer: null, isCorrect: false),
+        );
         int? correctIdx;
         if (found.correctAnswer != null && (found.correctAnswer as String).isNotEmpty) {
           final letter = (found.correctAnswer as String).toUpperCase();
@@ -95,8 +103,10 @@ class _ReadingPart7QuizScreenState extends State<ReadingPart7QuizScreen> {
 
         if (widget.returnResultMap) {
           Navigator.of(context).pop({'score': _score, 'total': widget.passage.questions.length});
-        } else {
+        } else if (widget.showResultOnFinish) {
           Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => resultView));
+        } else {
+          Navigator.of(context).pop({'score': _score, 'total': widget.passage.questions.length});
         }
       }
     }
@@ -141,7 +151,6 @@ class _ReadingPart7QuizScreenState extends State<ReadingPart7QuizScreen> {
       appBar: CustomAppBar(title: 'Part 7 - Câu ${_currentPage + 1}', centerTitle: true),
       backgroundColor: AppColors.background,
       body: Column(children: [
-        // Passage area: constrain height and make scrollable for long passages
         Container(
           width: double.infinity,
           margin: const EdgeInsets.all(12),

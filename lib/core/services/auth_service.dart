@@ -120,12 +120,141 @@ class AuthService {
     }
   }
 
-  // (Tuỳ chọn) Hàm reset mật khẩu
+  // (Tuỳ chọn) Hàm gửi OTP cho reset mật khẩu
+  /// Gửi mã OTP tới email để reset mật khẩu
+  Future<void> sendPasswordResetOtp(String email) async {
+    try {
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/Auth/send-reset-otp',
+        data: {'email': email},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint("Mã OTP đã được gửi tới email");
+      } else {
+        throw Exception(response.data['message'] ?? 'Gửi OTP thất bại');
+      }
+    } on DioException catch (e) {
+      debugPrint("Lỗi gửi OTP: ${e.message}");
+      rethrow;
+    } catch (e) {
+      debugPrint("Lỗi gửi OTP: $e");
+      rethrow;
+    }
+  }
+
+  /// Xác nhận OTP code và lấy reset token
+  Future<String> verifyResetOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/Auth/verify-reset-otp',
+        data: {
+          'email': email,
+          'otp': otp,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final resetToken = response.data['resetToken'];
+        debugPrint("OTP xác nhận thành công");
+        return resetToken;
+      } else {
+        throw Exception(response.data['message'] ?? 'Xác nhận OTP thất bại');
+      }
+    } on DioException catch (e) {
+      debugPrint("Lỗi xác nhận OTP: ${e.message}");
+      rethrow;
+    } catch (e) {
+      debugPrint("Lỗi xác nhận OTP: $e");
+      rethrow;
+    }
+  }
+
+  /// Reset mật khẩu sau khi OTP được xác nhận
+  Future<void> resetPasswordWithOtp({
+    required String email,
+    required String otp,
+    required String newPassword,
+    required String resetToken,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/Auth/reset-password',
+        data: {
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+          'resetToken': resetToken,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint("Mật khẩu đã được reset thành công");
+      } else {
+        throw Exception(response.data['message'] ?? 'Reset mật khẩu thất bại');
+      }
+    } on DioException catch (e) {
+      debugPrint("Lỗi reset mật khẩu: ${e.message}");
+      rethrow;
+    } catch (e) {
+      debugPrint("Lỗi reset mật khẩu: $e");
+      rethrow;
+    }
+  }
+
+  /// (Deprecated) Reset password cách cũ - sử dụng email link từ Firebase
+  /// Vui lòng sử dụng sendPasswordResetOtp() thay thế
+  @Deprecated('Use sendPasswordResetOtp() instead')
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } catch (e) {
       debugPrint("Lỗi gửi email reset: $e");
+      rethrow;
+    }
+  }
+
+  /// (Deprecated) Reset password cách cũ
+  /// Vui lòng sử dụng verifyResetOtp() và resetPasswordWithOtp() thay thế
+  @Deprecated('Use verifyResetOtp() and resetPasswordWithOtp() instead')
+  Future<void> resetPasswordWithCode({
+    required String email,
+    required String newPassword,
+  }) async {
+    try {
+      // Cách 1: Nếu user đã đăng nhập, có thể thay đổi password trực tiếp
+      User? user = _auth.currentUser;
+      if (user != null && user.email == email) {
+        await user.updatePassword(newPassword);
+        return;
+      }
+
+      // Cách 2: Sử dụng email link từ Firebase (oobCode)
+      // Bạn sẽ nhận được oobCode từ email reset link
+      // Cách này yêu cầu user click link trong email trước
+      // Sau đó extract oobCode từ URL: ?oobCode=...&mode=resetPassword
+
+      // Cách 3: Nếu cần verify code từ custom backend
+      // Gọi API backend để verify code và nhận token
+      // final response = await _dio.post(
+      //   '${AppConstants.baseUrl}/Auth/verify-reset-code',
+      //   data: {
+      //     'email': email,
+      //     'code': verificationCode,
+      //     'newPassword': newPassword,
+      //   },
+      // );
+
+      // Mặc định: Gửi password reset link, user phải click link trong email
+      debugPrint("Vui lòng check email để reset mật khẩu");
+    } on FirebaseAuthException catch (e) {
+      debugPrint("Lỗi reset password: ${e.message}");
+      rethrow;
+    } catch (e) {
+      debugPrint("Lỗi reset password: $e");
       rethrow;
     }
   }
