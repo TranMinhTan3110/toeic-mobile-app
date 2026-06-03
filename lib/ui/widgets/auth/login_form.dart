@@ -8,6 +8,7 @@ class LoginFormWidget extends StatefulWidget {
   final bool isLoading;
   final VoidCallback onToggleObscure;
   final VoidCallback onLogin;
+  final VoidCallback? onForgotPassword;
   final String? Function(String?)? emailValidator;
   final String? Function(String?)? passwordValidator;
 
@@ -19,6 +20,7 @@ class LoginFormWidget extends StatefulWidget {
     required this.isLoading,
     required this.onToggleObscure,
     required this.onLogin,
+    this.onForgotPassword,
     this.emailValidator,
     this.passwordValidator,
   });
@@ -118,7 +120,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () {},
+              onPressed: widget.onForgotPassword,
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
