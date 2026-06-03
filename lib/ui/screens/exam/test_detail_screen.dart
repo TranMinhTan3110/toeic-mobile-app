@@ -19,21 +19,20 @@ class TestDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(
         title: 'Chi tiết bài thi',
-        actions: (testData.skill == 'speaking' || testData.skill == 'writing')
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.history_rounded, color: AppColors.appBarFg),
-                  onPressed: () => ExamHistorySheet.show(
-                    context,
-                    examId: testData.id,
-                    examTitle: testData.title,
-                    skill: testData.skill,
-                  ),
-                  tooltip: 'Lịch sử làm đề',
-                ),
-              ]
-            : null,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded, color: AppColors.appBarFg),
+            onPressed: () => ExamHistorySheet.show(
+              context,
+              examId: testData.id,
+              examTitle: testData.title,
+              skill: testData.skill ?? 'listening',
+            ),
+            tooltip: 'Lịch sử làm đề',
+          ),
+        ],
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(

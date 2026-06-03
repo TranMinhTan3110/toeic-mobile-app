@@ -10,6 +10,8 @@ import 'test_detail_screen.dart';
 import 'see_more_screen.dart';
 import '../../widgets/common/custom_app_bar.dart';
 
+import '../../../data/models/full_test_history_model.dart';
+
 class TestListScreen extends StatefulWidget {
   final VoidCallback? onBack;
   const TestListScreen({super.key, this.onBack});
@@ -27,6 +29,7 @@ class _TestListScreenState extends State<TestListScreen> {
       final examProvider = context.read<ExamProvider>();
       examProvider.fetchSpeakingExamHistory();
       examProvider.fetchWritingExamHistory();
+      examProvider.fetchFullTestHistory();
     });
   }
 
@@ -78,6 +81,10 @@ class _TestListScreenState extends State<TestListScreen> {
         final num = int.tryParse(id.substring(13));
         if (num != null) return num.toString();
       }
+      if (id.startsWith('ets_2024_test_')) {
+        final num = int.tryParse(id.substring(14));
+        if (num != null) return num.toString();
+      }
       return id;
     }
     
@@ -97,6 +104,14 @@ class _TestListScreenState extends State<TestListScreen> {
     matches.sort((a, b) => b.date.compareTo(a.date));
     return matches.first.toeicScore;
   }
+
+  double? _getLatestFullTestScore(String examId, List<FullTestHistoryModel> histories) {
+    final matches = histories.where((h) => _isSameExam(h.examId, examId)).toList();
+    if (matches.isEmpty) return null;
+    matches.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+    return matches.first.totalScore.toDouble();
+  }
+
 
 
   @override
@@ -225,6 +240,8 @@ class _TestListScreenState extends State<TestListScreen> {
           score = _getLatestSpeakingScore(test.id, examProvider.speakingExamHistories);
         } else if (test.skill == 'writing') {
           score = _getLatestWritingScore(test.id, examProvider.writingExamHistories);
+        } else {
+          score = _getLatestFullTestScore(test.id, examProvider.fullTestHistories);
         }
 
         return Stack(
@@ -241,6 +258,7 @@ class _TestListScreenState extends State<TestListScreen> {
                 );
               },
             ),
+
             if (score != null)
               Positioned(
                 top: -4,

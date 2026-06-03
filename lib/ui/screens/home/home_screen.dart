@@ -56,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<ReadingPart7Provider>().fetchHistory();
         context.read<ExamProvider>().fetchSpeakingExamHistory();
         context.read<ExamProvider>().fetchWritingExamHistory();
+        context.read<ExamProvider>().fetchFullTestHistory();
         // Load thông số từ vựng cần ôn ở sổ tay
         context.read<VocabularyProvider>().fetchHubStats(forceRefresh: true);
       }
@@ -376,6 +377,22 @@ class _HomeScreenState extends State<HomeScreen> {
           type: 'Thi',
           icon: Icons.draw_rounded,
           color: AppColors.purple,
+        ),
+      );
+    }
+
+    // 3. Map Full Test Exam History
+    for (final item in examProvider.fullTestHistories) {
+      mergedExamHistory.add(
+        HistoryItem(
+          title: item.examTitle,
+          date: item.completedAt,
+          percent: item.totalCount > 0
+              ? (item.correctCount * 100.0 / item.totalCount)
+              : 0.0,
+          type: 'Thi',
+          icon: Icons.assignment_rounded,
+          color: AppColors.primary,
         ),
       );
     }

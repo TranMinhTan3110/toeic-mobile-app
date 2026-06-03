@@ -4,6 +4,7 @@ import '../../core/services/auth_service.dart';
 import '../models/listening_question.dart';
 import '../models/speaking_exam_history_model.dart';
 import '../models/writing_exam_history_model.dart';
+import '../models/full_test_history_model.dart';
 
 class ExamRepository {
   final Dio _dio = Dio();
@@ -111,6 +112,89 @@ class ExamRepository {
       return data.map((json) => WritingExamHistoryModel.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Lỗi khi tải lịch sử thi Writing: $e');
+    }
+  }
+
+  // --- FULL TEST EXAM FLOW ---
+
+  Future<FullTestHistoryModel> submitFullTest({
+    required String examId,
+    required String examTitle,
+    required int scoreListening,
+    required int scoreReading,
+    required int totalScore,
+    required int correctCount,
+    required int totalCount,
+    required int timeSpent,
+    required Map<String, String> answers,
+    required Map<String, int> partScores,
+  }) async {
+    try {
+      final authOptions = await _getAuthOptions();
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/exam/history/submit',
+        data: {
+          'examId': examId,
+          'examTitle': examTitle,
+          'scoreListening': scoreListening,
+          'scoreReading': scoreReading,
+          'totalScore': totalScore,
+          'correctCount': correctCount,
+          'totalCount': totalCount,
+          'timeSpent': timeSpent,
+          'answers': answers,
+          'partScores': partScores,
+        },
+        options: authOptions,
+      );
+      if (response.data['success'] == true) {
+        final String historyId = response.data['id'];
+        return FullTestHistoryModel(
+          id: historyId,
+          userId: '',
+          examId: examId,
+          examTitle: examTitle,
+          scoreListening: scoreListening,
+          scoreReading: scoreReading,
+          totalScore: totalScore,
+          correctCount: correctCount,
+          totalCount: totalCount,
+          timeSpent: timeSpent,
+          completedAt: DateTime.now(),
+          answers: answers,
+          partScores: partScores,
+        );
+      }
+      throw Exception('Lỗi nộp bài thi: Response success false');
+    } catch (e) {
+      throw Exception('Lỗi khi nộp bài thi Full Test: $e');
+    }
+  }
+
+  Future<List<FullTestHistoryModel>> getFullTestHistory() async {
+    try {
+      final authOptions = await _getAuthOptions();
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/exam/history',
+        options: authOptions,
+      );
+      final List<dynamic> data = response.data;
+      return data.map((json) => FullTestHistoryModel.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Lỗi khi tải lịch sử thi Full Test: $e');
+    }
+  }
+
+  Future<FullTestHistoryModel> getFullTestHistoryById(String id) async {
+    try {
+      final authOptions = await _getAuthOptions();
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/exam/history/$id',
+        options: authOptions,
+      );
+      return FullTestHistoryModel.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Lỗi khi tải chi tiết lịch sử thi Full Test: $e');
     }
   }
 }

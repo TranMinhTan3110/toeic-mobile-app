@@ -35,6 +35,10 @@ class SeeMoreScreen extends StatelessWidget {
         final num = int.tryParse(id.substring(13));
         if (num != null) return num.toString();
       }
+      if (id.startsWith('ets_2024_test_')) {
+        final num = int.tryParse(id.substring(14));
+        if (num != null) return num.toString();
+      }
       return id;
     }
     return normalize(id1) == normalize(id2);
@@ -75,6 +79,15 @@ class SeeMoreScreen extends StatelessWidget {
               status = TestStatus.completed;
               score = matches.first.toeicScore.round();
             }
+          } else {
+            final matches = provider.fullTestHistories
+                .where((h) => _isSameExam(h.examId, test.id))
+                .toList();
+            if (matches.isNotEmpty) {
+              matches.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+              status = TestStatus.completed;
+              score = matches.first.totalScore;
+            }
           }
 
           final durationStr = test.duration != null ? '${test.duration} phút' : null;
@@ -83,6 +96,7 @@ class SeeMoreScreen extends StatelessWidget {
             testName: test.title,
             duration: durationStr,
             questionCount: test.questionCount,
+
             status: status,
             score: score,
             onTap: () {
