@@ -1,9 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../data/models/reading_part7_model.dart';
 import '../data/repositories/reading_part7_repository.dart';
+import '../data/repositories/user_repository.dart';
+import 'user_provider.dart';
 
 class ReadingPart7Provider with ChangeNotifier {
   final ReadingPart7Repository _repo = ReadingPart7Repository();
+
+  UserProvider? _userProvider;
+  void setUserProvider(UserProvider up) => _userProvider = up;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -238,6 +243,27 @@ class ReadingPart7Provider with ChangeNotifier {
 
       _history.insert(0, newHistory);
       notifyListeners();
+
+      // Ghi nhận EP cho Reading và cập nhật UI ngay lập tức
+      if (id.isNotEmpty && correctCount > 0) {
+        try {
+          final userRepository = UserRepository();
+          final epResult = await userRepository.recordActivity(
+            activityType: 'ReadingComplete',
+            referenceId: id,
+            correctAnswers: correctCount,
+            totalAnswers: totalCount,
+          );
+          if (epResult != null) {
+            _userProvider?.updateLocalEpAndStreak(epResult);
+            // ignore: avoid_print
+            print('✅ Reading P7 EP: +${epResult.epAwarded} EP');
+          }
+        } catch (epError) {
+          // ignore: avoid_print
+          print('Lỗi ghi nhận EP cho Reading P7: $epError');
+        }
+      }
 
       return id;
     } catch (e) {

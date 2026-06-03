@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../data/models/listening_question.dart';
+import '../data/models/speaking_exam_history_model.dart';
+import '../data/models/writing_exam_history_model.dart';
 import '../data/repositories/exam_repository.dart';
 
 class ExamProvider with ChangeNotifier {
@@ -22,6 +24,13 @@ class ExamProvider with ChangeNotifier {
 
   int _totalQuestions = 0;
   int get totalQuestions => _totalQuestions;
+
+  // --- Speaking & Writing Exam Histories ---
+  List<SpeakingExamHistoryModel> _speakingExamHistories = [];
+  List<SpeakingExamHistoryModel> get speakingExamHistories => _speakingExamHistories;
+
+  List<WritingExamHistoryModel> _writingExamHistories = [];
+  List<WritingExamHistoryModel> get writingExamHistories => _writingExamHistories;
 
   Future<void> fetchExamQuestions(String examId) async {
     _isLoading = true;
@@ -65,6 +74,100 @@ class ExamProvider with ChangeNotifier {
 
     } catch (e) {
       _errorMessage = 'Lỗi kết nối API: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // --- SPEAKING EXAM ACTIONS ---
+
+  Future<SpeakingExamHistoryModel> submitSpeakingExam({
+    required String examSetId,
+    required String examTitle,
+    required List<Map<String, dynamic>> tasks,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _repository.submitSpeakingExam(
+        examSetId: examSetId,
+        examTitle: examTitle,
+        tasks: tasks,
+      );
+      // Cập nhật lại list lịch sử tại local sau khi nộp
+      await fetchSpeakingExamHistory();
+      return result;
+    } catch (e) {
+      _errorMessage = 'Lỗi nộp bài thi Speaking: $e';
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchSpeakingExamHistory() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _speakingExamHistories = await _repository.getSpeakingExamHistory();
+      debugPrint('✅ [ExamProvider] Speaking exam histories fetched: ${_speakingExamHistories.length}');
+    } catch (e) {
+      _errorMessage = 'Lỗi tải lịch sử thi Speaking: $e';
+      debugPrint('❌ [ExamProvider] Error fetching Speaking exam history: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // --- WRITING EXAM ACTIONS ---
+
+  Future<WritingExamHistoryModel> submitWritingExam({
+    required String examSetId,
+    required String examTitle,
+    required int timeSpent,
+    required List<Map<String, dynamic>> tasks,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _repository.submitWritingExam(
+        examSetId: examSetId,
+        examTitle: examTitle,
+        timeSpent: timeSpent,
+        tasks: tasks,
+      );
+      // Cập nhật lại list lịch sử tại local sau khi nộp
+      await fetchWritingExamHistory();
+      return result;
+    } catch (e) {
+      _errorMessage = 'Lỗi nộp bài thi Writing: $e';
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchWritingExamHistory() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _writingExamHistories = await _repository.getWritingExamHistory();
+      debugPrint('✅ [ExamProvider] Writing exam histories fetched: ${_writingExamHistories.length}');
+    } catch (e) {
+      _errorMessage = 'Lỗi tải lịch sử thi Writing: $e';
+      debugPrint('❌ [ExamProvider] Error fetching Writing exam history: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -89,6 +89,8 @@ class _ReadingScreenState extends State<ReadingScreen> {
     }
 
     final accuracyPercent = totalDone > 0 ? (totalCorrect * 100.0 / totalDone) : 0.0;
+    final rawScore = totalDone > 0 ? (totalCorrect * 495.0 / totalDone) : 0.0;
+    final estimatedScore = ((rawScore / 5).round() * 5).clamp(5, 495);
 
     // Gộp lịch sử từ cả 3 part, sắp xếp theo thời gian mới nhất trước
     final allHistory = [
@@ -101,111 +103,24 @@ class _ReadingScreenState extends State<ReadingScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
+      appBar: const CustomAppBar(title: 'Đọc Hiểu'),
+      body: ListView(
         children: [
-          const CustomAppBar(title: 'Đọc Hiểu', centerTitle: true),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSummaryCard(totalDone, totalCorrect, accuracyPercent),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                    child: Column(
-                      children: const [
-                        SectionTitle(title: 'Phần đọc hiểu'),
-                        SizedBox(height: 14),
-                      ],
-                    ),
-                  ),
-                  _buildSectionsList(context, partStats),
-                  const SizedBox(height: 12),
-                  // Lịch sử làm bài
-                  _buildHistorySection(context, recentHistory, allHistory),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
+          // ── Stats card ─────────────────────────────────────────
+          _StatsCard(
+            totalDone: totalDone,
+            totalCorrect: totalCorrect,
+            accuracyPercent: accuracyPercent,
+            estimatedScore: estimatedScore,
           ),
-        ],
-      ),
-    );
-  }
+          const Divider(color: AppColors.divider, height: 1),
+          const SizedBox(height: 8),
 
-  Widget _buildSummaryCard(int totalDone, int totalCorrect, double accuracyPercent) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                color: AppColors.primaryPale,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.menu_book, size: 36, color: AppColors.primary),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Text('Số câu đã làm', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 8),
-                      Text('$totalDone', style: const TextStyle(fontWeight: FontWeight.w800)),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Text('Trả lời đúng', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 8),
-                      Text('$totalCorrect', style: const TextStyle(fontWeight: FontWeight.w800)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('Hoàn thành', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: totalDone > 0 ? accuracyPercent / 100 : 0,
-                      minHeight: 8,
-                      backgroundColor: AppColors.primaryPale,
-                      valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionsList(BuildContext context, Map<int, Map<String, int>> partStats) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: Column(
-        children: [
+          // ── Part cards ─────────────────────────────────────────
           _buildPartCard(
             context: context,
             partNumber: 5,
-            title: 'Phần 5 - Điền Vào Câu',
+            title: 'Part 5 – Điền Vào Câu',
             correctCount: partStats[5]!['correct']!,
             totalCount: partStats[5]!['total']!,
             onTap: () {
@@ -215,11 +130,10 @@ class _ReadingScreenState extends State<ReadingScreen> {
               });
             },
           ),
-          const SizedBox(height: 12),
           _buildPartCard(
             context: context,
             partNumber: 6,
-            title: 'Phần 6 - Điền Vào Đoạn Văn',
+            title: 'Part 6 – Điền Vào Đoạn Văn',
             correctCount: partStats[6]!['correct']!,
             totalCount: partStats[6]!['total']!,
             onTap: () {
@@ -229,11 +143,10 @@ class _ReadingScreenState extends State<ReadingScreen> {
               });
             },
           ),
-          const SizedBox(height: 12),
           _buildPartCard(
             context: context,
             partNumber: 7,
-            title: 'Phần 7 - Đọc Hiểu Đoạn Văn',
+            title: 'Part 7 – Đọc Hiểu Đoạn Văn',
             correctCount: partStats[7]!['correct']!,
             totalCount: partStats[7]!['total']!,
             onTap: () {
@@ -243,6 +156,10 @@ class _ReadingScreenState extends State<ReadingScreen> {
               });
             },
           ),
+
+          // ── Lịch sử làm bài ───────────────────────────────────
+          _buildHistorySection(context, recentHistory, allHistory),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -261,7 +178,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -284,14 +201,14 @@ class _ReadingScreenState extends State<ReadingScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryPale,
+                    gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Text(
                       'P$partNumber',
                       style: const TextStyle(
-                        color: AppColors.primary,
+                        color: AppColors.textOnPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
@@ -498,6 +415,8 @@ class _ReadingScreenState extends State<ReadingScreen> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
+          focusColor: Colors.transparent,
+          hoverColor: Colors.transparent,
           onTap: () {
             // Navigate to the appropriate detail screen based on part number
             Widget detailScreen;
@@ -578,6 +497,170 @@ class _ReadingScreenState extends State<ReadingScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StatsCard extends StatelessWidget {
+  const _StatsCard({
+    required this.totalDone,
+    required this.totalCorrect,
+    required this.accuracyPercent,
+    required this.estimatedScore,
+  });
+
+  final int totalDone;
+  final int totalCorrect;
+  final double accuracyPercent;
+  final int estimatedScore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: AppColors.primary.withOpacity(0.08)),
+      ),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF9F43), Color(0xFFFF5252)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF9F43).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.menu_book_rounded, size: 40, color: Colors.white),
+          ),
+          const SizedBox(width: 20),
+          // Stats
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Số câu đã làm:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$totalDone câu',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Trả lời đúng:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$totalCorrect câu',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Tỷ lệ chính xác:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '${accuracyPercent.toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Ước lượng TOEIC:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '$estimatedScore / 495',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.green,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: totalDone > 0 ? (totalCorrect / totalDone) : 0.0,
+                    minHeight: 8,
+                    backgroundColor: AppColors.primaryLighter.withOpacity(0.5),
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

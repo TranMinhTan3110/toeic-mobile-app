@@ -114,27 +114,47 @@ class _RegisterViewState extends State<RegisterView>
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.primary,
-                                  AppColors.primaryDark,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryDark.withOpacity(0.3),
+                                  color: AppColors.primaryDark.withOpacity(0.15),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
-                            child: const Icon(
-                              Icons.auto_stories_rounded,
-                              color: Colors.white,
-                              size: 28,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.network(
+                                'https://res.cloudinary.com/dlfc5qwhj/image/upload/q_auto/f_auto/v1780328432/Logo/logo-toeic_2.png',
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppColors.primary,
+                                    child: const Icon(
+                                      Icons.auto_stories_rounded,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -356,25 +376,11 @@ class _RegisterViewState extends State<RegisterView>
     setState(() => _isLoading = true);
 
     try {
-      final userCred = await _authService.registerWithEmailPassword(
+      await _authService.registerWithEmailPassword(
         email,
         password,
         displayName: name,
       );
-
-      // StreamBuilder ở main.dart sẽ tự động phát hiện đăng nhập và chuyển trang
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng ký thành công',
-          text: 'Chúc mừng bạn đã gia nhập TOEIC Master! ',
-          onConfirm: () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          },
-        );
-      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'weak-password') {
@@ -399,21 +405,7 @@ class _RegisterViewState extends State<RegisterView>
 
   void _handleGoogleLogin() async {
     try {
-      final user = await _authService.signInWithGoogle();
-      if (user == null) return;
-
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng nhập thành công',
-          text: 'Chào mừng bạn đến với TOEIC Master! ',
-          onConfirm: () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          },
-        );
-      }
+      await _authService.signInWithGoogle();
     } catch (e) {
       if (mounted) {
         showPremiumErrorDialog(

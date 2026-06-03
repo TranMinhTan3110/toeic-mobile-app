@@ -4,9 +4,14 @@ import '../data/models/writing_history_item.dart';
 import '../data/repositories/writing_repository.dart';
 import '../data/models/writing_evaluation_model.dart';
 import '../data/repositories/user_repository.dart';
+import 'user_provider.dart';
 
 class WritingProvider with ChangeNotifier {
   final WritingRepository _repository = WritingRepository();
+
+  /// Tham chiếu đến UserProvider để cập nhật EP ngay lập tức sau khi làm bài
+  UserProvider? _userProvider;
+  void setUserProvider(UserProvider up) => _userProvider = up;
 
   bool _isHistoryLoading = false;
   bool get isHistoryLoading => _isHistoryLoading;
@@ -99,16 +104,20 @@ class WritingProvider with ChangeNotifier {
       );
       await fetchHistory(forceRefresh: true);
 
-      // Ghi nhận EP cho Writing
+      // Ghi nhận EP cho Writing submission và cập nhật UI ngay lập tức
       if (id != null && sessionType == 'practice' && aiScore != null && aiScore > 0) {
         try {
           final userRepository = UserRepository();
-          await userRepository.recordActivity(
+          final epResult = await userRepository.recordActivity(
             activityType: 'WritingComplete',
             referenceId: id,
             correctAnswers: aiScore,
             totalAnswers: 10,
           );
+          if (epResult != null) {
+            _userProvider?.updateLocalEpAndStreak(epResult);
+            debugPrint('✅ Writing EP: +${epResult.epAwarded} EP');
+          }
         } catch (epError) {
           debugPrint('Lỗi ghi nhận EP cho Writing submission: $epError');
         }
@@ -163,16 +172,20 @@ class WritingProvider with ChangeNotifier {
       );
       await fetchHistory(forceRefresh: true);
 
-      // Ghi nhận EP cho Writing
+      // Ghi nhận EP cho Writing session và cập nhật UI ngay lập tức
       if (id != null && sessionType == 'practice' && aiScore != null && aiScore > 0) {
         try {
           final userRepository = UserRepository();
-          await userRepository.recordActivity(
+          final epResult = await userRepository.recordActivity(
             activityType: 'WritingComplete',
             referenceId: id,
             correctAnswers: aiScore,
             totalAnswers: 10,
           );
+          if (epResult != null) {
+            _userProvider?.updateLocalEpAndStreak(epResult);
+            debugPrint('✅ Writing Session EP: +${epResult.epAwarded} EP');
+          }
         } catch (epError) {
           debugPrint('Lỗi ghi nhận EP cho Writing session: $epError');
         }

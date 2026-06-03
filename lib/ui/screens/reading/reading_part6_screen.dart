@@ -158,42 +158,119 @@ class _BottomControls extends StatelessWidget {
     // If there are no passages and we're not loading, hide the controls entirely
     if (!isLoading && maxPassages <= 0) return const SizedBox.shrink();
 
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), decoration: const BoxDecoration(color: Colors.transparent), child: SafeArea(top: false, child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-
-      Row(children: [
-        const Text('Số đoạn', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-        const SizedBox(width: 12),
-        SizedBox(width: 72, child: Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppColors.divider)), padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), child: Builder(builder: (ctx) {
-          final items = <DropdownMenuItem<int>>[];
-          if (maxPassages > 0) {
-            final limit = maxPassages.clamp(1, 30);
-            for (var i = 1; i <= limit; i++) items.add(DropdownMenuItem(value: i, child: Text('$i')));
-            if (maxPassages > 30) items.add(DropdownMenuItem(value: maxPassages, child: const Text('Tất cả')));
-          } else {
-            for (var i = 1; i <= 5; i++) items.add(DropdownMenuItem(value: i, child: Text('$i')));
-          }
-          final hasValue = items.any((it) => it.value == passageCount);
-          final int? displayValue = hasValue ? passageCount : null;
-          return DropdownButton<int>(value: displayValue, hint: const Text('0', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)), isExpanded: true, underline: const SizedBox.shrink(), borderRadius: BorderRadius.circular(6), dropdownColor: AppColors.surface, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12), items: items, onChanged: (v) { if (v != null) onCountChanged(v); });
-        }))),
-      ]),
-      const SizedBox(height: 12),
-      ElevatedButton(onPressed: isLoading ? null : onStart, style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, disabledBackgroundColor: AppColors.primaryLight, padding: const EdgeInsets.symmetric(vertical: 14), elevation: 4, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))), child: Text(isLoading ? 'Đang tải...' : 'Bắt đầu nào', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white))),
-    ])));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Số đoạn',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        )
+                      : maxPassages == 0
+                          ? const Text(
+                              'Không có đoạn văn',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary, fontSize: 14),
+                            )
+                          : DropdownButton<int>(
+                              value: passageCount,
+                              isDense: true,
+                              underline: const SizedBox.shrink(),
+                              borderRadius: BorderRadius.circular(8),
+                              dropdownColor: AppColors.surface,
+                              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                              menuMaxHeight: 250,
+                              items: List.generate(maxPassages, (index) => index + 1)
+                                  .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                                  .toList(),
+                              onChanged: (v) {
+                                if (v != null) onCountChanged(v);
+                              },
+                            ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: isLoading ? null : onStart,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                disabledBackgroundColor: AppColors.primaryLight,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                isLoading ? 'Đang tải...' : 'Bắt đầu nào',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
 class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()..color = AppColors.primary.withOpacity(0.08)..style = PaintingStyle.fill;
-    var path = Path();
-    path.moveTo(0, size.height * 0.3);
-    path.quadraticBezierTo(size.width * 0.25, size.height * 0.2, size.width * 0.5, size.height * 0.3);
-    path.quadraticBezierTo(size.width * 0.75, size.height * 0.4, size.width, size.height * 0.3);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
+    _drawWave(
+        canvas, size, AppColors.primaryLighter.withOpacity(0.5), 0.35, 0.2, 0.6, 0.35);
+    _drawWave(
+        canvas, size, AppColors.primaryLighter.withOpacity(0.3), 0.55, 0.45, 0.65, 0.5);
+  }
+
+  void _drawWave(Canvas canvas, Size size, Color color, double y0, double cy,
+      double cx2, double y1) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, size.height * y0)
+      ..quadraticBezierTo(size.width * 0.25, size.height * cy,
+          size.width * 0.5, size.height * y0)
+      ..quadraticBezierTo(
+          size.width * 0.75, size.height * cx2, size.width, size.height * y1)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
     canvas.drawPath(path, paint);
   }
 

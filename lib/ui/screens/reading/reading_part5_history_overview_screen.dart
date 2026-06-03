@@ -86,31 +86,28 @@ class _ReadingPart5HistoryOverviewScreenState extends State<ReadingPart5HistoryO
         Color borderColor = AppColors.divider;
 
         if (isCorrect) {
-          bgColor = AppColors.success.withOpacity(0.18);
+          bgColor = AppColors.green;
           textColor = Colors.white;
-          borderColor = AppColors.success;
+          borderColor = AppColors.green;
         } else if (isSelected && !isCorrect) {
-          bgColor = AppColors.error.withOpacity(0.18);
+          bgColor = Colors.red;
           textColor = Colors.white;
-          borderColor = AppColors.error;
+          borderColor = Colors.red;
         }
 
         return Container(
           margin: const EdgeInsets.only(left: 10),
-          width: 44,
-          height: 44,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             color: bgColor,
-            border: Border.all(color: borderColor, width: isSelected || isCorrect ? 2.5 : 1.6),
+            border: Border.all(color: borderColor, width: 1.5),
             shape: BoxShape.circle,
-            boxShadow: isSelected || isCorrect
-                ? [BoxShadow(color: borderColor.withOpacity(0.22), blurRadius: 8, offset: const Offset(0, 3))]
-                : null,
           ),
           child: Center(
             child: Text(
               displayNum,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textColor),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor),
             ),
           ),
         );

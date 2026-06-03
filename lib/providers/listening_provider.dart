@@ -3,9 +3,14 @@ import '../data/models/listening_question.dart';
 import '../data/repositories/listening_repository.dart';
 import '../data/models/listening_history_model.dart';
 import '../data/repositories/user_repository.dart';
+import 'user_provider.dart';
 
 class ListeningProvider with ChangeNotifier {
   final ListeningRepository _repository = ListeningRepository();
+
+  /// Tham chiếu đến UserProvider để cập nhật EP ngay lập tức sau khi làm bài
+  UserProvider? _userProvider;
+  void setUserProvider(UserProvider up) => _userProvider = up;
 
   List<ListeningQuestion> _questions = [];
   List<ListeningQuestion> get questions => _questions;
@@ -208,16 +213,20 @@ class ListeningProvider with ChangeNotifier {
       // Reload history
       fetchHistory();
 
-      // Ghi nhận EP cho Listening
+      // Ghi nhận EP cho Listening và cập nhật UI ngay lập tức
       if (id.isNotEmpty && correctCount > 0) {
         try {
           final userRepository = UserRepository();
-          await userRepository.recordActivity(
+          final epResult = await userRepository.recordActivity(
             activityType: 'ListeningComplete',
             referenceId: id,
             correctAnswers: correctCount,
             totalAnswers: totalCount,
           );
+          if (epResult != null) {
+            _userProvider?.updateLocalEpAndStreak(epResult);
+            debugPrint('✅ Listening EP: +${epResult.epAwarded} EP');
+          }
         } catch (epError) {
           debugPrint('Lỗi ghi nhận EP cho Listening: $epError');
         }

@@ -1,9 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../data/models/reading_part5_model.dart';
 import '../data/repositories/reading_part5_repository.dart';
+import '../data/repositories/user_repository.dart';
+import 'user_provider.dart';
 
 class ReadingPart5Provider with ChangeNotifier {
   final ReadingPart5Repository _repo = ReadingPart5Repository();
+
+  UserProvider? _userProvider;
+  void setUserProvider(UserProvider up) => _userProvider = up;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -44,7 +49,9 @@ class ReadingPart5Provider with ChangeNotifier {
       _countCache = _questions.length;
       // debug
       // ignore: avoid_print
-      print('ReadingPart5Provider.fetchQuestions: loaded ${_questions.length} questions');
+      print(
+        'ReadingPart5Provider.fetchQuestions: loaded ${_questions.length} questions',
+      );
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -71,13 +78,16 @@ class ReadingPart5Provider with ChangeNotifier {
   /// Preload data ở background
   void preloadInBackground() {
     if (_questionsCache != null) return; // Đã có rồi
-    _repo.getQuestions().then((list) {
-      _questionsCache = list;
-      _countCache = list.length;
-      notifyListeners();
-    }).catchError((e) {
-      debugPrint('[Preload Reading Part 5] $e');
-    });
+    _repo
+        .getQuestions()
+        .then((list) {
+          _questionsCache = list;
+          _countCache = list.length;
+          notifyListeners();
+        })
+        .catchError((e) {
+          debugPrint('[Preload Reading Part 5] $e');
+        });
   }
 
   /// Đảm bảo dữ liệu được tải vào cache
@@ -124,7 +134,9 @@ class ReadingPart5Provider with ChangeNotifier {
     }
   }
 
-  Future<ReadingPart5SubmitResult> submitAnswers(Map<String, int?> answers) async {
+  Future<ReadingPart5SubmitResult> submitAnswers(
+    Map<String, int?> answers,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -151,7 +163,9 @@ class ReadingPart5Provider with ChangeNotifier {
     try {
       _history = await _repo.getHistory();
       // ignore: avoid_print
-      print('ReadingPart5Provider.fetchHistory: loaded ${_history.length} items');
+      print(
+        'ReadingPart5Provider.fetchHistory: loaded ${_history.length} items',
+      );
     } catch (e) {
       _historyErrorMessage = 'Lỗi tải lịch sử: $e';
       // ignore: avoid_print
@@ -197,8 +211,31 @@ class ReadingPart5Provider with ChangeNotifier {
       _history.insert(0, newHistory);
       notifyListeners();
 
+      // Ghi nhận EP cho Reading và cập nhật UI ngay lập tức
+      if (id.isNotEmpty && correctCount > 0) {
+        try {
+          final userRepository = UserRepository();
+          final epResult = await userRepository.recordActivity(
+            activityType: 'ReadingComplete',
+            referenceId: id,
+            correctAnswers: correctCount,
+            totalAnswers: totalCount,
+          );
+          if (epResult != null) {
+            _userProvider?.updateLocalEpAndStreak(epResult);
+            // ignore: avoid_print
+            print('✅ Reading P5 EP: +${epResult.epAwarded} EP');
+          }
+        } catch (epError) {
+          // ignore: avoid_print
+          print('Lỗi ghi nhận EP cho Reading P5: $epError');
+        }
+      }
+
       // ignore: avoid_print
-      print('ReadingPart5Provider.savePracticeHistory: local history now has ${_history.length} items');
+      print(
+        'ReadingPart5Provider.savePracticeHistory: local history now has ${_history.length} items',
+      );
 
       return id;
     } catch (e) {

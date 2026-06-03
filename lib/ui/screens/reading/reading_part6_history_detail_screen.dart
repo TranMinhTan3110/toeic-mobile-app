@@ -246,6 +246,25 @@ class _ReadingPart6HistoryDetailScreenState
                     ),
                   ],
                 ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.local_library_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Điểm kinh nghiệm: +${item.correctCount > 0 ? (item.correctCount * 3) + 5 : 0} EP',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

@@ -169,11 +169,12 @@ class _HistoryRow extends StatelessWidget {
   }
 
   String _formatDateTime(DateTime dt) {
-    final day = dt.day.toString().padLeft(2, '0');
-    final month = dt.month.toString().padLeft(2, '0');
-    final year = dt.year;
-    final hour = dt.hour.toString().padLeft(2, '0');
-    final minute = dt.minute.toString().padLeft(2, '0');
+    final localDt = dt.toLocal();
+    final day = localDt.day.toString().padLeft(2, '0');
+    final month = localDt.month.toString().padLeft(2, '0');
+    final year = localDt.year;
+    final hour = localDt.hour.toString().padLeft(2, '0');
+    final minute = localDt.minute.toString().padLeft(2, '0');
     return '$hour:$minute - $day/$month/$year';
   }
 

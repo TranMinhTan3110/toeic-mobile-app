@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/constants/app_constants.dart';
 
 import '../../../data/models/writing_question.dart';
+import '../../../providers/exam_provider.dart';
+import 'writing_exam_result_screen.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/cards/email_card.dart';
 import '../../widgets/cards/essay_prompt_card.dart';
@@ -94,9 +97,100 @@ class _WritingExamScreenState extends State<WritingExamScreen> {
     });
   }
 
-  void _submitExam() {
+  bool _isSubmitting = false;
+
+  Future<void> _submitExam() async {
+    if (_isSubmitting) return;
     _timer?.cancel();
-    _showCompletionDialog();
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    // Hiển thị loading overlay đè lên màn hình
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'AI đang chấm bài thi Writing của bạn. Quá trình này có thể mất 1-2 phút...',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final List<Map<String, dynamic>> tasksData = [];
+      for (int i = 0; i < _questions.length; i++) {
+        final q = _questions[i];
+        final answerText = _controllers[i].text.trim();
+        final wordCount = answerText.isEmpty ? 0 : answerText.split(RegExp(r'\s+')).length;
+        tasksData.add({
+          'questionId': q.id,
+          'taskNumber': q.taskNumber,
+          'taskType': q.taskType,
+          'userAnswer': answerText,
+          'wordCount': wordCount,
+        });
+      }
+
+      final examProvider = context.read<ExamProvider>();
+      final resultHistory = await examProvider.submitWritingExam(
+        examSetId: widget.examId,
+        examTitle: widget.examTitle,
+        timeSpent: (60 * 60) - _remainingSeconds,
+        tasks: tasksData,
+      );
+
+      // Đóng loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Chuyển sang màn hình kết quả
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WritingExamResultScreen(history: resultHistory),
+          ),
+        );
+      }
+    } catch (e) {
+      // Đóng loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Hiển thị lỗi
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Lỗi nộp bài'),
+            content: Text('Đã xảy ra lỗi khi gửi bài thi lên hệ thống: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Đóng'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override

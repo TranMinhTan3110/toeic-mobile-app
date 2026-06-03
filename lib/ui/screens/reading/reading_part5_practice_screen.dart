@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/practice/answer_card.dart';
-// ...existing code...
+import '../../shared/practice_dialogs.dart';
 import '../../../data/models/reading_part5_model.dart';
 import '../../../providers/reading_part5_provider.dart';
 import '../../../core/utils/practice_option_parser.dart';
@@ -261,31 +261,23 @@ class _ReadingAnswerTile extends StatelessWidget {
   }
 }
 
-class _ReadingExplanationPanel extends StatefulWidget {
-  const _ReadingExplanationPanel({required this.script, required this.explanation, required this.explanationVi, required this.onClose});
-  final String script;
+class _ExplanationPanel extends StatefulWidget {
   final String explanation;
   final String explanationVi;
   final VoidCallback onClose;
 
+  const _ExplanationPanel({
+    required this.explanation,
+    required this.explanationVi,
+    required this.onClose,
+  });
+
   @override
-  State<_ReadingExplanationPanel> createState() => _ReadingExplanationPanelState();
+  State<_ExplanationPanel> createState() => _ExplanationPanelState();
 }
 
-class _ReadingExplanationPanelState extends State<_ReadingExplanationPanel> with SingleTickerProviderStateMixin {
-  late TabController _tab;
-
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
+class _ExplanationPanelState extends State<_ExplanationPanel> {
+  String _activeTab = 'Lời dịch';
 
   @override
   Widget build(BuildContext context) {
@@ -302,36 +294,19 @@ class _ReadingExplanationPanelState extends State<_ReadingExplanationPanel> with
             child: Row(
               children: [
                 Expanded(
-                  child: TabBar(
-                    controller: _tab,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.white60,
-                    labelStyle: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                    indicatorColor: Colors.white,
-                    indicatorWeight: 3,
-                    tabs: const [
-                      Tab(text: 'Phụ đề'),
-                      Tab(text: 'Lời dịch'),
-                      Tab(text: 'Lời giải'),
+                  child: Row(
+                    children: [
+                      _buildTab('Lời dịch'),
+                      const SizedBox(width: 24),
+                      _buildTab('Lời giải'),
                     ],
                   ),
-                ),
-                // Settings icon centered between two small icons (left placeholder + settings + close)
-                Container(
-                  width: 36,
-                  height: 36,
-                  margin: const EdgeInsets.only(left: 8, right: 8),
-                  decoration: const BoxDecoration(color: Colors.white30, shape: BoxShape.circle),
-                  child: const Icon(Icons.settings_rounded, color: Colors.white, size: 18),
                 ),
                 GestureDetector(
                   onTap: widget.onClose,
                   child: Container(
-                    width: 28,
-                    height: 28,
+                    width: 36,
+                    height: 36,
                     decoration: const BoxDecoration(
                       color: Colors.white30,
                       shape: BoxShape.circle,
@@ -346,34 +321,68 @@ class _ReadingExplanationPanelState extends State<_ReadingExplanationPanel> with
               ],
             ),
           ),
+          const SizedBox(height: 8),
+          Container(height: 1, color: Colors.white24),
           SizedBox(
             height: 250,
-            child: TabBarView(
-              controller: _tab,
-              children: [
-                _ExplanationText(widget.script),
-                _ExplanationText(widget.explanationVi),
-                _ExplanationText(widget.explanation),
-              ],
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: _activeTab == 'Lời dịch'
+                  ? Center(
+                      child: Text(
+                        widget.explanationVi,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          height: 1.7,
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        widget.explanation,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          height: 1.7,
+                        ),
+                      ),
+                    ),
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _ExplanationText extends StatelessWidget {
-  const _ExplanationText(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.7),
+  Widget _buildTab(String title) {
+    final isActive = _activeTab == title;
+    return GestureDetector(
+      onTap: () => setState(() => _activeTab = title),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (isActive)
+            Container(
+              height: 3,
+              width: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -382,12 +391,13 @@ class _ExplanationText extends StatelessWidget {
 class _ReadingPart5PracticeScreenState extends State<ReadingPart5PracticeScreen> {
   late PageController _pageController;
   int _currentIdx = 0;
+  bool _showExplanation = false;
+  double _fontSize = 14.0;
+  bool _autoShowExplanation = false;
 
   // Track selected/submitted keys per page index
   final _selectedKeys = <int, String?>{};
   final _submittedKeys = <int, String?>{};
-
-  // ...existing code...
 
   // Lưu tất cả câu trả lời của người dùng: QuestionId -> SelectedOption
   final _userAnswers = <String, String>{};
@@ -456,9 +466,10 @@ class _ReadingPart5PracticeScreenState extends State<ReadingPart5PracticeScreen>
       _userAnswers[question.id] = selectedKey;
       setState(() {
         _submittedKeys[qIndex] = selectedKey;
+        if (_autoShowExplanation) {
+          _showExplanation = true;
+        }
       });
-      // Do not show explanation immediately after submitting during practice.
-      // Explanations are shown only in review/detail screens after finishing the quiz.
     }
   }
 
@@ -526,8 +537,66 @@ class _ReadingPart5PracticeScreenState extends State<ReadingPart5PracticeScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(
-        title: 'Reading Part 5',
-        centerTitle: true,
+        title: 'Câu ${_currentIdx + 1}',
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.appBarFg,
+              size: 22,
+            ),
+            onPressed: () => showReportDialog(context),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(
+              Icons.settings_rounded,
+              color: AppColors.appBarFg,
+              size: 22,
+            ),
+            onPressed: () => showReadingSettingsDialog(
+              context,
+              fontSize: _fontSize,
+              autoShowExplanation: _autoShowExplanation,
+              onFontSizeChanged: (v) => setState(() => _fontSize = v),
+              onAutoShowExplanationChanged: (v) => setState(() => _autoShowExplanation = v),
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(
+              Icons.favorite_border_rounded,
+              color: AppColors.appBarFg,
+              size: 22,
+            ),
+            onPressed: () {},
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => setState(() => _showExplanation = !_showExplanation),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: const Text(
+                'Giải thích',
+                style: TextStyle(
+                  color: AppColors.appBarFg,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Consumer<ReadingPart5Provider>(
         builder: (context, provider, child) {
@@ -565,117 +634,139 @@ class _ReadingPart5PracticeScreenState extends State<ReadingPart5PracticeScreen>
             );
           }
 
-          return PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) => setState(() => _currentIdx = index),
-            itemCount: questions.length,
-            itemBuilder: (context, index) {
-              final question = questions[index];
-              final selectedKey = _selectedKeys[index];
-              final isSubmitted = _submittedKeys[index] != null;
+          return Stack(
+            children: [
+              PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) => setState(() {
+                  _currentIdx = index;
+                  _showExplanation = false;
+                }),
+                itemCount: questions.length,
+                itemBuilder: (context, index) {
+                  final question = questions[index];
+                  final selectedKey = _selectedKeys[index];
+                  final isSubmitted = _submittedKeys[index] != null;
 
-              // Precompute a letter A-D correct key when possible to pass to AnswerCard.
-              // If backend returns full option text, try to match it against options.
-              final _normalizedCorrect = PracticeOptionParser.normalizeCorrectKey(
-                question.correctAnswer,
-                options: question.options,
-              );
-              String? _correctKeyToShow;
-              if (_normalizedCorrect.length == 1 && 'ABCD'.contains(_normalizedCorrect)) {
-                _correctKeyToShow = _normalizedCorrect;
-              } else {
-                final target = question.correctAnswer.trim().toLowerCase();
-                for (var oi = 0; oi < question.options.length; oi++) {
-                  final optDisplay = PracticeOptionParser.displayText(question.options[oi]).toLowerCase();
-                  final optRaw = question.options[oi].trim().toLowerCase();
-                  if (optDisplay == target || optRaw == target || optDisplay.contains(target) || target.contains(optDisplay)) {
-                    _correctKeyToShow = String.fromCharCode(65 + oi);
-                    break;
+                  // Precompute a letter A-D correct key when possible to pass to AnswerCard.
+                  // If backend returns full option text, try to match it against options.
+                  final _normalizedCorrect = PracticeOptionParser.normalizeCorrectKey(
+                    question.correctAnswer,
+                    options: question.options,
+                  );
+                  String? _correctKeyToShow;
+                  if (_normalizedCorrect.length == 1 && 'ABCD'.contains(_normalizedCorrect)) {
+                    _correctKeyToShow = _normalizedCorrect;
+                  } else {
+                    final target = question.correctAnswer.trim().toLowerCase();
+                    for (var oi = 0; oi < question.options.length; oi++) {
+                      final optDisplay = PracticeOptionParser.displayText(question.options[oi]).toLowerCase();
+                      final optRaw = question.options[oi].trim().toLowerCase();
+                      if (optDisplay == target || optRaw == target || optDisplay.contains(target) || target.contains(optDisplay)) {
+                        _correctKeyToShow = String.fromCharCode(65 + oi);
+                        break;
+                      }
+                    }
                   }
-                }
-              }
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Progress indicator
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Câu ${index + 1}/${questions.length}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                        // Progress indicator
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Câu ${index + 1}/${questions.length}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Progress bar
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (index + 1) / questions.length,
+                            backgroundColor: AppColors.primaryLighter,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.primary,
+                            ),
+                            minHeight: 6,
                           ),
                         ),
+                        const SizedBox(height: 20),
+
+                        // Select header (golden) + image/prompt + reading-specific answer card
+                        _SelectAnswerHeader(),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.shadow,
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            question.prompt,
+                            style: TextStyle(
+                              fontSize: _fontSize + 2,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        ReadingAnswerCard(
+                          options: List.generate(
+                            question.options.length,
+                            (oi) => AnswerOption(
+                              key: String.fromCharCode(65 + oi),
+                              text: question.options[oi],
+                            ),
+                          ),
+                          selectedKey: selectedKey,
+                          correctKey: isSubmitted ? _correctKeyToShow : null,
+                          onSelect: (key) => _selectOption(index, key),
+                          fontSize: _fontSize,
+                        ),
+
+                        // Explanations are not displayed during practice.
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    // Progress bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: (index + 1) / questions.length,
-                        backgroundColor: AppColors.primaryLighter,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
-                        ),
-                        minHeight: 6,
-                      ),
+                  );
+                },
+              ),
+              if (_showExplanation)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: SizedBox(
+                    height: 340,
+                    child: _ExplanationPanel(
+                      explanation: questions[_currentIdx].explanation ?? questions[_currentIdx].grammarExplanation ?? 'Không có lời giải cho câu hỏi này.',
+                      explanationVi: questions[_currentIdx].explanationVi ?? questions[_currentIdx].translation ?? 'Không có lời dịch cho câu hỏi này.',
+                      onClose: () => setState(() => _showExplanation = false),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Select header (golden) + image/prompt + reading-specific answer card
-                    _SelectAnswerHeader(),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.shadow,
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        question.prompt,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                          height: 1.6,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    ReadingAnswerCard(
-                      options: List.generate(
-                        question.options.length,
-                        (oi) => AnswerOption(
-                          key: String.fromCharCode(65 + oi),
-                          text: question.options[oi],
-                        ),
-                      ),
-                      selectedKey: selectedKey,
-                      correctKey: isSubmitted ? _correctKeyToShow : null,
-                      onSelect: (key) => _selectOption(index, key),
-                    ),
-
-                    // Explanations are not displayed during practice.
-                  ],
+                  ),
                 ),
-              );
-            },
+            ],
           );
         },
       ),

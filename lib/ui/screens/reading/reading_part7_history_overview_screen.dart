@@ -243,29 +243,29 @@ class _ReadingPart7HistoryOverviewScreenState
         Color borderColor = AppColors.divider;
 
         if (isCorrect) {
-          bgColor = AppColors.answerCorrect;
+          bgColor = AppColors.green;
           textColor = Colors.white;
-          borderColor = AppColors.answerCorrect;
+          borderColor = AppColors.green;
         } else if (isSelected && !isCorrect) {
-          bgColor = AppColors.answerWrong;
+          bgColor = Colors.red;
           textColor = Colors.white;
-          borderColor = AppColors.answerWrong;
+          borderColor = Colors.red;
         }
 
         return Container(
-          margin: const EdgeInsets.only(left: 8),
-          width: 36,
-          height: 36,
+          margin: const EdgeInsets.only(left: 10),
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             color: bgColor,
             border: Border.all(color: borderColor, width: 1.5),
-            borderRadius: BorderRadius.circular(8),
+            shape: BoxShape.circle,
           ),
           child: Center(
             child: Text(
               displayNum,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: textColor,
               ),

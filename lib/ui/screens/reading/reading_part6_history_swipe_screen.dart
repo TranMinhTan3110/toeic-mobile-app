@@ -20,6 +20,8 @@ class _ReadingPart6HistorySwipeScreenState extends State<ReadingPart6HistorySwip
   late PageController _pageController;
   int _currentIdx = 0;
   bool _showExplanation = true;
+  double _fontSize = 14.0;
+  bool _autoShowExplanation = false;
 
   @override
   void initState() {
@@ -44,6 +46,7 @@ class _ReadingPart6HistorySwipeScreenState extends State<ReadingPart6HistorySwip
       child: _ExplanationPanel(
         passageVi: passageVi.isNotEmpty ? passageVi : 'Không có lời dịch cho đoạn văn.',
         answerVi: answerVi.isNotEmpty ? answerVi : 'Không có lời giải cho câu hỏi này.',
+        fontSize: _fontSize,
         onClose: () => setState(() => _showExplanation = false),
       ),
     );
@@ -57,11 +60,23 @@ class _ReadingPart6HistorySwipeScreenState extends State<ReadingPart6HistorySwip
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(
         title: 'Câu ${_currentIdx + 1}',
+        centerTitle: false,
         onBack: () => Navigator.pop(context),
         actions: [
           IconButton(icon: const Icon(Icons.error_outline_rounded, color: AppColors.appBarFg, size: 22), onPressed: () => showReportDialog(context), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
           const SizedBox(width: 4),
-          IconButton(icon: const Icon(Icons.settings_rounded, color: AppColors.appBarFg, size: 22), onPressed: () => showDialog(context: context, builder: (_) => _LocalSettingsDialogStub()), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+          IconButton(
+            icon: const Icon(Icons.settings_rounded, color: AppColors.appBarFg, size: 22),
+            onPressed: () => showReadingSettingsDialog(
+              context,
+              fontSize: _fontSize,
+              autoShowExplanation: _autoShowExplanation,
+              onFontSizeChanged: (v) => setState(() => _fontSize = v),
+              onAutoShowExplanationChanged: (v) => setState(() => _autoShowExplanation = v),
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
           const SizedBox(width: 4),
           IconButton(icon: const Icon(Icons.favorite_border_rounded, color: AppColors.appBarFg, size: 22), onPressed: () {}, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
           const SizedBox(width: 4),
@@ -70,10 +85,11 @@ class _ReadingPart6HistorySwipeScreenState extends State<ReadingPart6HistorySwip
       ),
       body: Column(
         children: [
-          Padding(padding: const EdgeInsets.fromLTRB(16, 16, 16, 0), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Part 6', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)), Text('${_currentIdx + 1}/$total', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary))])),
-          const SizedBox(height: 8),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: (_currentIdx + 1) / total, backgroundColor: AppColors.primaryLighter, valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary), minHeight: 6))),
-          const SizedBox(height: 12),
+          _QuestionStrip(
+            current: _currentIdx + 1,
+            total: total,
+            partNumber: 6,
+          ),
           Expanded(
             child: PageView.builder(
               controller: _pageController,
@@ -87,13 +103,83 @@ class _ReadingPart6HistorySwipeScreenState extends State<ReadingPart6HistorySwip
                 return SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 200),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    if ((question.passage ?? '').isNotEmpty)
-                      Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Đoạn văn', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)), const SizedBox(height: 8), Text(question.passage ?? '', style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.6)), const SizedBox(height: 12), Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)), child: Text(question.prompt ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.6))),])),
-                    if ((question.passage ?? '').isNotEmpty)
+                    if (question.passage.isNotEmpty)
+                      Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Đoạn văn', style: TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w700, color: AppColors.textPrimary)), const SizedBox(height: 8), Text(question.passage, style: TextStyle(fontSize: _fontSize, color: AppColors.textPrimary, height: 1.6)), const SizedBox(height: 12), Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)), child: Text(question.prompt, style: TextStyle(fontSize: _fontSize + 2, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.6))),])),
+                    if (question.passage.isNotEmpty)
                       const SizedBox(height: 20),
-                    Column(children: List.generate(question.options.length, (oi) { final optionKey = String.fromCharCode(65 + oi); final isSelected = selectedAns == optionKey; final isOptCorrect = PracticeOptionParser.isSelectionCorrect(optionKey, question.correctAnswer, question.options); Color bgColor = Colors.white; Color borderColor = AppColors.divider; Color textColor = AppColors.textPrimary; if (isOptCorrect) { bgColor = AppColors.answerCorrect.withOpacity(0.12); borderColor = AppColors.answerCorrect; } else if (isSelected && !isOptCorrect) { bgColor = AppColors.answerWrong.withOpacity(0.12); borderColor = AppColors.answerWrong; } return Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: bgColor, border: Border.all(color: borderColor, width: isSelected || isOptCorrect ? 2 : 1), borderRadius: BorderRadius.circular(10)), child: Row(children: [Container(width: 32, height: 32, decoration: BoxDecoration(color: borderColor, shape: BoxShape.circle), child: Center(child: Text(optionKey, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)))), const SizedBox(width: 14), Expanded(child: Text(question.options[oi], style: TextStyle(fontSize: 14, color: textColor, height: 1.4))), ])); })),
+                    Column(
+                      children: List.generate(question.options.length, (oi) {
+                        final optionKey = String.fromCharCode(65 + oi);
+                        final isSelected = selectedAns == optionKey;
+                        final isOptCorrect = PracticeOptionParser.isSelectionCorrect(
+                            optionKey, question.correctAnswer, question.options);
+
+                        Color bgColor = Colors.white;
+                        Color borderColor = AppColors.divider;
+                        Color badgeColor = AppColors.surfaceVariant;
+                        Color badgeTextColor = AppColors.textSecondary;
+
+                        if (isOptCorrect) {
+                          bgColor = AppColors.answerCorrect.withOpacity(0.12);
+                          borderColor = AppColors.answerCorrect;
+                          badgeColor = AppColors.success;
+                          badgeTextColor = Colors.white;
+                        } else if (isSelected && !isOptCorrect) {
+                          bgColor = AppColors.answerWrong.withOpacity(0.12);
+                          borderColor = AppColors.answerWrong;
+                          badgeColor = AppColors.error;
+                          badgeTextColor = Colors.white;
+                        }
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: bgColor,
+                            border: Border.all(
+                              color: borderColor,
+                              width: isSelected || isOptCorrect ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: badgeColor,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    optionKey,
+                                    style: TextStyle(
+                                      color: badgeTextColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  question.options[oi],
+                                  style: TextStyle(
+                                    fontSize: _fontSize,
+                                    color: AppColors.textPrimary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
                     const SizedBox(height: 20),
-                    Container(width: double.infinity, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isCorrect ? AppColors.answerCorrect.withOpacity(0.12) : AppColors.answerWrong.withOpacity(0.12), borderRadius: BorderRadius.circular(8), border: Border.all(color: isCorrect ? AppColors.answerCorrect : AppColors.answerWrong)), child: Row(children: [Icon(isCorrect ? Icons.check_circle : Icons.cancel_rounded, color: isCorrect ? AppColors.answerCorrect : AppColors.answerWrong, size: 20), const SizedBox(width: 10), Text(isCorrect ? 'Đúng' : 'Sai', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCorrect ? AppColors.answerCorrect : AppColors.answerWrong)), ])),
+                    Container(width: double.infinity, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isCorrect ? AppColors.answerCorrect.withOpacity(0.12) : AppColors.answerWrong.withOpacity(0.12), borderRadius: BorderRadius.circular(8), border: Border.all(color: isCorrect ? AppColors.success : AppColors.error)), child: Row(children: [Icon(isCorrect ? Icons.check_circle : Icons.cancel_rounded, color: isCorrect ? AppColors.success : AppColors.error, size: 20), const SizedBox(width: 10), Text(isCorrect ? 'Đúng' : 'Sai', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCorrect ? AppColors.success : AppColors.error)), ])),
                   ]),
                 );
               },
@@ -109,9 +195,10 @@ class _ReadingPart6HistorySwipeScreenState extends State<ReadingPart6HistorySwip
 class _ExplanationPanel extends StatefulWidget {
   final String passageVi;
   final String answerVi;
+  final double fontSize;
   final VoidCallback onClose;
 
-  const _ExplanationPanel({required this.passageVi, required this.answerVi, required this.onClose});
+  const _ExplanationPanel({required this.passageVi, required this.answerVi, required this.fontSize, required this.onClose});
 
   @override
   State<_ExplanationPanel> createState() => _ExplanationPanelState();
@@ -173,8 +260,8 @@ class _ExplanationPanelState extends State<_ExplanationPanel> {
                       child: Text(
                         widget.passageVi,
                         textAlign: TextAlign.start,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: TextStyle(
+                          fontSize: widget.fontSize,
                           color: Colors.white,
                           height: 1.7,
                         ),
@@ -186,8 +273,8 @@ class _ExplanationPanelState extends State<_ExplanationPanel> {
                       child: Text(
                         widget.answerVi,
                         textAlign: TextAlign.start,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: TextStyle(
+                          fontSize: widget.fontSize,
                           color: Colors.white,
                           height: 1.7,
                         ),
@@ -233,17 +320,60 @@ class _ExplanationPanelState extends State<_ExplanationPanel> {
   }
 }
 
-class _LocalSettingsDialogStub extends StatefulWidget {
-  @override
-  State<_LocalSettingsDialogStub> createState() => _LocalSettingsDialogStubState();
-}
-
-class _LocalSettingsDialogStubState extends State<_LocalSettingsDialogStub> {
-  double _speed = 1.0;
-  bool _autoPlay = false;
+class _QuestionStrip extends StatelessWidget {
+  const _QuestionStrip({
+    required this.current,
+    required this.total,
+    required this.partNumber,
+  });
+  final int current, total, partNumber;
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), child: Padding(padding: const EdgeInsets.all(16), child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('Cài đặt', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 12), Row(children: [const Text('Tốc độ: '), Expanded(child: Slider(value: _speed, min: 0.5, max: 2.0, divisions: 6, label: '${_speed}x', onChanged: (v) => setState(() => _speed = v)))]), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Tự động hiển thị lời giải'), Switch(value: _autoPlay, onChanged: (v) => setState(() => _autoPlay = v))]), const SizedBox(height: 12), ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng'))]),),);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Part $partNumber',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: total > 0 ? current / total : 0,
+                backgroundColor: AppColors.primaryLighter,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
+                minHeight: 5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '$current/$total',
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
