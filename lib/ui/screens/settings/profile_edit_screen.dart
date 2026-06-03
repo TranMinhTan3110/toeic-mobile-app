@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +25,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   String? _selectedGender;
   bool _seeded = false;
+  bool _isDeleting = false;
 
   static const _genderOptions = ['Nam', 'Nữ', 'Khác'];
 
@@ -314,10 +316,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           const Divider(height: 1, color: AppColors.divider),
           _AccountAction(
             icon: Boxicons.bx_trash,
-            title: 'Xóa tài khoản',
+            title: _isDeleting ? 'Đang xóa tài khoản...' : 'Xóa tài khoản',
             color: AppColors.error,
             background: AppColors.answerWrong,
-            onTap: () {},
+            onTap: _isDeleting ? () {} : _confirmDeleteAccount,
           ),
         ],
       ),
@@ -456,20 +458,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   Widget _buildBottomBar(bool isSaving) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.divider)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: SizedBox(
-        height: 50,
+        width: double.infinity,
+        height: 52,
         child: ElevatedButton(
           onPressed: isSaving ? null : _onSave,
           style: ElevatedButton.styleFrom(
@@ -556,6 +549,218 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
+  Future<void> _confirmDeleteAccount() async {
+    final authUser = AuthService().currentUser;
+    final requiresPassword =
+        authUser?.providerData.any((info) => info.providerId == 'password') ??
+        false;
+    final passwordCtrl = TextEditingController();
+    final dialogFormKey = GlobalKey<FormState>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: AppColors.border),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          title: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.answerWrong,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Boxicons.bx_trash,
+                  color: AppColors.error,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Xóa tài khoản',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Form(
+            key: dialogFormKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Thao tác này sẽ xóa tài khoản đăng nhập hiện tại và không thể hoàn tác.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (requiresPassword) ...[
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Nhập mật khẩu hiện tại để xác nhận',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: passwordCtrl,
+                    obscureText: true,
+                    validator: (value) {
+                      if ((value ?? '').isEmpty) {
+                        return 'Vui lòng nhập mật khẩu hiện tại';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(
+                        Boxicons.bx_lock_alt,
+                        color: AppColors.primary,
+                        size: 21,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.error),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.error),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Bạn có thể cần xác nhận lại Google ở bước tiếp theo.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(
+                'Hủy',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (requiresPassword &&
+                    !(dialogFormKey.currentState?.validate() ?? false)) {
+                  return;
+                }
+                Navigator.of(dialogContext).pop(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Xóa',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) {
+      passwordCtrl.dispose();
+      return;
+    }
+
+    if (confirmed != true) {
+      passwordCtrl.dispose();
+      return;
+    }
+
+    setState(() => _isDeleting = true);
+    try {
+      await AuthService().deleteCurrentAccount(
+        password: requiresPassword ? passwordCtrl.text : null,
+      );
+
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final navigator = Navigator.of(context);
+      context.read<UserProvider>().clear();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Đã xóa tài khoản.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      navigator.popUntil((route) => route.isFirst);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_firebaseErrorMessage(e)),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_cleanErrorMessage(e)),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      passwordCtrl.dispose();
+      if (mounted) setState(() => _isDeleting = false);
+    }
+  }
+
   void _seedForm(UserProfileModel profile) {
     _nameCtrl.text = profile.displayName;
     _emailCtrl.text = profile.email;
@@ -614,6 +819,22 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       message = message.substring('Exception: '.length);
     }
     return message;
+  }
+
+  String _firebaseErrorMessage(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Mật khẩu hiện tại không đúng.';
+      case 'requires-recent-login':
+        return 'Phiên đăng nhập đã cũ, vui lòng đăng nhập lại rồi thử tiếp.';
+      case 'reauth-cancelled':
+        return 'Bạn đã hủy xác thực Google.';
+      case 'network-request-failed':
+        return 'Không có kết nối mạng, vui lòng thử lại.';
+      default:
+        return error.message ?? 'Không thể xóa tài khoản.';
+    }
   }
 }
 
