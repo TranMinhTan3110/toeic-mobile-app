@@ -1,9 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../data/models/reading_part6_model.dart';
 import '../data/repositories/reading_part6_repository.dart';
+import '../data/repositories/user_repository.dart';
+import 'user_provider.dart';
 
 class ReadingPart6Provider with ChangeNotifier {
   final ReadingPart6Repository _repo = ReadingPart6Repository();
+
+  UserProvider? _userProvider;
+  void setUserProvider(UserProvider up) => _userProvider = up;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -40,7 +45,9 @@ class ReadingPart6Provider with ChangeNotifier {
       _questionsCache = List<ReadingPart6Question>.from(_questions);
       _countCache = _questions.length;
       // ignore: avoid_print
-      print('ReadingPart6Provider.fetchQuestions: loaded ${_questions.length} questions');
+      print(
+        'ReadingPart6Provider.fetchQuestions: loaded ${_questions.length} questions',
+      );
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -84,13 +91,16 @@ class ReadingPart6Provider with ChangeNotifier {
 
   void preloadInBackground() {
     if (_questionsCache != null) return;
-    _repo.getQuestions().then((list) {
-      _questionsCache = list;
-      _countCache = list.length;
-      notifyListeners();
-    }).catchError((e) {
-      debugPrint('[Preload Reading Part 6] $e');
-    });
+    _repo
+        .getQuestions()
+        .then((list) {
+          _questionsCache = list;
+          _countCache = list.length;
+          notifyListeners();
+        })
+        .catchError((e) {
+          debugPrint('[Preload Reading Part 6] $e');
+        });
   }
 
   Future<void> ensurePartLoaded() async {
@@ -101,7 +111,9 @@ class ReadingPart6Provider with ChangeNotifier {
       _countCache = list.length;
       // debug
       // ignore: avoid_print
-      print('ReadingPart6Provider.ensurePartLoaded: questionsCache=${_questionsCache?.length}');
+      print(
+        'ReadingPart6Provider.ensurePartLoaded: questionsCache=${_questionsCache?.length}',
+      );
       notifyListeners();
     } catch (e) {
       debugPrint('[ensurePartLoaded Reading Part 6] $e');
@@ -179,15 +191,21 @@ class ReadingPart6Provider with ChangeNotifier {
       _questions = selected;
       // debug: print loaded questions and sample questionText
       // ignore: avoid_print
-      print('ReadingPart6Provider.fetchQuestionsByPassageCount: selected_questions=${_questions.length}');
+      print(
+        'ReadingPart6Provider.fetchQuestionsByPassageCount: selected_questions=${_questions.length}',
+      );
       if (_questions.isNotEmpty) {
         // ignore: avoid_print
-        print('ReadingPart6Provider.firstQuestion.questionText: ${_questions.first.questionText}');
+        print(
+          'ReadingPart6Provider.firstQuestion.questionText: ${_questions.first.questionText}',
+        );
         // list details for debugging
         for (var i = 0; i < _questions.length && i < 20; i++) {
           final q = _questions[i];
           // ignore: avoid_print
-          print('ReadingPart6Provider.question[$i]: id=${q.id} questionText="${q.questionText}" prompt="${q.prompt}" options=${q.options.length}');
+          print(
+            'ReadingPart6Provider.question[$i]: id=${q.id} questionText="${q.questionText}" prompt="${q.prompt}" options=${q.options.length}',
+          );
         }
       }
     } catch (e) {
@@ -198,7 +216,9 @@ class ReadingPart6Provider with ChangeNotifier {
     }
   }
 
-  Future<ReadingPart6SubmitResult> submitAnswers(Map<String, int?> answers) async {
+  Future<ReadingPart6SubmitResult> submitAnswers(
+    Map<String, int?> answers,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -261,6 +281,27 @@ class ReadingPart6Provider with ChangeNotifier {
       _history.insert(0, newHistory);
       notifyListeners();
 
+      // Ghi nhận EP cho Reading và cập nhật UI ngay lập tức
+      if (id.isNotEmpty && correctCount > 0) {
+        try {
+          final userRepository = UserRepository();
+          final epResult = await userRepository.recordActivity(
+            activityType: 'ReadingComplete',
+            referenceId: id,
+            correctAnswers: correctCount,
+            totalAnswers: totalCount,
+          );
+          if (epResult != null) {
+            _userProvider?.updateLocalEpAndStreak(epResult);
+            // ignore: avoid_print
+            print('✅ Reading P6 EP: +${epResult.epAwarded} EP');
+          }
+        } catch (epError) {
+          // ignore: avoid_print
+          print('Lỗi ghi nhận EP cho Reading P6: $epError');
+        }
+      }
+
       return id;
     } catch (e) {
       _errorMessage = 'Lỗi lưu lịch sử (server): $e';
@@ -286,4 +327,3 @@ class ReadingPart6Provider with ChangeNotifier {
     _countCache = null;
   }
 }
-

@@ -86,14 +86,6 @@ class _ReadingPart5HistoryDetailScreenState extends State<ReadingPart5HistoryDet
               _buildBannerCard(item),
               const SizedBox(height: 16),
               _buildScoreDetailsCard(item),
-              const SizedBox(height: 16),
-              _buildWrongQuestionsSection(
-                sessionQuestions.where((q) {
-                  final sel = item.selectedAnswers[q.id];
-                  return sel == null || sel != q.correctAnswer;
-                }).toList(),
-                item,
-              ),
             ],
           ),
         ),
@@ -148,99 +140,10 @@ class _ReadingPart5HistoryDetailScreenState extends State<ReadingPart5HistoryDet
               Row(children: [const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 20), const SizedBox(width: 8), Text('Đúng: ${item.correctCount}/${item.totalCount} câu', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]),
               const SizedBox(height: 6),
               Row(children: [const Icon(Icons.stars_rounded, color: AppColors.primary, size: 20), const SizedBox(width: 8), Text('Tỷ lệ chính xác: ${item.percent.toInt()}%', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary))]),
+              const SizedBox(height: 6),
+              Row(children: [const Icon(Icons.local_library_rounded, color: Colors.orange, size: 20), const SizedBox(width: 8), Text('Điểm kinh nghiệm: +${item.correctCount > 0 ? (item.correctCount * 3) + 5 : 0} EP', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.orange))]),
             ]),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWrongQuestionsSection(List<ReadingPart5Question> wrongQuestions, ReadingPart5HistoryModel item) {
-    if (wrongQuestions.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2))]),
-        child: const Column(children: [Icon(Icons.check_circle_outline_rounded, color: AppColors.green, size: 48), SizedBox(height: 12), Text('Tuyệt vời! Không có câu hỏi sai', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)), SizedBox(height: 4), Text('Bạn đã trả lời đúng 100% các câu hỏi!', style: TextStyle(fontSize: 13, color: AppColors.textSecondary))]),
-      );
-    }
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [const Icon(Icons.report_problem_rounded, color: Colors.orange, size: 20), const SizedBox(width: 8), Text('Danh sách câu hỏi sai (${wrongQuestions.length}):', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]), const SizedBox(height: 12), ...wrongQuestions.map((q) => _buildWrongQuestionCard(q, item))]);
-  }
-
-  Widget _buildWrongQuestionCard(ReadingPart5Question q, ReadingPart5HistoryModel item) {
-    final selectedAns = item.selectedAnswers[q.id];
-    final correctAns = q.correctAnswer;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.divider), boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 6, offset: Offset(0, 2))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(q.prompt ?? 'Câu hỏi', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        const SizedBox(height: 12),
-        ...List.generate(q.options.length, (idx) {
-          final optionText = q.options[idx];
-          final optionKey = String.fromCharCode(65 + idx);
-
-          final isSelected = selectedAns == optionKey;
-          final isCorrect = correctAns == optionKey;
-
-          Color tileColor = AppColors.surface;
-          Color borderColor = AppColors.divider;
-          Widget? suffixIcon;
-
-          if (isCorrect) {
-            tileColor = AppColors.green.withOpacity(0.12);
-            borderColor = AppColors.green;
-            suffixIcon = const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 20);
-          } else if (isSelected) {
-            tileColor = Colors.red.withOpacity(0.08);
-            borderColor = Colors.red;
-            suffixIcon = const Icon(Icons.cancel_rounded, color: Colors.red, size: 20);
-          }
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(color: tileColor, border: Border.all(color: borderColor), borderRadius: BorderRadius.circular(10)),
-            child: Row(children: [Container(width: 24, height: 24, decoration: BoxDecoration(color: isCorrect ? AppColors.green : (isSelected ? Colors.red : AppColors.divider), shape: BoxShape.circle), child: Center(child: Text(optionKey, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)))), const SizedBox(width: 12), Expanded(child: Text(optionText, style: TextStyle(fontSize: 13.5, fontWeight: (isCorrect || isSelected) ? FontWeight.bold : FontWeight.normal, color: AppColors.textPrimary))), if (suffixIcon != null) suffixIcon]),
-          );
-        }),
-        const SizedBox(height: 12),
-        const Divider(),
-        _buildExplanationSection(q),
-      ]),
-    );
-  }
-
-  Widget _buildExplanationSection(ReadingPart5Question q) {
-    final explanation = q.explanation ?? q.grammarExplanation ?? '';
-    final explanationVi = q.explanationVi ?? q.translation ?? '';
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          if (explanationVi.isNotEmpty) ...[
-            Text('Lời dịch', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
-            const SizedBox(height: 8),
-            Text(explanationVi, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, height: 1.7, color: Colors.white)),
-            const SizedBox(height: 12),
-            Container(height: 1, color: Colors.white24),
-          ],
-          if (explanation.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text('Lời giải', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
-            const SizedBox(height: 8),
-            Text(explanation, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, height: 1.7, color: Colors.white)),
-            const SizedBox(height: 8),
-            Container(height: 1, color: Colors.white24),
-          ],
         ],
       ),
     );

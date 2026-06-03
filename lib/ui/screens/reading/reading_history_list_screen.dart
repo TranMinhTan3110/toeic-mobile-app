@@ -127,6 +127,8 @@ class ReadingHistoryListScreen extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
+        focusColor: Colors.transparent,
+        hoverColor: Colors.transparent,
         onTap: () {
           Widget detail;
           switch (part) {

@@ -882,3 +882,236 @@ class _WritingSettingsDialogState extends State<_WritingSettingsDialog> {
     );
   }
 }
+
+// ── Reading Settings dialog ──────────────────────────────────────────────────
+
+void showReadingSettingsDialog(
+  BuildContext context, {
+  required double fontSize,
+  required bool autoShowExplanation,
+  required ValueChanged<double> onFontSizeChanged,
+  required ValueChanged<bool> onAutoShowExplanationChanged,
+}) {
+  showDialog(
+    context: context,
+    builder: (_) => _ReadingSettingsDialog(
+      fontSize: fontSize,
+      autoShowExplanation: autoShowExplanation,
+      onFontSizeChanged: onFontSizeChanged,
+      onAutoShowExplanationChanged: onAutoShowExplanationChanged,
+    ),
+  );
+}
+
+class _ReadingSettingsDialog extends StatefulWidget {
+  const _ReadingSettingsDialog({
+    required this.fontSize,
+    required this.autoShowExplanation,
+    required this.onFontSizeChanged,
+    required this.onAutoShowExplanationChanged,
+  });
+
+  final double fontSize;
+  final bool autoShowExplanation;
+  final ValueChanged<double> onFontSizeChanged;
+  final ValueChanged<bool> onAutoShowExplanationChanged;
+
+  @override
+  State<_ReadingSettingsDialog> createState() => _ReadingSettingsDialogState();
+}
+
+class _ReadingSettingsDialogState extends State<_ReadingSettingsDialog> {
+  late double _fontSize;
+  late bool _autoShowExplanation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fontSize = widget.fontSize;
+    _autoShowExplanation = widget.autoShowExplanation;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLighter,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.settings_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Cài đặt',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Font size
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLighter,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.text_fields_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Cỡ chữ',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const Spacer(),
+                // Minus button
+                GestureDetector(
+                  onTap: () => setState(() {
+                    if (_fontSize > 12) _fontSize--;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: const Icon(
+                      Icons.remove_rounded,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Font size display
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Text(
+                    '${_fontSize.toInt()}',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Plus button
+                GestureDetector(
+                  onTap: () => setState(() {
+                    if (_fontSize < 24) _fontSize++;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(color: AppColors.divider, height: 24),
+
+            // Auto show explanation
+            Row(
+              children: [
+                const Icon(Icons.description_outlined, color: AppColors.primary, size: 20),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Tự động hiển thị lời giải',
+                    style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                  ),
+                ),
+                Switch(
+                  value: _autoShowExplanation,
+                  onChanged: (v) => setState(() => _autoShowExplanation = v),
+                  activeColor: AppColors.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onFontSizeChanged(_fontSize);
+                  widget.onAutoShowExplanationChanged(_autoShowExplanation);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text(
+                  'Lưu cài đặt',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

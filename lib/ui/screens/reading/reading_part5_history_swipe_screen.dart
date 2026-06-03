@@ -28,6 +28,8 @@ class _ReadingPart5HistorySwipeScreenState
 
   int _currentIdx = 0;
   bool _showExplanation = true; // Open by default
+  double _fontSize = 14.0;
+  bool _autoShowExplanation = false;
 
   @override
   void initState() {
@@ -67,6 +69,7 @@ class _ReadingPart5HistorySwipeScreenState
       child: _ExplanationPanel(
         explanation: explanation,
         explanationVi: explanationVi,
+        fontSize: _fontSize,
         onClose: () => setState(() => _showExplanation = false),
       ),
     );
@@ -75,12 +78,12 @@ class _ReadingPart5HistorySwipeScreenState
   @override
   Widget build(BuildContext context) {
     final total = widget.sessionQuestions.length;
-    final q = widget.sessionQuestions[_currentIdx];
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(
         title: 'Câu ${_currentIdx + 1}',
+        centerTitle: false,
         onBack: () => Navigator.pop(context),
         actions: [
           IconButton(
@@ -101,10 +104,13 @@ class _ReadingPart5HistorySwipeScreenState
               color: AppColors.appBarFg,
               size: 22,
             ),
-            onPressed: () {
-              // Open local settings dialog (reuse pattern from listening)
-              showDialog(context: context, builder: (_) => _LocalSettingsDialogStub());
-            },
+            onPressed: () => showReadingSettingsDialog(
+              context,
+              fontSize: _fontSize,
+              autoShowExplanation: _autoShowExplanation,
+              onFontSizeChanged: (v) => setState(() => _fontSize = v),
+              onAutoShowExplanationChanged: (v) => setState(() => _autoShowExplanation = v),
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -132,45 +138,10 @@ class _ReadingPart5HistorySwipeScreenState
       ),
       body: Column(
         children: [
-          // Progress bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Part 5',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-                Text(
-                  '${_currentIdx + 1}/$total',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (_currentIdx + 1) / total,
-                backgroundColor: AppColors.primaryLighter,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
-                ),
-                minHeight: 6,
-              ),
-            ),
+          _QuestionStrip(
+            current: _currentIdx + 1,
+            total: total,
+            partNumber: 5,
           ),
 
           // Content
@@ -183,10 +154,6 @@ class _ReadingPart5HistorySwipeScreenState
                 final question = widget.sessionQuestions[index];
                 final selectedAns =
                     widget.historyItem.selectedAnswers[question.id];
-                final correctAns = PracticeOptionParser.normalizeCorrectKey(
-                  question.correctAnswer,
-                  options: question.options,
-                );
                 final isCorrect = selectedAns != null && PracticeOptionParser.isSelectionCorrect(selectedAns, question.correctAnswer, question.options);
 
                 return SingleChildScrollView(
@@ -211,8 +178,8 @@ class _ReadingPart5HistorySwipeScreenState
                         ),
                         child: Text(
                           question.prompt,
-                          style: const TextStyle(
-                            fontSize: 15,
+                          style: TextStyle(
+                            fontSize: _fontSize + 1,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                             height: 1.6,
@@ -230,14 +197,19 @@ class _ReadingPart5HistorySwipeScreenState
 
                           Color bgColor = Colors.white;
                           Color borderColor = AppColors.divider;
-                          Color textColor = AppColors.textPrimary;
+                          Color badgeColor = AppColors.surfaceVariant;
+                          Color badgeTextColor = AppColors.textSecondary;
 
                           if (isOptCorrect) {
                             bgColor = AppColors.answerCorrect.withOpacity(0.12);
                             borderColor = AppColors.answerCorrect;
+                            badgeColor = AppColors.success;
+                            badgeTextColor = Colors.white;
                           } else if (isSelected && !isOptCorrect) {
                             bgColor = AppColors.answerWrong.withOpacity(0.12);
                             borderColor = AppColors.answerWrong;
+                            badgeColor = AppColors.error;
+                            badgeTextColor = Colors.white;
                           }
 
                           return Container(
@@ -257,14 +229,14 @@ class _ReadingPart5HistorySwipeScreenState
                                   width: 32,
                                   height: 32,
                                   decoration: BoxDecoration(
-                                    color: borderColor,
+                                    color: badgeColor,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Center(
                                     child: Text(
                                       optionKey,
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: badgeTextColor,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
                                       ),
@@ -276,8 +248,8 @@ class _ReadingPart5HistorySwipeScreenState
                                   child: Text(
                                     question.options[oi],
                                     style: TextStyle(
-                                      fontSize: 14,
-                                      color: textColor,
+                                      fontSize: _fontSize,
+                                      color: AppColors.textPrimary,
                                       height: 1.4,
                                     ),
                                   ),
@@ -300,8 +272,8 @@ class _ReadingPart5HistorySwipeScreenState
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isCorrect
-                                ? AppColors.answerCorrect
-                                : AppColors.answerWrong,
+                                ? AppColors.success
+                                : AppColors.error,
                           ),
                         ),
                         child: Row(
@@ -311,8 +283,8 @@ class _ReadingPart5HistorySwipeScreenState
                                   ? Icons.check_circle
                                   : Icons.cancel_rounded,
                               color: isCorrect
-                                  ? AppColors.answerCorrect
-                                  : AppColors.answerWrong,
+                                  ? AppColors.success
+                                  : AppColors.error,
                               size: 20,
                             ),
                             const SizedBox(width: 10),
@@ -322,8 +294,8 @@ class _ReadingPart5HistorySwipeScreenState
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: isCorrect
-                                    ? AppColors.answerCorrect
-                                    : AppColors.answerWrong,
+                                    ? AppColors.success
+                                    : AppColors.error,
                               ),
                             ),
                           ],
@@ -346,11 +318,13 @@ class _ReadingPart5HistorySwipeScreenState
 class _ExplanationPanel extends StatefulWidget {
   final String explanation;
   final String explanationVi;
+  final double fontSize;
   final VoidCallback onClose;
 
   const _ExplanationPanel({
     required this.explanation,
     required this.explanationVi,
+    required this.fontSize,
     required this.onClose,
   });
 
@@ -417,8 +391,8 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
                       child: Text(
                         widget.explanationVi,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: TextStyle(
+                          fontSize: widget.fontSize,
                           color: Colors.white,
                           height: 1.7,
                         ),
@@ -428,8 +402,8 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
                       child: Text(
                         widget.explanation,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: TextStyle(
+                          fontSize: widget.fontSize,
                           color: Colors.white,
                           height: 1.7,
                         ),
@@ -473,30 +447,59 @@ class _ExplanationPanelState extends State<_ExplanationPanel>
   }
 }
 
-// Small stub dialog to mimic listening local settings dialog used by the settings icon.
-class _LocalSettingsDialogStub extends StatefulWidget {
-  @override
-  State<_LocalSettingsDialogStub> createState() => _LocalSettingsDialogStubState();
-}
-
-class _LocalSettingsDialogStubState extends State<_LocalSettingsDialogStub> {
-  double _speed = 1.0;
-  bool _autoPlay = false;
+class _QuestionStrip extends StatelessWidget {
+  const _QuestionStrip({
+    required this.current,
+    required this.total,
+    required this.partNumber,
+  });
+  final int current, total, partNumber;
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Cài đặt', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Row(children: [const Text('Tốc độ: '), Expanded(child: Slider(value: _speed, min: 0.5, max: 2.0, divisions: 6, label: '${_speed}x', onChanged: (v) => setState(() => _speed = v)))]),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Tự động hiển thị lời giải'), Switch(value: _autoPlay, onChanged: (v) => setState(() => _autoPlay = v))]),
-          const SizedBox(height: 12),
-          ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
-        ]),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Part $partNumber',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: total > 0 ? current / total : 0,
+                backgroundColor: AppColors.primaryLighter,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
+                minHeight: 5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '$current/$total',
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

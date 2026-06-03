@@ -37,15 +37,38 @@ void main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ExamProvider()),
         ChangeNotifierProvider(create: (_) => VocabularyProvider()),
-        ChangeNotifierProvider(create: (_) => ReadingPart5Provider()),
-        ChangeNotifierProvider(create: (_) => ReadingPart6Provider()),
-        ChangeNotifierProvider(create: (_) => ReadingPart7Provider()),
-        ChangeNotifierProvider(create: (_) => ExamProvider()),
         ChangeNotifierProvider(create: (_) => GrammarProvider()),
-        ChangeNotifierProvider(create: (_) => ListeningProvider()),
-        ChangeNotifierProvider(create: (_) => SpeakingProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => WritingProvider()),
+        
+        ChangeNotifierProxyProvider<UserProvider, ReadingPart5Provider>(
+          create: (_) => ReadingPart5Provider(),
+          update: (_, userProvider, readingProvider) =>
+              readingProvider!..setUserProvider(userProvider),
+        ),
+        ChangeNotifierProxyProvider<UserProvider, ReadingPart6Provider>(
+          create: (_) => ReadingPart6Provider(),
+          update: (_, userProvider, readingProvider) =>
+              readingProvider!..setUserProvider(userProvider),
+        ),
+        ChangeNotifierProxyProvider<UserProvider, ReadingPart7Provider>(
+          create: (_) => ReadingPart7Provider(),
+          update: (_, userProvider, readingProvider) =>
+              readingProvider!..setUserProvider(userProvider),
+        ),
+        ChangeNotifierProxyProvider<UserProvider, ListeningProvider>(
+          create: (_) => ListeningProvider(),
+          update: (_, userProvider, listeningProvider) =>
+              listeningProvider!..setUserProvider(userProvider),
+        ),
+        ChangeNotifierProxyProvider<UserProvider, SpeakingProvider>(
+          create: (_) => SpeakingProvider(),
+          update: (_, userProvider, speakingProvider) =>
+              speakingProvider!..setUserProvider(userProvider),
+        ),
+        ChangeNotifierProxyProvider<UserProvider, WritingProvider>(
+          create: (_) => WritingProvider(),
+          update: (_, userProvider, writingProvider) =>
+              writingProvider!..setUserProvider(userProvider),
+        ),
       ],
       child: MyApp(showOnboarding: showOnboarding),
     ),

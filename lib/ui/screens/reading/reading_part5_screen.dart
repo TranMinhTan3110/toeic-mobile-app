@@ -307,49 +307,50 @@ class _BottomControls extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                SizedBox(
-                  width: 100,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: DropdownButton<int>(
-                      value: questionCount,
-                      isExpanded: true,
-                      underline: const SizedBox.shrink(),
-                      borderRadius: BorderRadius.circular(8),
-                      dropdownColor: AppColors.surface,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      items: [
-                        if (maxQuestions >= 5)
-                          const DropdownMenuItem(value: 5, child: Text('5')),
-                        if (maxQuestions >= 10)
-                          const DropdownMenuItem(value: 10, child: Text('10')),
-                        if (maxQuestions >= 15)
-                          const DropdownMenuItem(value: 15, child: Text('15')),
-                        if (maxQuestions >= 20)
-                          const DropdownMenuItem(value: 20, child: Text('20')),
-                        if (maxQuestions >= 25)
-                          const DropdownMenuItem(value: 25, child: Text('25')),
-                        if (maxQuestions >= 30)
-                          const DropdownMenuItem(
-                              value: 30, child: Text('Tất cả')),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) onCountChanged(v);
-                      },
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.divider),
                   ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        )
+                      : maxQuestions == 0
+                          ? const Text(
+                              'Không có câu hỏi',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary, fontSize: 14),
+                            )
+                          : DropdownButton<int>(
+                              value: questionCount,
+                              isDense: true,
+                              underline: const SizedBox.shrink(),
+                              borderRadius: BorderRadius.circular(8),
+                              dropdownColor: AppColors.surface,
+                              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                              menuMaxHeight: 250,
+                              items: List.generate(maxQuestions, (index) => index + 1)
+                                  .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                                  .toList(),
+                              onChanged: (v) {
+                                if (v != null) onCountChanged(v);
+                              },
+                            ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             // Start button
             ElevatedButton(
-              onPressed: isLoading ? null : onStart,
+              onPressed: (isLoading || maxQuestions == 0) ? null : onStart,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: AppColors.primaryLight,
@@ -380,20 +381,26 @@ class _BottomControls extends StatelessWidget {
 class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = AppColors.primary.withOpacity(0.08)
+    _drawWave(
+        canvas, size, AppColors.primaryLighter.withOpacity(0.5), 0.35, 0.2, 0.6, 0.35);
+    _drawWave(
+        canvas, size, AppColors.primaryLighter.withOpacity(0.3), 0.55, 0.45, 0.65, 0.5);
+  }
+
+  void _drawWave(Canvas canvas, Size size, Color color, double y0, double cy,
+      double cx2, double y1) {
+    final paint = Paint()
+      ..color = color
       ..style = PaintingStyle.fill;
-
-    var path = Path();
-    path.moveTo(0, size.height * 0.3);
-    path.quadraticBezierTo(size.width * 0.25, size.height * 0.2,
-        size.width * 0.5, size.height * 0.3);
-    path.quadraticBezierTo(
-        size.width * 0.75, size.height * 0.4, size.width, size.height * 0.3);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
+    final path = Path()
+      ..moveTo(0, size.height * y0)
+      ..quadraticBezierTo(size.width * 0.25, size.height * cy,
+          size.width * 0.5, size.height * y0)
+      ..quadraticBezierTo(
+          size.width * 0.75, size.height * cx2, size.width, size.height * y1)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
     canvas.drawPath(path, paint);
   }
 
