@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../providers/exam_provider.dart';
 import '../../screens/exam/speaking_exam_result_screen.dart';
 import '../../screens/exam/writing_exam_result_screen.dart';
+import '../../screens/exam/full_test_result_screen.dart';
 
 class ExamHistorySheet extends StatelessWidget {
   final String examId;
@@ -114,7 +115,34 @@ class ExamHistorySheet extends StatelessWidget {
           },
         ));
       }
+    } else {
+      final fullTestHistories = examProvider.fullTestHistories
+          .where((h) => _isSameExam(h.examId, examId))
+          .toList();
+      fullTestHistories.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+
+      for (int i = 0; i < fullTestHistories.length; i++) {
+        final history = fullTestHistories[i];
+        final attemptNum = fullTestHistories.length - i;
+        listItems.add(_buildHistoryRow(
+          context,
+          title: 'Lần thi #$attemptNum',
+          score: history.totalScore,
+          maxScore: 990,
+          dateStr: _formatDate(history.completedAt),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => FullTestResultScreen(historyItem: history),
+              ),
+            );
+          },
+        ));
+      }
     }
+
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -196,12 +224,21 @@ class ExamHistorySheet extends StatelessWidget {
     required int score,
     required String dateStr,
     required VoidCallback onTap,
+    int maxScore = 200,
   }) {
     Color scoreColor = Colors.red;
-    if (score >= 160) {
-      scoreColor = AppColors.success;
-    } else if (score >= 110) {
-      scoreColor = Colors.orange;
+    if (maxScore == 990) {
+      if (score >= 700) {
+        scoreColor = AppColors.success;
+      } else if (score >= 450) {
+        scoreColor = Colors.orange;
+      }
+    } else {
+      if (score >= 160) {
+        scoreColor = AppColors.success;
+      } else if (score >= 110) {
+        scoreColor = Colors.orange;
+      }
     }
 
     return Material(
@@ -258,7 +295,7 @@ class ExamHistorySheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '$score/200',
+                  '$score/$maxScore',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
