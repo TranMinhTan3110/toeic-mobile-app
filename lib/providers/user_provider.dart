@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import '../data/models/user_profile_model.dart';
 import '../data/models/leaderboard_entry_model.dart';
 import '../data/models/engagement_result_model.dart';
@@ -6,6 +7,7 @@ import '../data/repositories/user_repository.dart';
 
 class UserProvider with ChangeNotifier {
   final UserRepository _userRepository = UserRepository();
+  bool _disposed = false;
 
   UserProfileModel? _profile;
   UserProfileModel? get profile => _profile;
@@ -35,7 +37,7 @@ class UserProvider with ChangeNotifier {
 
     _isLoadingProfile = true;
     _profileError = null;
-    notifyListeners();
+    _notifyListenersSafely();
 
     try {
       debugPrint('🔄 [UserProvider] Fetching profile from API...');
@@ -48,7 +50,7 @@ class UserProvider with ChangeNotifier {
       debugPrint('❌ [UserProvider] Error fetching user profile: $e');
     } finally {
       _isLoadingProfile = false;
-      notifyListeners();
+      _notifyListenersSafely();
     }
   }
 
@@ -64,7 +66,7 @@ class UserProvider with ChangeNotifier {
   }) async {
     _isLoadingProfile = true;
     _profileError = null;
-    notifyListeners();
+    _notifyListenersSafely();
 
     try {
       final updatedProfile = await _userRepository.updateProfile(
@@ -94,7 +96,7 @@ class UserProvider with ChangeNotifier {
       rethrow;
     } finally {
       _isLoadingProfile = false;
-      notifyListeners();
+      _notifyListenersSafely();
     }
   }
 
@@ -108,7 +110,7 @@ class UserProvider with ChangeNotifier {
 
     _isLoadingLeaderboard = true;
     _leaderboardError = null;
-    notifyListeners();
+    _notifyListenersSafely();
 
     try {
       debugPrint('🔄 [UserProvider] Fetching leaderboard from API...');
@@ -121,7 +123,7 @@ class UserProvider with ChangeNotifier {
       debugPrint('Error fetching leaderboard: $e');
     } finally {
       _isLoadingLeaderboard = false;
-      notifyListeners();
+      _notifyListenersSafely();
     }
   }
 
@@ -165,7 +167,7 @@ class UserProvider with ChangeNotifier {
       }
     }
 
-    notifyListeners();
+    _notifyListenersSafely();
   }
 
   void clear() {
@@ -173,7 +175,7 @@ class UserProvider with ChangeNotifier {
     _leaderboard = [];
     _profileError = null;
     _leaderboardError = null;
-    notifyListeners();
+    _notifyListenersSafely();
   }
 
   UserProfileModel _mergeProfileUpdate(
@@ -225,5 +227,25 @@ class UserProvider with ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  void _notifyListenersSafely() {
+    if (_disposed) return;
+
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
