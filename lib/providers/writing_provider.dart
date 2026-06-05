@@ -234,4 +234,11 @@ class WritingProvider with ChangeNotifier {
     _lastEvaluation = null;
     notifyListeners();
   }
+
+  void clearCache() {
+    _historyItems = [];
+    _selectedSubmission = null;
+    _lastEvaluation = null;
+    notifyListeners();
+  }
 }

@@ -262,4 +262,17 @@ class ExamProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearCache() {
+    _part12Questions = [];
+    _part34Groups = [];
+    _examItems = [];
+    _questionNumbers = [];
+    _totalQuestions = 0;
+    _speakingExamHistories = [];
+    _writingExamHistories = [];
+    _fullTestHistories = [];
+    _exams = [];
+    notifyListeners();
+  }
 }
