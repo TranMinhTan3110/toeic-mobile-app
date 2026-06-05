@@ -4,6 +4,7 @@ import '../../core/services/auth_service.dart';
 import '../models/listening_question.dart';
 import '../models/speaking_exam_history_model.dart';
 import '../models/writing_exam_history_model.dart';
+import '../models/test_info.dart';
 
 class ExamRepository {
   final Dio _dio = Dio();
@@ -111,6 +112,66 @@ class ExamRepository {
       return data.map((json) => WritingExamHistoryModel.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Lỗi khi tải lịch sử thi Writing: $e');
+    }
+  }
+
+  Future<List<TestInfo>> getExams() async {
+    try {
+      final response = await _dio.get('${AppConstants.baseUrl}/exam');
+      final List<dynamic> data = response.data;
+      final List<TestInfo> exams = [];
+      
+      for (var json in data) {
+        final isPractice = json['isPractice'] ?? false;
+        final isExam = json['isExam'] ?? false;
+        if (isPractice || !isExam) {
+          continue;
+        }
+
+        final id = json['id'] ?? '';
+        final title = json['title'] ?? '';
+        final duration = json['duration'] ?? 120;
+        final List<dynamic> questionIds = json['questionIds'] ?? [];
+        final examType = json['examType'] ?? 'full';
+
+        if (examType == 'speaking_writing') {
+          // Add as speaking
+          exams.add(TestInfo(
+            id: id,
+            title: title.toString().replaceAll('Speaking & Writing - ', 'Speaking - '),
+            duration: 20,
+            questionCount: 11,
+            skill: 'speaking',
+          ));
+
+          // Add as writing
+          exams.add(TestInfo(
+            id: id,
+            title: title.toString().replaceAll('Speaking & Writing - ', 'Writing - '),
+            duration: 60,
+            questionCount: 8,
+            skill: 'writing',
+          ));
+        } else {
+          String skill = 'listening';
+          if (examType == 'speaking') {
+            skill = 'speaking';
+          } else if (examType == 'writing') {
+            skill = 'writing';
+          }
+
+          exams.add(TestInfo(
+            id: id,
+            title: title,
+            duration: duration,
+            questionCount: questionIds.length,
+            skill: skill,
+          ));
+        }
+      }
+      return exams;
+    } catch (e) {
+      throw Exception('Lỗi khi tải danh sách bài thi: $e');
     }
   }
 }
