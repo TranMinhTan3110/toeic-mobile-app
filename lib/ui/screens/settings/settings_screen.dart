@@ -6,6 +6,13 @@ import 'package:toeicmobileapp/core/services/study_reminder_service.dart';
 import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/providers/grammar_provider.dart';
 import 'package:toeicmobileapp/providers/listening_provider.dart';
+import 'package:toeicmobileapp/providers/speaking_provider.dart';
+import 'package:toeicmobileapp/providers/writing_provider.dart';
+import 'package:toeicmobileapp/providers/vocabulary_provider.dart';
+import 'package:toeicmobileapp/providers/exam_provider.dart';
+import 'package:toeicmobileapp/providers/reading_part5_provider.dart';
+import 'package:toeicmobileapp/providers/reading_part6_provider.dart';
+import 'package:toeicmobileapp/providers/reading_part7_provider.dart';
 import 'package:toeicmobileapp/providers/user_provider.dart';
 import 'package:toeicmobileapp/ui/shared/practice_dialogs.dart';
 import 'package:toeicmobileapp/ui/widgets/common/custom_app_bar.dart';
@@ -13,6 +20,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/settings/profile_header.dart';
 import '../../widgets/settings/setting_tile.dart';
 import 'profile_edit_screen.dart';
+
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
@@ -191,9 +199,20 @@ class SettingsScreen extends StatelessWidget {
       icon: Boxicons.bx_log_out,
     );
     if (confirm && context.mounted) {
+      // Nhập các providers
       final userProvider = context.read<UserProvider>();
       final grammarProvider = context.read<GrammarProvider>();
       final listeningProvider = context.read<ListeningProvider>();
+      
+      // Dọn dẹp cache của các providers
+      context.read<SpeakingProvider>().clearCache();
+      context.read<WritingProvider>().clearCache();
+      context.read<VocabularyProvider>().clearCache();
+      context.read<ExamProvider>().clearCache();
+      context.read<ReadingPart5Provider>().clearCache();
+      context.read<ReadingPart6Provider>().clearCache();
+      context.read<ReadingPart7Provider>().clearCache();
+
       await AuthService().signOut();
       userProvider.clear();
       grammarProvider.clearCache();

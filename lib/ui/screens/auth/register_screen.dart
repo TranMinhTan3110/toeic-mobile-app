@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:toeicmobileapp/ui/shared/practice_dialogs.dart';
 import 'package:toeicmobileapp/core/services/auth_service.dart';
@@ -344,6 +346,54 @@ class _RegisterViewState extends State<RegisterView>
               ),
             ),
           ),
+          if (_isLoading)
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                child: Container(
+                  color: Colors.black.withOpacity(0.25),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 24,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primary,
+                            ),
+                            strokeWidth: 3,
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Vui lòng chờ...',
+                            style: TextStyle(
+                              color: Color(0xFF5D4037),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -382,12 +432,8 @@ class _RegisterViewState extends State<RegisterView>
         displayName: name,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng ký tài khoản thành công!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('show_welcome_dialog', true);
         Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
@@ -413,8 +459,16 @@ class _RegisterViewState extends State<RegisterView>
   }
 
   void _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
     try {
-      await _authService.signInWithGoogle();
+      final credential = await _authService.signInWithGoogle();
+      if (credential != null) {
+        final isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
+        if (isNewUser) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('show_welcome_dialog', true);
+        }
+      }
     } catch (e) {
       if (mounted) {
         showPremiumErrorDialog(
@@ -422,6 +476,10 @@ class _RegisterViewState extends State<RegisterView>
           title: 'Đăng nhập thất bại',
           text: 'Đăng nhập Google thất bại!',
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }

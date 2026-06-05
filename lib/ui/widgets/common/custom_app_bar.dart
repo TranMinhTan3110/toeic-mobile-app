@@ -94,15 +94,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             const SizedBox(width: 8),
           ],
-          Text(
-            title,
-            style: titleStyle ??
-                TextStyle(
-                  color: fgColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
-                ),
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: titleStyle ??
+                  TextStyle(
+                    color: fgColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
+            ),
           ),
         ],
       ),

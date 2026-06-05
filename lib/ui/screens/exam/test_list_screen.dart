@@ -27,6 +27,7 @@ class _TestListScreenState extends State<TestListScreen> {
     // Load histories in background to display score badges
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final examProvider = context.read<ExamProvider>();
+      examProvider.fetchExams();
       examProvider.fetchSpeakingExamHistory();
       examProvider.fetchWritingExamHistory();
       examProvider.fetchFullTestHistory();
@@ -116,10 +117,15 @@ class _TestListScreenState extends State<TestListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final listReading = _generateMockTests('ETS 2024');
-    final listSpeaking = _generateSpeakingTests();
-    final listWriting = _generateWritingTests();
     final examProvider = context.watch<ExamProvider>();
+    
+    final realReading = examProvider.exams.where((e) => e.skill == 'listening').toList();
+    final realSpeaking = examProvider.exams.where((e) => e.skill == 'speaking').toList();
+    final realWriting = examProvider.exams.where((e) => e.skill == 'writing').toList();
+
+    final listReading = realReading.isNotEmpty ? realReading : _generateMockTests('ETS 2024');
+    final listSpeaking = realSpeaking.isNotEmpty ? realSpeaking : _generateSpeakingTests();
+    final listWriting = realWriting.isNotEmpty ? realWriting : _generateWritingTests();
 
     return Scaffold(
       backgroundColor: AppColors.background,

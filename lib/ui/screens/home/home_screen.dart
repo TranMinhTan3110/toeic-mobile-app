@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../shared/practice_dialogs.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/speaking_provider.dart';
@@ -44,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         context.read<UserProvider>().fetchProfile();
         // Load lịch sử các kỹ năng để đảm bảo dữ liệu sẵn sàng ngoài trang chủ
@@ -59,6 +61,22 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<ExamProvider>().fetchFullTestHistory();
         // Load thông số từ vựng cần ôn ở sổ tay
         context.read<VocabularyProvider>().fetchHubStats(forceRefresh: true);
+
+        // Check welcome dialog flag
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final showWelcome = prefs.getBool('show_welcome_dialog') ?? false;
+          if (showWelcome && mounted) {
+            showPremiumSuccessDialog(
+              context,
+              title: 'Chào mừng thành viên mới!',
+              text: 'Chào mừng bạn đến với TOEIC Master! Hãy cùng nhau chinh phục điểm số TOEIC mục tiêu nhé.',
+            );
+            await prefs.setBool('show_welcome_dialog', false);
+          }
+        } catch (e) {
+          debugPrint('Lỗi hiển thị welcome dialog: $e');
+        }
       }
     });
   }

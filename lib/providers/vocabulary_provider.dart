@@ -189,4 +189,16 @@ class VocabularyProvider with ChangeNotifier {
       debugPrint('Toggle star from notebook error: $e');
     }
   }
+
+  void clearCache() {
+    _words = [];
+    _topics = [];
+    _levels = [];
+    _hubStats = null;
+    _starredWords = [];
+    _cacheWords.clear();
+    _lastTopic = null;
+    _lastLevel = null;
+    notifyListeners();
+  }
 }

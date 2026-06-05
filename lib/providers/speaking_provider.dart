@@ -338,6 +338,15 @@ class SpeakingProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clearCache() {
+    _historyItems = [];
+    _selectedHistory = null;
+    _currentSessionAnswers.clear();
+    _questionsByPart.clear();
+    _examQuestions = [];
+    notifyListeners();
+  }
+
   List<SpeakingQuestion> _enrichWithMockExplanations(
     List<SpeakingQuestion> fromApi,
     int partNumber,

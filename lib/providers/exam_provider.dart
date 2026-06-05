@@ -3,6 +3,7 @@ import '../data/models/full_test_history_model.dart';
 import '../data/models/listening_question.dart';
 import '../data/models/speaking_exam_history_model.dart';
 import '../data/models/writing_exam_history_model.dart';
+import '../data/models/test_info.dart';
 import '../data/repositories/exam_repository.dart';
 
 class ExamProvider with ChangeNotifier {
@@ -32,6 +33,25 @@ class ExamProvider with ChangeNotifier {
 
   List<WritingExamHistoryModel> _writingExamHistories = [];
   List<WritingExamHistoryModel> get writingExamHistories => _writingExamHistories;
+
+  List<TestInfo> _exams = [];
+  List<TestInfo> get exams => _exams;
+
+  Future<void> fetchExams() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      _exams = await _repository.getExams();
+      debugPrint('✅ [ExamProvider] Exams fetched: ${_exams.length}');
+    } catch (e) {
+      _errorMessage = 'Lỗi tải danh sách bài thi: $e';
+      debugPrint('❌ [ExamProvider] Error fetching exams: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   List<FullTestHistoryModel> _fullTestHistories = [];
   List<FullTestHistoryModel> get fullTestHistories => _fullTestHistories;
@@ -241,5 +261,18 @@ class ExamProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void clearCache() {
+    _part12Questions = [];
+    _part34Groups = [];
+    _examItems = [];
+    _questionNumbers = [];
+    _totalQuestions = 0;
+    _speakingExamHistories = [];
+    _writingExamHistories = [];
+    _fullTestHistories = [];
+    _exams = [];
+    notifyListeners();
   }
 }
