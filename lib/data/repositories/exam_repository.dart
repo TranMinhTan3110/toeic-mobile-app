@@ -256,5 +256,6 @@ class ExamRepository {
       return FullTestHistoryModel.fromJson(response.data);
     } catch (e) {
       throw Exception('Lỗi khi tải chi tiết lịch sử thi Full Test: $e');
+    }
   }
 }
