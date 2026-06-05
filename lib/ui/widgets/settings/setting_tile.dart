@@ -6,18 +6,26 @@ class SettingTile extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
+    this.subtitle,
     this.onTap,
     this.trailingWidget,
     this.trailingText,
     this.trailingTextColor,
+    this.iconColor = AppColors.primary,
+    this.iconBackground = AppColors.primaryPale,
+    this.showChevron = true,
   });
 
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback? onTap;
   final Widget? trailingWidget;
   final String? trailingText;
   final Color? trailingTextColor;
+  final Color iconColor;
+  final Color iconBackground;
+  final bool showChevron;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +34,7 @@ class SettingTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: const BoxDecoration(
             border: Border(
               bottom: BorderSide(color: AppColors.divider, width: 1),
@@ -35,21 +43,38 @@ class SettingTile extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.badgeBg.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(10),
+                  color: iconBackground,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 22),
+                child: Icon(icon, color: iconColor, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle!,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               if (trailingText != null)
@@ -61,8 +86,10 @@ class SettingTile extends StatelessWidget {
                   ),
                 ),
               ?trailingWidget,
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: AppColors.tabInactive),
+              if (showChevron) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, color: AppColors.tabInactive),
+              ],
             ],
           ),
         ),

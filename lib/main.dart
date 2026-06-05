@@ -12,6 +12,7 @@ import 'package:toeicmobileapp/providers/listening_provider.dart';
 import 'package:toeicmobileapp/providers/speaking_provider.dart';
 import 'package:toeicmobileapp/providers/user_provider.dart';
 import 'package:toeicmobileapp/providers/writing_provider.dart';
+import 'package:toeicmobileapp/core/services/study_reminder_service.dart';
 import 'package:toeicmobileapp/ui/screens/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -26,6 +27,7 @@ void main() async {
 
   // Khởi tạo Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await StudyReminderService.instance.initialize();
 
   // Đọc cờ showOnboarding từ bộ nhớ cục bộ
   final prefs = await SharedPreferences.getInstance();

@@ -12,9 +12,7 @@ class UserRepository {
   Future<Options> _getAuthOptions() async {
     final token = await _authService.getIdToken();
     return Options(
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
   }
 
@@ -27,29 +25,41 @@ class UserRepository {
       );
       return UserProfileModel.fromJson(response.data);
     } catch (e) {
-      throw Exception('Không thể lấy thông tin hồ sơ: $e');
+      throw Exception('Không thể lấy thông tin hồ sơ: ${_messageFromError(e)}');
     }
   }
 
   Future<UserProfileModel> updateProfile({
-    required int targetScore,
-    required String currentLevel,
-    required List<String> preferredSkills,
+    int? targetScore,
+    String? currentLevel,
+    List<String>? preferredSkills,
+    String? displayName,
+    String? avatarUrl,
+    String? phoneNumber,
+    String? gender,
+    String? birthDate,
   }) async {
     try {
       final options = await _getAuthOptions();
+      final data = <String, dynamic>{
+        if (targetScore != null) 'targetScore': targetScore,
+        if (currentLevel != null) 'currentLevel': currentLevel,
+        if (preferredSkills != null) 'preferredSkills': preferredSkills,
+        if (displayName != null) 'displayName': displayName,
+        if (avatarUrl != null) 'avatarUrl': avatarUrl,
+        if (phoneNumber != null) 'phoneNumber': phoneNumber,
+        if (gender != null) 'gender': gender,
+        if (birthDate != null) 'birthDate': birthDate,
+      };
+
       final response = await _dio.patch(
         '${AppConstants.baseUrl}/users/me',
-        data: {
-          'targetScore': targetScore,
-          'currentLevel': currentLevel,
-          'preferredSkills': preferredSkills,
-        },
+        data: data,
         options: options,
       );
       return UserProfileModel.fromJson(response.data);
     } catch (e) {
-      throw Exception('Không thể cập nhật hồ sơ: $e');
+      throw Exception('Không thể cập nhật hồ sơ: ${_messageFromError(e)}');
     }
   }
 
@@ -59,12 +69,27 @@ class UserRepository {
         '${AppConstants.baseUrl}/leaderboard/weekly',
         queryParameters: {'limit': 50},
       );
-      
+
       final List<dynamic> entriesJson = response.data['entries'] ?? [];
-      return entriesJson.map((json) => LeaderboardEntryModel.fromJson(json)).toList();
+      return entriesJson
+          .map((json) => LeaderboardEntryModel.fromJson(json))
+          .toList();
     } catch (e) {
       throw Exception('Không thể lấy bảng xếp hạng tuần: $e');
     }
+  }
+
+  String _messageFromError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['detail'] ?? data['message'];
+        if (message is String && message.isNotEmpty) return message;
+      }
+      if (data is String && data.isNotEmpty) return data;
+      return error.message ?? 'Máy chủ đang gặp lỗi.';
+    }
+    return error.toString();
   }
 
   /// Ghi nhận hoạt động học và cộng EP
@@ -81,11 +106,11 @@ class UserRepository {
       final response = await _dio.post(
         '${AppConstants.baseUrl}/engagement/activity',
         data: {
-          'activityType'  : activityType,
-          'referenceId'   : referenceId,
+          'activityType': activityType,
+          'referenceId': referenceId,
           'correctAnswers': correctAnswers,
-          'totalAnswers'  : totalAnswers,
-          'newlyMastered' : newlyMastered,
+          'totalAnswers': totalAnswers,
+          'newlyMastered': newlyMastered,
         },
         options: options,
       );
