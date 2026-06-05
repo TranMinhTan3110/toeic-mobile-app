@@ -119,19 +119,20 @@ class _HistorySectionState extends State<HistorySection>
   Widget _buildList() {
     if (_currentItems.isEmpty) return _buildEmptyState();
 
+    final displayItems = _currentItems.take(3).toList();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          ..._visibleItems.map((item) => Column(
+          ...displayItems.map((item) => Column(
             children: [
               HistoryRow(item: item),
-              if (item != _visibleItems.last)
+              if (item != displayItems.last)
                 const Divider(height: 1, color: AppColors.border),
             ],
           )),
-          if (_hasMore) _buildSeeMoreButton(),
-          if (!_hasMore) const SizedBox(height: 4),
+          const SizedBox(height: 12),
         ],
       ),
     );

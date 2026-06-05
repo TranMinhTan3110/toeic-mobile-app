@@ -78,7 +78,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 _showFloatingEP(
                   "+${engagement.epAwarded} EP",
                   Colors.orange,
-                  icon: Icons.local_fire_department_rounded,
+                  icon: Icons.local_library_rounded,
                 );
               } else if (engagement.dailyCapReached) {
                 Future.microtask(() {

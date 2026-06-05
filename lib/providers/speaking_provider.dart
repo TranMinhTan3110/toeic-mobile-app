@@ -6,9 +6,14 @@ import '../data/models/speaking_part_info.dart';
 import '../data/models/speaking_history_item.dart';
 import '../data/repositories/speaking_repository.dart';
 import '../data/repositories/user_repository.dart';
+import 'user_provider.dart';
 
 class SpeakingProvider with ChangeNotifier {
   final SpeakingRepository _repository = SpeakingRepository();
+
+  /// Tham chiếu đến UserProvider để cập nhật EP ngay lập tức sau khi làm bài
+  UserProvider? _userProvider;
+  void setUserProvider(UserProvider up) => _userProvider = up;
 
   final Map<String, List<SpeakingQuestion>> _questionsByPart = {};
 
@@ -181,16 +186,20 @@ class SpeakingProvider with ChangeNotifier {
       _currentSessionAnswers.clear();
       await fetchHistory(forceRefresh: true);
 
-      // Ghi nhận EP cho Speaking
+      // Ghi nhận EP cho Speaking và cập nhật UI ngay lập tức
       if (id != null && !examMode && correct > 0) {
         try {
           final userRepository = UserRepository();
-          await userRepository.recordActivity(
+          final epResult = await userRepository.recordActivity(
             activityType: 'SpeakingComplete',
             referenceId: id,
             correctAnswers: correct,
             totalAnswers: total,
           );
+          if (epResult != null) {
+            _userProvider?.updateLocalEpAndStreak(epResult);
+            debugPrint('✅ Speaking EP: +${epResult.epAwarded} EP');
+          }
         } catch (epError) {
           debugPrint('Lỗi ghi nhận EP cho Speaking: $epError');
         }

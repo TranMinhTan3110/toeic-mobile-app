@@ -67,16 +67,44 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               onTap: onBack ?? () => Navigator.maybePop(context),
             )
           : null,
-      title: Text(
-        title,
-        style:
-            titleStyle ??
-            TextStyle(
-              color: fgColor,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!showBackButton) ...[
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.network(
+                  'https://res.cloudinary.com/dlfc5qwhj/image/upload/q_auto/f_auto/v1780328432/Logo/logo-toeic_2.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            title,
+            style: titleStyle ??
+                TextStyle(
+                  color: fgColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+          ),
+        ],
       ),
       actions: [if (actions != null) ...actions!, const SizedBox(width: 8)],
       bottom: bottom,

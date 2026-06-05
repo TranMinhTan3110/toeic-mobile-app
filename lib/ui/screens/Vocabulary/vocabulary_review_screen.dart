@@ -83,7 +83,7 @@ class _VocabularyReviewScreenState extends State<VocabularyReviewScreen> {
               setState(() {
                 _earnedEP += engagement.epAwarded;
               });
-              _showFloatingEP('+${engagement.epAwarded} EP', Colors.orange, icon: Icons.local_fire_department_rounded);
+              _showFloatingEP('+${engagement.epAwarded} EP', Colors.orange, icon: Icons.local_library_rounded);
             } else if (engagement.dailyCapReached) {
               _showSnackbar('Đạt giới hạn 500 EP/ngày 🎯', AppColors.warning);
             }

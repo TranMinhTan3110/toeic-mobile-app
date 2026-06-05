@@ -232,6 +232,8 @@ class _ListeningScreenState extends State<ListeningScreen> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
+          focusColor: Colors.transparent,
+          hoverColor: Colors.transparent,
           onTap: () {
             Navigator.push(
               context,

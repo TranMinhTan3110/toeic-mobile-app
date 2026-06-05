@@ -6,6 +6,7 @@ import 'package:toeicmobileapp/core/theme/app_colors.dart';
 import 'package:toeicmobileapp/core/utils/validators.dart';
 import 'package:toeicmobileapp/ui/widgets/auth/login_form.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -107,32 +108,50 @@ class _LoginViewState extends State<LoginView>
                         child: Column(
                           children: [
                             Container(
-                              width: 72,
-                              height: 72,
+                              width: 80,
+                              height: 80,
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    AppColors.primary,
-                                    AppColors.primaryDark,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primaryDark.withOpacity(
-                                      0.3,
-                                    ),
+                                    color: AppColors.primaryDark.withOpacity(0.15),
                                     blurRadius: 24,
                                     offset: const Offset(0, 8),
                                   ),
                                 ],
                               ),
-                              child: const Icon(
-                                Icons.auto_stories_rounded,
-                                color: Colors.white,
-                                size: 38,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.network(
+                                  'https://res.cloudinary.com/dlfc5qwhj/image/upload/q_auto/f_auto/v1780328432/Logo/logo-toeic_2.png',
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                  loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: AppColors.primary,
+                                      child: const Icon(
+                                        Icons.auto_stories_rounded,
+                                        color: Colors.white,
+                                        size: 38,
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -178,6 +197,34 @@ class _LoginViewState extends State<LoginView>
                             if (valid) {
                               _handleLogin();
                             }
+                          },
+                          onForgotPassword: () {
+                            Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder: (_, animation, _) =>
+                                    const ForgotPasswordScreen(),
+                                transitionsBuilder:
+                                    (_, animation, _, child) {
+                                      return SlideTransition(
+                                        position:
+                                            Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.easeOutCubic,
+                                              ),
+                                            ),
+                                        child: child,
+                                      );
+                                    },
+                                transitionDuration: const Duration(
+                                  milliseconds: 400,
+                                ),
+                              ),
+                            );
                           },
                           emailValidator: (v) => Validators.email(v),
                           passwordValidator: (v) => Validators.password(v),
@@ -325,13 +372,6 @@ class _LoginViewState extends State<LoginView>
 
     try {
       await _authService.signInWithEmailPassword(email, password);
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng nhập thành công',
-          text: 'Chào mừng bạn quay lại với TOEIC Master! 🎉',
-        );
-      }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'user-not-found' ||
@@ -360,13 +400,6 @@ class _LoginViewState extends State<LoginView>
       if (user == null) {
         // User hủy bỏ đăng nhập
         return;
-      }
-      if (mounted) {
-        showPremiumSuccessDialog(
-          context,
-          title: 'Đăng nhập thành công',
-          text: 'Chào mừng bạn đến với TOEIC Master! 🎉',
-        );
       }
     } catch (e) {
       if (mounted) {

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/listening_data.dart';
 
+/// Callback when a history item is tapped. Receives the index of the item.
+typedef OnHistoryItemTap = void Function(int index);
+
 /// Bottom sheet hiển thị lịch sử làm bài của 1 part.
 class PartHistorySheet extends StatelessWidget {
   const PartHistorySheet({
@@ -9,17 +12,20 @@ class PartHistorySheet extends StatelessWidget {
     required this.partNumber,
     required this.partTitle,
     required this.items,
+    this.onItemTap,
   });
 
   final int partNumber;
   final String partTitle;
   final List<HistoryItem> items;
+  final OnHistoryItemTap? onItemTap;
 
   static void show(
     BuildContext context, {
     required int partNumber,
     required String partTitle,
     required List<HistoryItem> items,
+    OnHistoryItemTap? onItemTap,
   }) {
     showModalBottomSheet(
       context: context,
@@ -29,6 +35,7 @@ class PartHistorySheet extends StatelessWidget {
         partNumber: partNumber,
         partTitle: partTitle,
         items: items,
+        onItemTap: onItemTap,
       ),
     );
   }
@@ -114,7 +121,10 @@ class PartHistorySheet extends StatelessWidget {
                     itemCount: items.length,
                     separatorBuilder: (_, _) =>
                         const Divider(height: 1, color: AppColors.divider),
-                    itemBuilder: (_, i) => _HistoryRow(item: items[i]),
+                    itemBuilder: (_, i) => _HistoryRow(
+                      item: items[i],
+                      onTap: onItemTap != null ? () => onItemTap!(i) : null,
+                    ),
                   ),
           ),
         ],
@@ -144,8 +154,13 @@ class PartHistorySheet extends StatelessWidget {
 }
 
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.item});
+  const _HistoryRow({
+    required this.item,
+    this.onTap,
+  });
+
   final HistoryItem item;
+  final VoidCallback? onTap;
 
   Color get _color {
     if (item.percent >= 70) return AppColors.success;
@@ -154,71 +169,75 @@ class _HistoryRow extends StatelessWidget {
   }
 
   String _formatDateTime(DateTime dt) {
-    final day = dt.day.toString().padLeft(2, '0');
-    final month = dt.month.toString().padLeft(2, '0');
-    final year = dt.year;
-    final hour = dt.hour.toString().padLeft(2, '0');
-    final minute = dt.minute.toString().padLeft(2, '0');
+    final localDt = dt.toLocal();
+    final day = localDt.day.toString().padLeft(2, '0');
+    final month = localDt.month.toString().padLeft(2, '0');
+    final year = localDt.year;
+    final hour = localDt.hour.toString().padLeft(2, '0');
+    final minute = localDt.minute.toString().padLeft(2, '0');
     return '$hour:$minute - $day/$month/$year';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(
-              child: Text(
-                'Aa',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Center(
+                child: Text(
+                  'Aa',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${item.correct}/${item.total} câu đúng • ${_formatDateTime(item.date)}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 2),
+                  Text(
+                    '${item.correct}/${item.total} câu đúng • ${_formatDateTime(item.date)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Text(
-            '${item.percent.toInt()}%',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: _color,
+            Text(
+              '${item.percent.toInt()}%',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: _color,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

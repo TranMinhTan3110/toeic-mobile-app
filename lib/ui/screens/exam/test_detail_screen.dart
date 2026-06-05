@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/test_info.dart';
 import '../../widgets/buttons/start_exam_button.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../../widgets/practice/exam_history_sheet.dart';
 import 'exam_taking_screen.dart';
 import 'speaking_exam_screen.dart';
 import 'writing_exam_screen.dart';
@@ -16,10 +17,22 @@ class TestDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Chi tiết bài thi',
-        // showBackButton mặc định là true trong CustomAppBar rồi nên không cần khai báo lại
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded, color: AppColors.appBarFg),
+            onPressed: () => ExamHistorySheet.show(
+              context,
+              examId: testData.id,
+              examTitle: testData.title,
+              skill: testData.skill ?? 'listening',
+            ),
+            tooltip: 'Lịch sử làm đề',
+          ),
+        ],
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
