@@ -6,106 +6,114 @@ class ProfileHeader extends StatelessWidget {
     super.key,
     this.isLoggedIn = false,
     this.userName,
+    this.email,
     this.avatarUrl,
     this.onLogout,
   });
 
   final bool isLoggedIn;
   final String? userName;
+  final String? email;
   final String? avatarUrl;
   final VoidCallback? onLogout;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: isLoggedIn ? _buildLoggedIn(context) : _buildGuest(context),
-    );
-  }
-
-  Widget _buildGuest(BuildContext context) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 28,
-          backgroundColor: AppColors.primaryLighter,
-          child: const Icon(Icons.person, color: Colors.white, size: 28),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () {},
-                child: Text('Đăng nhập',
-                    style: TextStyle(
-                      color: AppColors.primaryDark,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    )),
-              ),
-              const SizedBox(width: 8),
-              Text('|', style: TextStyle(color: AppColors.textSecondary)),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {},
-                child: Text('Đăng ký',
-                    style: TextStyle(
-                      color: AppColors.primaryDark,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    )),
-              ),
-            ],
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.18),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: _buildLoggedIn(context),
     );
   }
 
   Widget _buildLoggedIn(BuildContext context) {
+    final resolvedName = userName?.trim().isNotEmpty == true
+        ? userName!.trim()
+        : 'Học viên TOEIC';
+    final resolvedEmail = email?.trim();
+
     return Row(
       children: [
-        CircleAvatar(
-          radius: 28,
-          backgroundImage:
-              avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-          backgroundColor: AppColors.primaryLighter,
-          child: avatarUrl == null
-              ? Text(
-                  userName != null && userName!.isNotEmpty
-                      ? userName![0].toUpperCase()
-                      : 'B',
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
-                )
-              : null,
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: CircleAvatar(
+            radius: 28,
+            backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
+                ? NetworkImage(avatarUrl!)
+                : null,
+            backgroundColor: AppColors.primaryLight,
+            child: avatarUrl == null || avatarUrl!.isEmpty
+                ? Text(
+                    userName != null && userName!.isNotEmpty
+                        ? userName!.trimLeft()[0].toUpperCase()
+                        : 'B',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                : null,
+          ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                userName ?? 'Người dùng',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
+                resolvedName,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontSize: 19,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                resolvedEmail?.isNotEmpty == true
+                    ? resolvedEmail!
+                    : 'Sẵn sàng cho buổi luyện hôm nay',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
             ],
           ),
         ),
         GestureDetector(
           onTap: onLogout,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: Text('Đăng xuất',
-                style: TextStyle(
-                  color: AppColors.textLink,
-                  fontWeight: FontWeight.w700,
-                )),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Text(
+              'Đăng xuất',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
           ),
         ),
       ],

@@ -41,66 +41,80 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               _buildHeader(),
 
               Expanded(
-                child: isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      )
-                    : leaderboard.isEmpty
-                    ? _buildEmpty()
-                    : RefreshIndicator(
-                        onRefresh: () => userProvider.fetchLeaderboard(),
-                        color: AppColors.primary,
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                          children: [
-                            // Podium
-                            if (top3.isNotEmpty) _buildPodium(top3),
-                            const SizedBox(height: 16),
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await Future.wait([
+                      userProvider.fetchProfile(forceRefresh: true),
+                      userProvider.fetchLeaderboard(forceRefresh: true),
+                    ]);
+                  },
+                  color: AppColors.primary,
+                  child: isLoading && leaderboard.isEmpty
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : leaderboard.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                SizedBox(
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: _buildEmpty(),
+                                ),
+                              ],
+                            )
+                          : ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                              children: [
+                                // Podium
+                                if (top3.isNotEmpty) _buildPodium(top3),
+                                const SizedBox(height: 16),
 
-                            // Divider
-                            if (rest.isNotEmpty) ...[
-                              Row(
-                                children: [
-                                  const Expanded(
-                                    child: Divider(color: AppColors.divider),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    child: Text(
-                                      'Bảng xếp hạng đầy đủ',
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 12,
+                                // Divider
+                                if (rest.isNotEmpty) ...[
+                                  Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Divider(color: AppColors.divider),
                                       ),
-                                    ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                        ),
+                                        child: Text(
+                                          'Bảng xếp hạng đầy đủ',
+                                          style: TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      const Expanded(
+                                        child: Divider(color: AppColors.divider),
+                                      ),
+                                    ],
                                   ),
-                                  const Expanded(
-                                    child: Divider(color: AppColors.divider),
+                                  const SizedBox(height: 10),
+                                  ...rest.map(
+                                    (e) => _buildListItem(
+                                      entry: e,
+                                      isMe: currentUser?.uid == e.uid,
+                                    ),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 10),
-                              ...rest.map(
-                                (e) => _buildListItem(
-                                  entry: e,
-                                  isMe: currentUser?.uid == e.uid,
-                                ),
-                              ),
-                            ],
 
-                            // Nếu user không có trong list
-                            if (currentUser != null &&
-                                !leaderboard.any(
-                                  (l) => l.uid == currentUser.uid,
-                                ))
-                              _buildMyPositionCard(currentUser),
-                          ],
-                        ),
-                      ),
+                                // Nếu user không có trong list
+                                if (currentUser != null &&
+                                    !leaderboard.any(
+                                      (l) => l.uid == currentUser.uid,
+                                    ))
+                                  _buildMyPositionCard(currentUser),
+                              ],
+                            ),
+                ),
               ),
             ],
           );

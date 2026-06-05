@@ -6,9 +6,6 @@ class Validators {
   static String? name(String? v) {
     final s = v?.trim() ?? '';
     if (s.isEmpty) return 'Vui lòng nhập họ và tên';
-    if (s.length < 2) return 'Tên quá ngắn';
-    final valid = RegExp(r"^[\p{L} '-]+$", unicode: true);
-    if (!valid.hasMatch(s)) return 'Tên chứa ký tự không hợp lệ';
     return null;
   }
 

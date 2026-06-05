@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import '../data/models/user_profile_model.dart';
 import '../data/models/leaderboard_entry_model.dart';
 import '../data/models/engagement_result_model.dart';
@@ -6,6 +7,7 @@ import '../data/repositories/user_repository.dart';
 
 class UserProvider with ChangeNotifier {
   final UserRepository _userRepository = UserRepository();
+  bool _disposed = false;
 
   UserProfileModel? _profile;
   UserProfileModel? get profile => _profile;
@@ -25,7 +27,6 @@ class UserProvider with ChangeNotifier {
   String? _leaderboardError;
   String? get leaderboardError => _leaderboardError;
 
-  // TTL cache: profile 10 phút, leaderboard 5 phút
   DateTime? _profileFetchedAt;
   DateTime? _leaderboardFetchedAt;
   static const _profileTtl = Duration(minutes: 10);
@@ -40,77 +41,126 @@ class UserProvider with ChangeNotifier {
       DateTime.now().difference(_leaderboardFetchedAt!) > _leaderboardTtl;
 
   Future<void> fetchProfile({bool forceRefresh = false}) async {
-    // Dùng cache nếu dữ liệu còn mới (< 10 phút) và không yêu cầu force refresh
     if (_profile != null && !forceRefresh && !_profileIsStale) {
-      debugPrint('ℹ️ [UserProvider] Profile cache still fresh (< 10min). Skipping fetch.');
+      debugPrint(
+        '[UserProvider] Profile cache still fresh (< 10min). Skipping fetch.',
+      );
       return;
     }
 
     _isLoadingProfile = true;
     _profileError = null;
-    notifyListeners();
+    _notifyListenersSafely();
 
     try {
-      debugPrint('🔄 [UserProvider] Fetching profile from API...');
-      _profile = await _userRepository.getProfile();
-      _profileFetchedAt = DateTime.now();
-      debugPrint('✅ [UserProvider] Profile loaded: ${_profile?.displayName} | EP: ${_profile?.experiencePoints}');
-    } catch (e) {
-      _profileError = e.toString();
-      debugPrint('❌ [UserProvider] Error fetching user profile: $e');
+      int retryCount = 0;
+      const maxRetries = 3;
+      const retryDelay = Duration(milliseconds: 1500);
+
+      while (true) {
+        try {
+          debugPrint('[UserProvider] Fetching profile from API (Attempt ${retryCount + 1})...');
+          _profile = await _userRepository.getProfile();
+          _profileFetchedAt = DateTime.now();
+          _profileError = null;
+          debugPrint('[UserProvider] Profile loaded: ${_profile?.displayName} | EP: ${_profile?.experiencePoints}');
+          break; // Success, exit loop
+        } catch (e) {
+          final errorStr = e.toString();
+          // Check if the error is due to user not being synchronized yet (404 Not Found)
+          final isNotFoundError = errorStr.contains('404') || 
+                                errorStr.contains('NotFound') || 
+                                errorStr.contains('chưa được đồng bộ');
+
+          if (isNotFoundError && retryCount < maxRetries) {
+            retryCount++;
+            debugPrint('[UserProvider] Profile not found (404). Backend sync might be in progress. Retrying in ${retryDelay.inMilliseconds}ms... (Attempt $retryCount of $maxRetries)');
+            await Future.delayed(retryDelay);
+          } else {
+            _profileError = errorStr;
+            debugPrint('[UserProvider] Error fetching user profile: $e');
+            break; // Max retries reached or different error, exit loop
+          }
+        }
+      }
     } finally {
       _isLoadingProfile = false;
-      notifyListeners();
+      _notifyListenersSafely();
     }
   }
 
   Future<void> updateProfile({
-    required int targetScore,
-    required String currentLevel,
-    required List<String> preferredSkills,
+    int? targetScore,
+    String? currentLevel,
+    List<String>? preferredSkills,
+    String? displayName,
+    String? avatarUrl,
+    String? phoneNumber,
+    String? gender,
+    String? birthDate,
   }) async {
     _isLoadingProfile = true;
     _profileError = null;
-    notifyListeners();
+    _notifyListenersSafely();
 
     try {
-      _profile = await _userRepository.updateProfile(
+      final updatedProfile = await _userRepository.updateProfile(
         targetScore: targetScore,
         currentLevel: currentLevel,
         preferredSkills: preferredSkills,
+        displayName: displayName,
+        avatarUrl: avatarUrl,
+        phoneNumber: phoneNumber,
+        gender: gender,
+        birthDate: birthDate,
       );
+      _profile = _mergeProfileUpdate(
+        updatedProfile,
+        targetScore: targetScore,
+        currentLevel: currentLevel,
+        preferredSkills: preferredSkills,
+        displayName: displayName,
+        avatarUrl: avatarUrl,
+        phoneNumber: phoneNumber,
+        gender: gender,
+        birthDate: birthDate,
+      );
+      _profileFetchedAt = DateTime.now();
     } catch (e) {
       _profileError = e.toString();
       debugPrint('Error updating profile: $e');
       rethrow;
     } finally {
       _isLoadingProfile = false;
-      notifyListeners();
+      _notifyListenersSafely();
     }
   }
 
   Future<void> fetchLeaderboard({bool forceRefresh = false}) async {
-    // Dùng cache nếu dữ liệu còn mới (< 5 phút) và không yêu cầu force refresh
     if (_leaderboard.isNotEmpty && !forceRefresh && !_leaderboardIsStale) {
-      debugPrint('ℹ️ [UserProvider] Leaderboard cache still fresh (< 5min). Skipping fetch.');
+      debugPrint(
+        '[UserProvider] Leaderboard cache still fresh (< 5min). Skipping fetch.',
+      );
       return;
     }
 
     _isLoadingLeaderboard = true;
     _leaderboardError = null;
-    notifyListeners();
+    _notifyListenersSafely();
 
     try {
-      debugPrint('🔄 [UserProvider] Fetching leaderboard from API...');
+      debugPrint('[UserProvider] Fetching leaderboard from API...');
       _leaderboard = await _userRepository.getWeeklyLeaderboard();
       _leaderboardFetchedAt = DateTime.now();
-      debugPrint('✅ [UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.');
+      debugPrint(
+        '[UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.',
+      );
     } catch (e) {
       _leaderboardError = e.toString();
       debugPrint('Error fetching leaderboard: $e');
     } finally {
       _isLoadingLeaderboard = false;
-      notifyListeners();
+      _notifyListenersSafely();
     }
   }
 
@@ -125,7 +175,9 @@ class UserProvider with ChangeNotifier {
     );
 
     // Cập nhật điểm của mình trên Bảng xếp hạng nếu có mặt
-    final index = _leaderboard.indexWhere((entry) => entry.uid == _profile!.uid);
+    final index = _leaderboard.indexWhere(
+      (entry) => entry.uid == _profile!.uid,
+    );
     if (index != -1) {
       final oldEntry = _leaderboard[index];
       _leaderboard[index] = LeaderboardEntryModel(
@@ -152,7 +204,7 @@ class UserProvider with ChangeNotifier {
       }
     }
 
-    notifyListeners();
+    _notifyListenersSafely();
   }
 
   void clear() {
@@ -162,7 +214,33 @@ class UserProvider with ChangeNotifier {
     _leaderboardError = null;
     _profileFetchedAt = null;
     _leaderboardFetchedAt = null;
-    notifyListeners();
+    _notifyListenersSafely();
+  }
+
+  UserProfileModel _mergeProfileUpdate(
+    UserProfileModel updatedProfile, {
+    int? targetScore,
+    String? currentLevel,
+    List<String>? preferredSkills,
+    String? displayName,
+    String? avatarUrl,
+    String? phoneNumber,
+    String? gender,
+    String? birthDate,
+  }) {
+    final current = _profile;
+    if (current == null) return updatedProfile;
+
+    return current.copyWith(
+      targetScore: targetScore ?? updatedProfile.targetScore,
+      currentLevel: currentLevel ?? updatedProfile.currentLevel,
+      preferredSkills: preferredSkills ?? updatedProfile.preferredSkills,
+      displayName: displayName ?? updatedProfile.displayName,
+      avatarUrl: avatarUrl ?? updatedProfile.avatarUrl,
+      phoneNumber: phoneNumber ?? updatedProfile.phoneNumber,
+      gender: gender ?? updatedProfile.gender,
+      birthDate: birthDate ?? updatedProfile.birthDate,
+    );
   }
 
   /// Ghi nhận hoạt động học và cộng EP — gọi sau khi hoàn thành Quiz/Matching/AI Writing
@@ -175,11 +253,11 @@ class UserProvider with ChangeNotifier {
   }) async {
     try {
       final result = await _userRepository.recordActivity(
-        activityType   : activityType,
-        referenceId    : referenceId,
-        correctAnswers : correctAnswers,
-        totalAnswers   : totalAnswers,
-        newlyMastered  : newlyMastered,
+        activityType: activityType,
+        referenceId: referenceId,
+        correctAnswers: correctAnswers,
+        totalAnswers: totalAnswers,
+        newlyMastered: newlyMastered,
       );
       if (result != null) {
         updateLocalEpAndStreak(result);
@@ -188,5 +266,25 @@ class UserProvider with ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  void _notifyListenersSafely() {
+    if (_disposed) return;
+
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
