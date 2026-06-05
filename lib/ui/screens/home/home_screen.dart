@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<UserProvider>().fetchProfile();
         // Load lịch sử các kỹ năng để đảm bảo dữ liệu sẵn sàng ngoài trang chủ

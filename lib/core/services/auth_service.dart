@@ -49,7 +49,9 @@ class AuthService {
           idToken: googleAuth.idToken,
         );
 
-        final UserCredential result = await _auth.signInWithCredential(credential);
+        final UserCredential result = await _auth.signInWithCredential(
+          credential,
+        );
         if (result.user != null) {
           await _syncUserWithBackend(result.user!);
         }
@@ -151,10 +153,7 @@ class AuthService {
     try {
       final response = await _dio.post(
         '${AppConstants.baseUrl}/Auth/verify-reset-otp',
-        data: {
-          'email': email,
-          'otp': otp,
-        },
+        data: {'email': email, 'otp': otp},
       );
 
       if (response.statusCode == 200) {
@@ -217,6 +216,38 @@ class AuthService {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'Bạn cần đăng nhập lại để đổi mật khẩu.',
+      );
+    }
+
+    await _reauthenticateCurrentUser(user, password: currentPassword);
+    await user.updatePassword(newPassword);
+    await user.reload();
+  }
+
+  Future<void> deleteCurrentAccount({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'Bạn cần đăng nhập lại để xóa tài khoản.',
+      );
+    }
+
+    await _reauthenticateCurrentUser(user, password: password);
+    await _deleteProfileFromBackend(user);
+    await user.delete();
+    await _googleSignIn.signOut();
+  }
+
   /// (Deprecated) Reset password cách cũ
   /// Vui lòng sử dụng verifyResetOtp() và resetPasswordWithOtp() thay thế
   @Deprecated('Use verifyResetOtp() and resetPasswordWithOtp() instead')
@@ -266,6 +297,79 @@ class AuthService {
     return user.getIdToken(forceRefresh);
   }
 
+  Future<void> _reauthenticateCurrentUser(User user, {String? password}) async {
+    final providerIds = user.providerData
+        .map((info) => info.providerId)
+        .toSet();
+
+    if (providerIds.contains('password')) {
+      final email = user.email;
+      if (email == null || email.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'missing-email',
+          message: 'Tài khoản chưa có email để xác thực lại.',
+        );
+      }
+      if (password == null || password.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'missing-password',
+          message: 'Vui lòng nhập mật khẩu hiện tại.',
+        );
+      }
+
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+      return;
+    }
+
+    if (providerIds.contains('google.com')) {
+      if (kIsWeb) {
+        final provider = GoogleAuthProvider();
+        provider.setCustomParameters({'prompt': 'select_account'});
+        await user.reauthenticateWithPopup(provider);
+        return;
+      }
+
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw FirebaseAuthException(
+          code: 'reauth-cancelled',
+          message: 'Bạn đã hủy xác thực Google.',
+        );
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await user.reauthenticateWithCredential(credential);
+      return;
+    }
+
+    throw FirebaseAuthException(
+      code: 'unsupported-provider',
+      message: 'Phương thức đăng nhập này chưa hỗ trợ thao tác tài khoản.',
+    );
+  }
+
+  Future<void> _deleteProfileFromBackend(User user) async {
+    try {
+      final idToken = await user.getIdToken(true);
+      if (idToken == null) return;
+
+      await _dio.delete(
+        '${AppConstants.baseUrl}/Users/me',
+        options: Options(headers: {'Authorization': 'Bearer $idToken'}),
+      );
+    } catch (e) {
+      debugPrint("Lỗi khi xóa hồ sơ backend: $e");
+    }
+  }
+
   void _logIdTokenForApiTesting(String idToken, User user) {
     debugPrint('');
     debugPrint('╔══════════════════════════════════════════════════════════╗');
@@ -282,7 +386,10 @@ class AuthService {
   }
 
   // 5. Đồng bộ User với Backend
-  Future<void> _syncUserWithBackend(User user, {bool forceRefresh = false}) async {
+  Future<void> _syncUserWithBackend(
+    User user, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final String? idToken = await user.getIdToken(forceRefresh);
       if (idToken == null) return;
@@ -301,7 +408,6 @@ class AuthService {
       }
     } catch (e) {
       debugPrint("Lỗi khi gọi API đồng bộ User: $e");
-
     }
   }
 }
