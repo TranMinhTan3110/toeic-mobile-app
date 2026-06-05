@@ -43,7 +43,7 @@ class UserProvider with ChangeNotifier {
   Future<void> fetchProfile({bool forceRefresh = false}) async {
     if (_profile != null && !forceRefresh && !_profileIsStale) {
       debugPrint(
-        'ℹ️ [UserProvider] Profile cache still fresh (< 10min). Skipping fetch.',
+        '[UserProvider] Profile cache still fresh (< 10min). Skipping fetch.',
       );
       return;
     }
@@ -53,15 +53,36 @@ class UserProvider with ChangeNotifier {
     _notifyListenersSafely();
 
     try {
-      debugPrint('🔄 [UserProvider] Fetching profile from API...');
-      _profile = await _userRepository.getProfile();
-      _profileFetchedAt = DateTime.now();
-      debugPrint(
-        '✅ [UserProvider] Profile loaded: ${_profile?.displayName} | EP: ${_profile?.experiencePoints}',
-      );
-    } catch (e) {
-      _profileError = e.toString();
-      debugPrint('❌ [UserProvider] Error fetching user profile: $e');
+      int retryCount = 0;
+      const maxRetries = 3;
+      const retryDelay = Duration(milliseconds: 1500);
+
+      while (true) {
+        try {
+          debugPrint('[UserProvider] Fetching profile from API (Attempt ${retryCount + 1})...');
+          _profile = await _userRepository.getProfile();
+          _profileFetchedAt = DateTime.now();
+          _profileError = null;
+          debugPrint('[UserProvider] Profile loaded: ${_profile?.displayName} | EP: ${_profile?.experiencePoints}');
+          break; // Success, exit loop
+        } catch (e) {
+          final errorStr = e.toString();
+          // Check if the error is due to user not being synchronized yet (404 Not Found)
+          final isNotFoundError = errorStr.contains('404') || 
+                                errorStr.contains('NotFound') || 
+                                errorStr.contains('chưa được đồng bộ');
+
+          if (isNotFoundError && retryCount < maxRetries) {
+            retryCount++;
+            debugPrint('[UserProvider] Profile not found (404). Backend sync might be in progress. Retrying in ${retryDelay.inMilliseconds}ms... (Attempt $retryCount of $maxRetries)');
+            await Future.delayed(retryDelay);
+          } else {
+            _profileError = errorStr;
+            debugPrint('[UserProvider] Error fetching user profile: $e');
+            break; // Max retries reached or different error, exit loop
+          }
+        }
+      }
     } finally {
       _isLoadingProfile = false;
       _notifyListenersSafely();
@@ -118,7 +139,7 @@ class UserProvider with ChangeNotifier {
   Future<void> fetchLeaderboard({bool forceRefresh = false}) async {
     if (_leaderboard.isNotEmpty && !forceRefresh && !_leaderboardIsStale) {
       debugPrint(
-        'ℹ️ [UserProvider] Leaderboard cache still fresh (< 5min). Skipping fetch.',
+        '[UserProvider] Leaderboard cache still fresh (< 5min). Skipping fetch.',
       );
       return;
     }
@@ -128,11 +149,11 @@ class UserProvider with ChangeNotifier {
     _notifyListenersSafely();
 
     try {
-      debugPrint('🔄 [UserProvider] Fetching leaderboard from API...');
+      debugPrint('[UserProvider] Fetching leaderboard from API...');
       _leaderboard = await _userRepository.getWeeklyLeaderboard();
       _leaderboardFetchedAt = DateTime.now();
       debugPrint(
-        '✅ [UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.',
+        '[UserProvider] Leaderboard loaded: ${_leaderboard.length} entries.',
       );
     } catch (e) {
       _leaderboardError = e.toString();
