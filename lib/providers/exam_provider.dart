@@ -18,7 +18,8 @@ class ExamProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  List<dynamic> _examItems = []; // Contains ListeningQuestion (Part 1, 2, 5) and ListeningGroup (Part 3, 4, 6, 7)
+  List<dynamic> _examItems =
+      []; // Contains ListeningQuestion (Part 1, 2, 5) and ListeningGroup (Part 3, 4, 6, 7)
   List<dynamic> get examItems => _examItems;
 
   List<int> _questionNumbers = [];
@@ -29,10 +30,12 @@ class ExamProvider with ChangeNotifier {
 
   // --- Speaking, Writing, & Full Test Exam Histories ---
   List<SpeakingExamHistoryModel> _speakingExamHistories = [];
-  List<SpeakingExamHistoryModel> get speakingExamHistories => _speakingExamHistories;
+  List<SpeakingExamHistoryModel> get speakingExamHistories =>
+      _speakingExamHistories;
 
   List<WritingExamHistoryModel> _writingExamHistories = [];
-  List<WritingExamHistoryModel> get writingExamHistories => _writingExamHistories;
+  List<WritingExamHistoryModel> get writingExamHistories =>
+      _writingExamHistories;
 
   List<TestInfo> _exams = [];
   List<TestInfo> get exams => _exams;
@@ -43,10 +46,10 @@ class ExamProvider with ChangeNotifier {
     notifyListeners();
     try {
       _exams = await _repository.getExams();
-      debugPrint('✅ [ExamProvider] Exams fetched: ${_exams.length}');
+      debugPrint(' [ExamProvider] Exams fetched: ${_exams.length}');
     } catch (e) {
       _errorMessage = 'Lỗi tải danh sách bài thi: $e';
-      debugPrint('❌ [ExamProvider] Error fetching exams: $e');
+      debugPrint(' [ExamProvider] Error fetching exams: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -68,7 +71,9 @@ class ExamProvider with ChangeNotifier {
       final questions = await _repository.getQuestionsByExamId(examId);
       final groups = await _repository.getGroupsByExamId(examId);
 
-      _part12Questions = questions.where((q) => q.part == 1 || q.part == 2 || q.part == 5).toList();
+      _part12Questions = questions
+          .where((q) => q.part == 1 || q.part == 2 || q.part == 5)
+          .toList();
       _part34Groups = groups;
 
       // Sắp xếp các câu hỏi theo Part để gom thành 1 đề thi hoàn chỉnh
@@ -101,7 +106,6 @@ class ExamProvider with ChangeNotifier {
         }
       }
       _totalQuestions = currentNum - 1;
-
     } catch (e) {
       _errorMessage = 'Lỗi kết nối API: $e';
     } finally {
@@ -159,10 +163,12 @@ class ExamProvider with ChangeNotifier {
 
     try {
       _fullTestHistories = await _repository.getFullTestHistory();
-      debugPrint('✅ [ExamProvider] Full test histories fetched: ${_fullTestHistories.length}');
+      debugPrint(
+        ' [ExamProvider] Full test histories fetched: ${_fullTestHistories.length}',
+      );
     } catch (e) {
       _errorMessage = 'Lỗi tải lịch sử thi Full Test: $e';
-      debugPrint('❌ [ExamProvider] Error fetching Full Test history: $e');
+      debugPrint(' [ExamProvider] Error fetching Full Test history: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -205,10 +211,12 @@ class ExamProvider with ChangeNotifier {
 
     try {
       _speakingExamHistories = await _repository.getSpeakingExamHistory();
-      debugPrint('✅ [ExamProvider] Speaking exam histories fetched: ${_speakingExamHistories.length}');
+      debugPrint(
+        ' [ExamProvider] Speaking exam histories fetched: ${_speakingExamHistories.length}',
+      );
     } catch (e) {
       _errorMessage = 'Lỗi tải lịch sử thi Speaking: $e';
-      debugPrint('❌ [ExamProvider] Error fetching Speaking exam history: $e');
+      debugPrint(' [ExamProvider] Error fetching Speaking exam history: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -253,10 +261,12 @@ class ExamProvider with ChangeNotifier {
 
     try {
       _writingExamHistories = await _repository.getWritingExamHistory();
-      debugPrint('✅ [ExamProvider] Writing exam histories fetched: ${_writingExamHistories.length}');
+      debugPrint(
+        ' [ExamProvider] Writing exam histories fetched: ${_writingExamHistories.length}',
+      );
     } catch (e) {
       _errorMessage = 'Lỗi tải lịch sử thi Writing: $e';
-      debugPrint('❌ [ExamProvider] Error fetching Writing exam history: $e');
+      debugPrint(' [ExamProvider] Error fetching Writing exam history: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

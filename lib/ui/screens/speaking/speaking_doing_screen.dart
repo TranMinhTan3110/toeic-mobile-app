@@ -130,6 +130,8 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
   }
 
   Future<void> _initSTT() async {
+    // Không khởi tạo SpeechToText trên điện thoại thật để tránh chiếm Microphone của AudioRecorder
+    if (!kIsWeb) return;
     try {
       _sttEnabled = await _speech.initialize(
         onStatus: (status) => debugPrint('STT Status: $status'),
@@ -201,7 +203,9 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
           });
           _pulseCtrl.repeat(reverse: true);
 
-          if (_sttEnabled) {
+          // Phân tách logic: Web thì chạy STT bình thường để có chữ realtime (vì Web hỗ trợ)
+          // Mobile thì tắt STT để tránh bị văng lỗi chiếm quyền Mic của AudioRecorder
+          if (kIsWeb && _sttEnabled) {
             _speech.listen(
               onResult: (result) {
                 if (mounted) {
@@ -252,13 +256,37 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
     _onRecordingTimeUp();
   }
 
-  void _startRecording() {
+  Future<void> _startRecordingLogic() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        String path = '';
+        if (!kIsWeb) {
+          final directory = await getTemporaryDirectory();
+          path = '${directory.path}/speaking_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        }
+        const config = RecordConfig();
+        await _audioRecorder.start(config, path: path);
+        _lastRecordingPath = path;
+      }
+    } catch (e) {
+      debugPrint('Lỗi mic: $e');
+    }
+  }
+
+  Future<void> _startRecording() async {
     if (_currentTask == null) return;
     
-    _lastRecordingPath = null; 
+    // Phải dừng TTS để nhả Audio Focus cho Microphone trên Android
+    TtsService().stop();
+    
+    await _startRecordingLogic();
+    _pulseCtrl.repeat(reverse: true);
+
+    if (!mounted) return;
     setState(() {
       _phase = _Phase.recording;
       _hasRecorded = false;
+      _isListening = true;
       if (_currentTask!.questions.isNotEmpty) {
         _secondsLeft = _currentTask!.answerTimes[_currentSubQuestionIndex];
       } else {
@@ -267,6 +295,19 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
       _recognizedText = '';
     });
     
+    if (kIsWeb && _sttEnabled) {
+      _speech.listen(
+        onResult: (result) {
+          if (mounted) {
+            setState(() {
+              _recognizedText = result.recognizedWords;
+            });
+          }
+        },
+        localeId: 'en_US',
+      );
+    }
+
     _startCountdown(_onRecordingTimeUp);
   }
 
@@ -975,46 +1016,34 @@ class _SpeakingDoingScreenState extends State<SpeakingDoingScreen>
                       ),
                     ),
                   ] else ...[
-                    Text(
-                      _isListening ? "Đang lắng nghe..." : "Nhấp để nói",
+                    const Text(
+                      "Đang ghi âm...",
                       style: TextStyle(
-                        color: _isListening ? AppColors.primary : Colors.grey.shade600,
+                        color: Colors.red,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    GestureDetector(
-                      onTap: () {
-                        if (_isListening) {
-                          _handleStopListening();
-                        } else {
-                          _handleStartListening();
-                        }
-                      },
-                      child: ScaleTransition(
-                        scale: _pulseAnim,
+                    ScaleTransition(
+                      scale: _pulseAnim,
+                      child: GestureDetector(
+                        onTap: _skip,
                         child: Container(
-                          width: 84,
-                          height: 84,
+                          width: 72,
+                          height: 72,
                           decoration: BoxDecoration(
-                            color: _isListening ? Colors.red : Colors.orange,
+                            color: Colors.redAccent,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: (_isListening ? Colors.red : Colors.orange).withOpacity(0.4),
-                                blurRadius: 20,
+                                color: Colors.redAccent.withOpacity(0.3),
+                                blurRadius: 15,
                                 spreadRadius: 2,
-                                offset: const Offset(0, 6),
                               )
                             ],
                           ),
-                          child: Icon(
-                            _isListening ? Icons.stop_rounded : Icons.mic_rounded,
-                            size: 42,
-                            color: Colors.white,
-                          ),
+                          child: const Icon(Icons.stop_rounded, color: Colors.white, size: 36),
                         ),
                       ),
                     ),

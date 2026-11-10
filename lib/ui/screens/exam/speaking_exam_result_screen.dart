@@ -244,7 +244,7 @@ class SpeakingExamResultScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildMiniStat('Điểm trung bình AI', '${history.rawAverageScore}/5'),
+                  _buildMiniStat('Điểm trung bình AI', '${history.rawAverageScore}/10'),
                   const SizedBox(height: 12),
                   _buildMiniStat('Số câu đã làm', '${history.totalTasks} câu'),
                   const SizedBox(height: 12),
@@ -333,7 +333,7 @@ class SpeakingExamResultScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${result.score}/5',
+                '${result.score}/10',
                 style: TextStyle(
                   color: result.score >= 3.0 ? Colors.green : Colors.orange,
                   fontWeight: FontWeight.bold,
@@ -389,7 +389,7 @@ class SpeakingExamResultScreen extends StatelessWidget {
                   elevation: 0,
                   shadowColor: Colors.transparent,
                   label: Text(
-                    '${entry.key}: ${entry.value}/5',
+                    '${entry.key}: ${entry.value}/10',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                 );

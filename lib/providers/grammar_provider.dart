@@ -43,7 +43,7 @@ class GrammarProvider with ChangeNotifier {
   /// Tải danh sách các chủ đề ngữ pháp
   Future<void> fetchTopics({bool forceRefresh = false}) async {
     if (_topics.isNotEmpty && !forceRefresh) {
-      debugPrint('ℹ️ [GrammarProvider] Grammar topics already loaded. Using cache.');
+      debugPrint('ℹ [GrammarProvider] Grammar topics already loaded. Using cache.');
       return;
     }
 
@@ -67,7 +67,7 @@ class GrammarProvider with ChangeNotifier {
     if (_lessonsCache.containsKey(topicId) && !forceRefresh) {
       _currentLesson = _lessonsCache[topicId];
       _lessonError = null;
-      debugPrint('ℹ️ [GrammarProvider] Lesson for topic "$topicId" already loaded. Using cache.');
+      debugPrint('ℹ [GrammarProvider] Lesson for topic "$topicId" already loaded. Using cache.');
       notifyListeners();
       return;
     }
@@ -95,7 +95,7 @@ class GrammarProvider with ChangeNotifier {
     if (_exercisesCache.containsKey(topicId) && !forceRefresh) {
       _exercises = _exercisesCache[topicId]!;
       _exercisesError = null;
-      debugPrint('ℹ️ [GrammarProvider] Exercises for topic "$topicId" already loaded. Using cache.');
+      debugPrint('ℹ [GrammarProvider] Exercises for topic "$topicId" already loaded. Using cache.');
       notifyListeners();
       return;
     }

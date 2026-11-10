@@ -113,6 +113,7 @@ class _SpeakingExamScreenState extends State<SpeakingExamScreen>
   }
 
   Future<void> _initSTT() async {
+    if (!kIsWeb) return;
     try {
       _sttEnabled = await _speech.initialize(
         onStatus: (status) => debugPrint('STT Status: $status'),
