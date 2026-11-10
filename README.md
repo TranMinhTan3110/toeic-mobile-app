@@ -3,7 +3,6 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.11+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 > Ứng dụng di động luyện thi TOEIC 4 kỹ năng toàn diện, tích hợp trí tuệ nhân tạo (AI) chấm điểm bài thi Nói (Speaking) và Viết (Writing), áp dụng thuật toán lặp lại ngắt quãng (Spaced Repetition System - SRS) giúp ghi nhớ từ vựng hiệu quả cùng hệ thống thi đua Gamification thời gian thực.
 
@@ -27,15 +26,19 @@ Hệ thống được phát triển theo mô hình Client-Server hiện đại, 
 <div align="center">
   <table style="border: none;">
     <tr>
-      <td align="center"><img src="docs/screenshots/home.png" width="220px" alt="Màn hình chính"/><br/><b>Trang chủ & Lộ trình</b></td>
-      <td align="center"><img src="docs/screenshots/practice.png" width="220px" alt="Luyện tập 4 kỹ năng"/><br/><b>Luyện thi Listening/Reading</b></td>
-      <td align="center"><img src="docs/screenshots/speaking_ai.png" width="220px" alt="AI Chấm Speaking"/><br/><b>Chấm điểm Nói bằng AI</b></td>
-      <td align="center"><img src="docs/screenshots/leaderboard.png" width="220px" alt="Bảng xếp hạng"/><br/><b>BXH & Điểm thưởng EP</b></td>
+      <td align="center"><img src="docs/screenshots/home.png" width="190px" alt="Trang chủ"/><br/><b>Trang chủ & Lộ trình</b></td>
+      <td align="center"><img src="docs/screenshots/listening_practice.png" width="190px" alt="Luyện nghe Audio"/><br/><b>Luyện nghe Listening Part 1-4</b></td>
+      <td align="center"><img src="docs/screenshots/speaking_ai.png" width="190px" alt="Luyện Nói AI"/><br/><b>Luyện Nói Speaking với AI</b></td>
+      <td align="center"><img src="docs/screenshots/exam_sets.png" width="190px" alt="Kho Đề thi"/><br/><b>Kho Đề thi Full Test 4 Kỹ năng</b></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="docs/screenshots/vocabulary_srs.png" width="190px" alt="Từ vựng SRS"/><br/><b>Học Từ vựng & Flashcards</b></td>
+      <td align="center"><img src="docs/screenshots/grammar.png" width="190px" alt="Ngữ pháp"/><br/><b>Ngữ pháp TOEIC trọng tâm</b></td>
+      <td align="center"><img src="docs/screenshots/leaderboard.png" width="190px" alt="Bảng xếp hạng"/><br/><b>Bảng xếp hạng Tuần</b></td>
+      <td align="center"><img src="docs/screenshots/profile_streak.png" width="190px" alt="Hồ sơ & Streak"/><br/><b>Hồ sơ, Streak & Điểm EP</b></td>
     </tr>
   </table>
 </div>
-
-> *Tip: Đặt ảnh chụp màn hình thực tế của ứng dụng vào thư mục `docs/screenshots/` theo đúng tên trên để ảnh tự động hiển thị lung linh trên GitHub!*
 
 ---
 
@@ -149,7 +152,3 @@ Dự án được xây dựng bởi nhóm 5 thành viên:
 * **Trần Minh Tấn (Leader & Core Backend):** Thiết kế kiến trúc tổng thể, xây dựng Backend API .NET 9, tích hợp AI chấm thi, điều phối nhóm và triển khai Cloud.
 * **Nhóm phát triển Mobile & Web:** Cùng xây dựng giao diện người dùng, tích hợp gọi API và kiểm thử tính năng.
 
----
-
-## 📄 License
-Phát hành theo giấy phép [MIT License](LICENSE).
